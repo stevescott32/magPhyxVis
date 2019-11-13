@@ -18,17 +18,12 @@ let genVisConfig = {
     bottom: 30,
     right: 5
   }
-}
-;
-
-let eventGroups = new EventGroups();
-
-function eventGroupClick() {
-  eventGroups.handleEventGroupClick();
-}
+};
 
 const NUM_FILES = 10;
 let selectedPoints = [];
+
+let eventTypeVis = new EventTypeVis();
 
 // load numFiles as promises
 let dataPromises = [];
@@ -37,18 +32,14 @@ for (let i = 0; i < NUM_FILES; i++) {
 }
 
 // load the demo
-Promise.all([...dataPromises]).then(function (data) {
-  console.log('Data.length', data.length);
+let dataPromise = Promise.all([...dataPromises]).then(function (data) {
+  console.log('Data', data);
   for (let i = 0; i < data.length; i++) {
     for (let j = 0; j < data[i].length; j++) {
       data[i][j]['parentIndex'] = i;
     }
   }
-
-  console.log('Data', data);
-  eventGroups.init(data);
-
-  // set up the axes
+  // set up the axes for the scatterplot
   let xscale = d3.scaleLinear()
     .domain([
       d3.min(data, (file) => {
@@ -80,6 +71,7 @@ Promise.all([...dataPromises]).then(function (data) {
     ])
     .range([visConfig.padding.bottom, visConfig.height - visConfig.padding.top])
 
+  // add an svg to the scatter element
   let svg = d3.select('#scatter')
     .append('svg')
     .attr('width', visConfig.width)
@@ -88,6 +80,7 @@ Promise.all([...dataPromises]).then(function (data) {
     .attr('transform', `translate(${visConfig.padding.left}, ${visConfig.padding.top})`)
     ;
 
+    // finish setting up the axes
   let xaxis = svg.append('g');
   let yaxis = svg.append('g');
 
@@ -100,6 +93,7 @@ Promise.all([...dataPromises]).then(function (data) {
   xaxis.call(bottomAxis);
   yaxis.call(leftAxis);
 
+  // break the data up into one group per file
   let fileGroups = svg.selectAll('.demo')
     .data(data)
     .enter()
@@ -111,8 +105,7 @@ Promise.all([...dataPromises]).then(function (data) {
     })
     ;
 
-  let logs = 0;
-  // add circle everywhere a data point is
+  // add circle everywhere a data point is.
   let scatters = fileGroups.selectAll('circle')
     .data((d) => {
       return d;
@@ -127,7 +120,7 @@ Promise.all([...dataPromises]).then(function (data) {
     })
     .attr('r', 1)
     .style('fill', (d) => {
-      return getFill(d[' event_type']);
+      return Utils.getFill(d[' event_type']);
     })
     .on('mouseover', function (d) {
       d3.select(this)
@@ -142,29 +135,47 @@ Promise.all([...dataPromises]).then(function (data) {
       selectedPoints.push(d);
     })
     ;
-}).catch(function (err) { })
-;
 
-function getFill(event_type) {
-  switch (event_type) {
-    case 'init':
-      return 'grey';
-    case 'collision':
-      return 'red';
-    case 'beta = 0':
-      return 'purple';
-    case 'theta = 0':
-      return 'blue';
-    case 'pr = 0':
-      return 'orange';
-    case 'phi = 0':
-      return 'green';
-    case 'pphi = 0':
-      return 'yellow';
-    default:
-      return 'black';
-  }
-}
+    let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
+
+    // add the event type selection boxes
+    d3.select('#event-groups')
+      .append('form')
+      .selectAll('input')
+      .data(eventTypes)
+      .enter()
+      .append('g')
+      .attr('class', 'checkboxes')
+      ;
+
+    d3.selectAll('.checkboxes')
+      .append('input')
+      .attr('type', 'radio')
+      .attr('name', 'event-type')
+      .attr('value', (d) => { return d; })
+      .text(d => { return `${d}`; })
+      .on('click', (type) => {
+        console.log('type', type);
+        let filteredData = data.map((d) => {
+          return d.filter(d => {
+            return d[' event_type'] == type;
+          })
+        })
+        eventTypeVis.update(filteredData);
+      })
+      ;
+
+     d3.selectAll('.checkboxes')
+      .append('label')
+      .text(d => { return `${d}`; })
+      ;
+
+   
+    d3.selectAll('.checkboxes')
+      .append('br')
+      ;
+
+}).catch(function (err) { })
 
 function clearPrevVis() {
   let previous = document.getElementById("generated-vis");

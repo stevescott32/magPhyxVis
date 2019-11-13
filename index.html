@@ -1,30 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8">
-    <title>Simulation Data Vis</title>
-    <link rel="stylesheet" href="styles.css"/>
-    <script src="d3.js"></script>
-    <script type="application/javascript" src="js/eventGroups.js"></script>
-    <script type="application/javascript" src="js/script.js"></script>
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <title>Simulation Data Vis</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="d3.js"></script>
+  <script type="application/javascript" src="js/utils.js"></script>
+  <script type="application/javascript" src="js/eventTypeVis.js"></script>
+  <script type="application/javascript" src="js/script.js"></script>
+</head>
 
-  <body>
-    <div id="scatter"></div>
-    <div id='event-groups'>
-      <input type="checkbox" onclick="eventGroupClick()" name="event-type" value="collision">Collisions<br>
-      <input type="checkbox" onclick="eventGroupClick()" name="event-type" value="theta = 0">Theta = 0<br>
-      <input type="checkbox" onclick="eventGroupClick()" name="event-type" value="beta = 0">Beta = 0
-    </div>
+<body>
+  <div id="scatter"></div>
+  <div id='event-groups'></div>
+  <div id='event-type-vis'>
+    <svg height="500" width="1000"></svg>
+  </div>
 
-    <h3>Vis of Selected Points</h3>
-    <button onclick="clearSelected()">Clear</button>
-    <button onclick="genVis()">Generate</button>
-    <div id='generated-vis'></div>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-  </body>
+  <h3>Vis of Selected Points</h3>
+  <button onclick="clearSelected()">Clear</button>
+  <button onclick="genVis()">Generate</button>
+  <div id='generated-vis'></div>
+  <br />
+  <br />
+  <br />
+  <br />
+</body>
+
 </html>
