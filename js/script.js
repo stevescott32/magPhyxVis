@@ -19,6 +19,13 @@ let genVisConfig = {
     right: 5
   }
 }
+;
+
+let eventGroups = new EventGroups();
+
+function eventGroupClick() {
+  eventGroups.handleEventGroupClick();
+}
 
 const NUM_FILES = 10;
 let selectedPoints = [];
@@ -32,11 +39,14 @@ for (let i = 0; i < NUM_FILES; i++) {
 // load the demo
 Promise.all([...dataPromises]).then(function (data) {
   console.log('Data.length', data.length);
-  for(let i = 0; i < data.length; i++) {
-    for(let j = 0; j < data[i].length; j++) {
+  for (let i = 0; i < data.length; i++) {
+    for (let j = 0; j < data[i].length; j++) {
       data[i][j]['parentIndex'] = i;
     }
   }
+
+  console.log('Data', data);
+  eventGroups.init(data);
 
   // set up the axes
   let xscale = d3.scaleLinear()
@@ -54,6 +64,7 @@ Promise.all([...dataPromises]).then(function (data) {
     ])
     .range([visConfig.padding.left, visConfig.width - visConfig.padding.right])
     ;
+
   let yscale = d3.scaleLinear()
     .domain([
       d3.max(data, (file) => {
@@ -83,7 +94,8 @@ Promise.all([...dataPromises]).then(function (data) {
   let bottomAxis = d3.axisBottom()
     .scale(xscale);
   let leftAxis = d3.axisLeft()
-    .scale(yscale);
+    .scale(yscale)
+    ;
 
   xaxis.call(bottomAxis);
   yaxis.call(leftAxis);
@@ -99,7 +111,7 @@ Promise.all([...dataPromises]).then(function (data) {
     })
     ;
 
-    let logs = 0;
+  let logs = 0;
   // add circle everywhere a data point is
   let scatters = fileGroups.selectAll('circle')
     .data((d) => {
@@ -131,6 +143,7 @@ Promise.all([...dataPromises]).then(function (data) {
     })
     ;
 }).catch(function (err) { })
+;
 
 function getFill(event_type) {
   switch (event_type) {
@@ -183,8 +196,8 @@ function genVis() {
   console.log('Generating vis for selected points', selectedPoints);
   clearPrevVis();
   let groups = [];
-  for(let i = 0; i < NUM_FILES; i++) {
-    groups.push(selectedPoints.filter(function(d) {
+  for (let i = 0; i < NUM_FILES; i++) {
+    groups.push(selectedPoints.filter(function (d) {
       return d.parentIndex == i;
     }))
   }
@@ -201,7 +214,7 @@ function genVis() {
     ;
 
 
-    visGroup.selectAll('circle')
+  visGroup.selectAll('circle')
     .data((d) => { return d; })
     .enter()
     .append('circle')
