@@ -18,6 +18,19 @@ class EventTypeVis {
         console.log('handling event group click', data);
         d3.selectAll('.event-type-vis').remove();
 
+        let timeScale = d3.scaleLinear()
+          .domain(
+              [0, d3.max(data, (sim) => {
+                      // console.log('d outside', sim);
+                  return d3.max(sim, (d) => {
+                      // console.log('d inside', d[' t']);
+                      return d[' t'];
+                  })
+              })]
+          )
+          .range([0, this.config.width])
+          ;
+
         this.svg = d3.select('#event-type-vis')
             .append('svg')
             .attr('class', 'event-type-vis')
@@ -37,7 +50,10 @@ class EventTypeVis {
             .data(d => { return d; })
             .enter()
             .append('circle')
-            .attr('cx', d => { return d[' t']; })
+            .attr('cx', d => { 
+                // console.log('d for cx', d[' t']);
+                return timeScale( +d[' t']); 
+            })
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * 2; })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
