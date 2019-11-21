@@ -20,15 +20,17 @@ let genVisConfig = {
   }
 };
 
-const NUM_FILES = 1000;
+const NUM_FILES = 100;
 let selectedPoints = [];
 
 let eventTypeVis = new EventTypeVis(NUM_FILES);
+let paramsVis = new ParamsVis();
+paramsVis.init();
 
 // load numFiles as promises
 let dataPromises = [];
 for (let i = 0; i <= NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data/events${('00' + i).slice(-3)}.csv`))
+  dataPromises.push(d3.csv(`data/events/events${('0' + i).slice(-2)}.csv`))
 }
 
 // load the demo
