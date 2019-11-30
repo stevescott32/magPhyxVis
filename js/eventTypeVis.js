@@ -21,9 +21,7 @@ class EventTypeVis {
         let timeScale = d3.scaleLinear()
           .domain(
               [0, d3.max(data, (sim) => {
-                      // console.log('d outside', sim);
                   return d3.max(sim, (d) => {
-                      // console.log('d inside', d[' t']);
                       return d[' t'];
                   })
               })]
@@ -51,7 +49,6 @@ class EventTypeVis {
             .enter()
             .append('circle')
             .attr('cx', d => { 
-                // console.log('d for cx', d[' t']);
                 return timeScale( +d[' t']); 
             })
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * 2; })
