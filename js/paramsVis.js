@@ -1,6 +1,8 @@
 class ParamsVis {
   constructor() {
     this.circleSize = 5;
+    this.highlightScale = 2;
+
     this.config = {
       width: 400,
       height: 400,
@@ -14,6 +16,26 @@ class ParamsVis {
     // sample url: http://edwardsjohnmartin.github.io/MagPhyx/?initparams=1,0,0,0.721905,-0.0589265,0.0455992
     this.baseUrl = 'http://edwardsjohnmartin.github.io/MagPhyx/?initparams=';
 
+  }
+
+  highlightSimulation(simulation) {
+    d3.select(`.group${simulation}`)
+      .attr('r', () => { return this.circleSize * this.highlightScale; })
+      ;
+  }
+
+  unhighlightSimulation(simulation) {
+    d3.select(`.group${simulation}`)
+      .attr('r', () => { return this.circleSize; })
+      ;
+  }
+
+  setScatter(scatter) {
+    this.scatter = scatter;
+  }
+
+  setEventVis(eventVis) {
+    this.eventVis = eventVis;
   }
 
   getUrlFromCsv(row) {
@@ -41,6 +63,7 @@ class ParamsVis {
         id: parent + 1,
         parent: parent,
         order: simOrder[index],
+        index: index,
         command: command,
         url: this.getUrlFromCsv(command)
       }
@@ -101,38 +124,41 @@ class ParamsVis {
       .attr('parent', d => { return d.parent; })
       ;
 
-    let paramsVis = this;
+    let paramVis = this;
 
     // add circles for every param combo
     let params = displaySvg.selectAll('circle')
       .data(derived)
       .enter()
       .append('circle')
-      .attr('cx', d => {
-        return xscale(d.theta);
-      })
-      .attr('cy', d => {
-        return yscale(d.beta);
-      })
-      .attr('r', () => {
-        return paramsVis.circleSize;
-      })
+      .attr('cx', d => { return xscale(d.theta); })
+      .attr('cy', d => { return yscale(d.beta); })
+      .attr('r', () => { return paramVis.circleSize; })
+      .attr('class', d => { return `group${d.index}`; })
       .style('fill', 'blue')
       .attr('id', d => { return d.id; })
       .attr('parent', d => { return d.parent; })
       .on('mouseover', function (d) {
         d3.select(this)
           .attr('r', () => {
-            return paramsVis.circleSize * 1.3;
+            return paramVis.circleSize * 1.3;
           })
           ;
+        if (null != paramVis.scatter) {
+          paramVis.scatter.highlightSimulation(d.index);
+          paramVis.eventVis.highlightSimulation(d.index);
+        } else { console.log('null param scatter vis'); }
       })
       .on('mouseout', function (d) {
         d3.select(this)
           .attr('r', () => {
-            return paramsVis.circleSize;
+            return paramVis.circleSize;
           })
           ;
+        if (null != paramVis.scatter) {
+          paramVis.scatter.unhighlightSimulation(d.index);
+          paramVis.eventVis.unhighlightSimulation(d.index);
+        } else { console.log('null param scatter vis'); }
       })
       .on('click', d => {
         window.open(d.url);

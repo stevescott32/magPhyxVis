@@ -1,12 +1,43 @@
 class Scatter {
   constructor() {
+    this.circleSize = 1;
+    this.highlightScale = 5;
 
+    this.divId = 'scatter';
+  }
+
+  setParamVis(paramVis) {
+    this.paramVis = paramVis;
+  }
+
+  setEventVis(eventVis) {
+    this.eventVis = eventVis;
+  }
+
+  highlightSimulation(simulation) {
+    d3.select(`#${this.divId}`)
+      .selectAll(`.group${simulation}`)
+      .style('z-index', 1)
+      .selectAll('circle')
+      .attr('r', () => { return this.circleSize * this.highlightScale; })
+      ;
+  }
+
+  unhighlightSimulation(simulation) {
+    d3.select(`#${this.divId}`)
+      .selectAll(`.group${simulation}`)
+      .selectAll('circle')
+      .attr('r', () => { return this.circleSize; })
+      .style('z-index', -1)
+      ;
   }
 
   init(data) {
+    this.data = data;
     for (let i = 0; i < data.length; i++) {
       for (let j = 0; j < data[i].length; j++) {
         data[i][j]['parentIndex'] = i;
+        data[i][j].index = i;
       }
     }
 
@@ -69,37 +100,42 @@ class Scatter {
       .data(data)
       .enter()
       .append('g')
-      .attr('class', 'fileGroup')
+      .attr('class', (d, i) => { return `fileGroup group${i}`; })
       .attr('groupIndex', (d, i) => {
         d.index = i;
         return i;
       })
+      .style('position', 'relative') 
+      .style('z-index', -1)
       ;
 
+    // grab references so remapping 'this' doesn't break anything
+    let scatterVis = this;
+    let paramVis = this.paramVis;
+    let eventVis = this.eventVis;
+
     // add circle everywhere a data point is.
-    let scatters = fileGroups.selectAll('circle')
+    let circles = fileGroups.selectAll('circle')
       .data((d) => {
         return d;
       })
       .enter()
       .append('circle')
-      .attr('cx', (d) => {
-        return xscale(+d[' theta']);
-      })
-      .attr('cy', (d) => {
-        return yscale(+d[' phi']);
-      })
-      .attr('r', 1)
-      .style('fill', (d) => {
-        return Utils.getFill(d[' event_type']);
-      })
+      .attr('cx', (d) => { return xscale(+d[' theta']); })
+      .attr('cy', (d) => { return yscale(+d[' phi']); })
+      .attr('r', this.circleSize)
+      .style('fill', (d) => { return Utils.getFill(d[' event_type']); })
       .on('mouseover', function (d) {
         d3.select(this)
-          .attr('r', 10);
+          .attr('r', () => { return scatterVis.circleSize * scatterVis.highlightScale; });
+        paramVis.highlightSimulation(d.index);
+        eventVis.highlightSimulation(d.index);
       })
       .on('mouseout', function (d) {
         d3.select(this)
-          .attr('r', 1);
+          .attr('r', () => { return scatterVis.circleSize; });
+        paramVis.unhighlightSimulation(d.index);
+        eventVis.unhighlightSimulation(d.index);
       })
       .on('click', function (d) {
         console.log('clicked', d);

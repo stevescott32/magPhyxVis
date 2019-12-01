@@ -24,14 +24,21 @@ const NUM_FILES = 100;
 let selectedPoints = [];
 
 let eventTypeVis = new EventTypeVis(NUM_FILES);
-let paramsVis = new ParamsVis();
+let paramVis = new ParamsVis();
 let scatter = new Scatter();
+  
+// let each vis know about the other event vis
+scatter.setParamVis(paramVis);
+scatter.setEventVis(eventTypeVis);
+paramVis.setScatter(scatter);
+paramVis.setEventVis(eventTypeVis);
+eventTypeVis.setParamVis(paramVis);
+eventTypeVis.setScatterVis(scatter);
 
 let simulationOrder = [];
 for (let i = 0; i < NUM_FILES; i++) {
   simulationOrder.push(i);
 }
-
 
 // promise the param data
 let paramDataPromises = [];
@@ -41,7 +48,7 @@ for (let i = 1; i <= NUM_FILES; i++) {
 
 // load the param data
 Promise.all([...paramDataPromises]).then((paramData) => {
-  paramsVis.init(paramData, simulationOrder);
+  paramVis.init(paramData, simulationOrder);
 });
 
 // promise the event data
@@ -53,7 +60,6 @@ for (let i = 0; i <= NUM_FILES; i++) {
 // load the event data
 let dataPromise = Promise.all([...dataPromises]).then(function (data) {
   scatter.init(data);
-
 }).catch(function (err) { })
 
 function clearPrevVis() {
@@ -95,9 +101,7 @@ function genVis() {
     .data((d) => { return d; })
     .enter()
     .append('circle')
-    .attr('cx', (d) => {
-      return +d[' t'];
-    })
+    .attr('cx', (d) => { return +d[' t']; })
     .attr('cy', genVisConfig.height / 2)
     .attr('r', 5)
     .style('fill', (d) => {
