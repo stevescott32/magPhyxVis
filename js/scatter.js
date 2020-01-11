@@ -55,7 +55,7 @@ class Scatter {
           }))
         })
       ])
-      .range([visConfig.padding.left, visConfig.width - visConfig.padding.right])
+      .range([visConfig.padding.left, visConfig.width + visConfig.padding.left])
       ;
 
     let yscale = d3.scaleLinear()
@@ -71,7 +71,7 @@ class Scatter {
           }))
         })
       ])
-      .range([visConfig.padding.bottom, visConfig.height - visConfig.padding.top])
+      .range([visConfig.padding.top, visConfig.height + visConfig.padding.top])
 
     // add an svg to the scatter element
     let svg = d3.select('#scatter')
@@ -79,21 +79,39 @@ class Scatter {
       .attr('width', visConfig.width)
       .attr('height', visConfig.height)
       .append('g')
-      .attr('transform', `translate(${visConfig.padding.left}, ${visConfig.padding.top})`)
+      // .attr('transform', `translate(${visConfig.padding.left}, ${visConfig.padding.top})`)
       ;
 
     // finish setting up the axes
-    let xaxis = svg.append('g');
-    let yaxis = svg.append('g');
+    let xaxis = svg.append('g')
+      .attr('transform', `translate(0, ${visConfig.padding.top})`)
+      ;
+    let yaxis = svg.append('g')
+      .attr('transform', `translate(${visConfig.padding.left}, 0)`)
+      ;
 
-    let bottomAxis = d3.axisBottom()
+    let topAxis = d3.axisTop()
       .scale(xscale);
     let leftAxis = d3.axisLeft()
       .scale(yscale)
       ;
 
-    xaxis.call(bottomAxis);
+    xaxis.call(topAxis);
     yaxis.call(leftAxis);
+
+    svg.append('text')
+      .attr('x', xscale(0))
+      .attr('y', visConfig.padding.top / 2)
+      .text('Theta')
+      ;
+    
+    svg.append('g')
+      .attr('transform', `rotate(-90)`)
+      .append('text')
+      .attr('y', visConfig.padding.left / 2)
+      .attr('x', -1 * yscale(0))
+      .text('Phi')
+      ;
 
     // break the data up into one group per file
     let fileGroups = svg.selectAll('.demo')

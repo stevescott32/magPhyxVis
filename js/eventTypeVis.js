@@ -7,8 +7,8 @@ class EventTypeVis {
             width: 1200,
             height: (this.circleSize * 2) * numEvents,
             padding: {
-                left: 5,
-                top: 5,
+                left: 80,
+                top: 100,
                 bottom: 5,
                 right: 5
             }
@@ -57,7 +57,12 @@ class EventTypeVis {
                     })
                 })]
             )
-            .range([this.config.padding.left, this.config.width])
+            .range([this.config.padding.left, this.config.width + this.config.padding.left])
+            ;
+
+        let eventCountScale = d3.scaleLinear()
+            .domain([0, data.length])
+            .range([this.config.padding.top, this.config.height + this.config.padding.top])
             ;
 
         this.svg = d3.select(`#${this.divId}`)
@@ -66,6 +71,37 @@ class EventTypeVis {
             .attr('id', 'event-type-svg')
             .attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
+            ;
+
+
+        let xaxis = this.svg.append('g')
+            .attr('transform', `translate(0, ${this.config.padding.left + 10})`)
+            ;
+        let yaxis = this.svg.append('g')
+            .attr('transform', `translate(${this.config.padding.top - 30}, 0)`)
+            ;
+
+        let topAxis = d3.axisTop()
+            .scale(timeScale);
+        let leftAxis = d3.axisLeft()
+            .scale(eventCountScale)
+            ;
+
+        xaxis.call(topAxis);
+        yaxis.call(leftAxis);
+
+        this.svg.append('text')
+            .attr('x', timeScale(50))
+            .attr('y', this.config.padding.top / 2)
+            .text('Time')
+            ;
+
+        this.svg.append('g')
+            .attr('transform', `rotate(-90)`)
+            .append('text')
+            .attr('y', this.config.padding.left / 2)
+            .attr('x', -1 * eventCountScale(50))
+            .text('Simulation')
             ;
 
         let sims = this.svg.selectAll('.oneSimulation')

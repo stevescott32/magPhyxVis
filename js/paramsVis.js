@@ -7,8 +7,8 @@ class ParamsVis {
       width: 400,
       height: 400,
       padding: {
-        left: 30,
-        top: 50,
+        left: 200,
+        top: 100,
         bottom: 30,
         right: 15
       }
@@ -83,7 +83,7 @@ class ParamsVis {
           return d.theta;
         })
       ])
-      .range([this.config.padding.left, this.config.width - this.config.padding.right])
+      .range([this.config.padding.left, this.config.width + this.config.padding.left])
       ;
 
     // set up the y axis
@@ -96,14 +96,46 @@ class ParamsVis {
           return d.beta;
         })
       ])
-      .range([this.config.padding.left, this.config.width - this.config.padding.right])
+      .range([this.config.padding.top, this.config.height + this.config.padding.top])
       ;
 
     // add a svg for the vis
     let displaySvg = d3.select('#param-vis')
       .append('svg')
-      .attr('width', myConfig.width)
-      .attr('height', myConfig.height)
+      .attr('width', myConfig.width + myConfig.padding.left + myConfig.padding.right)
+      .attr('height', myConfig.height + myConfig.padding.top + myConfig.padding.bottom)
+      ;
+
+    let xaxis = displaySvg.append('g')
+      .attr('transform', `translate(0 ${myConfig.padding.top * (3/4)})`)
+      ;
+    let yaxis = displaySvg.append('g')
+      .attr('transform', `translate(${myConfig.padding.left * (3/4)} 0)`)
+    ;
+
+    let topAxis = d3.axisTop()
+      .scale(xscale);
+    let leftAxis = d3.axisLeft()
+      .scale(yscale)
+      ;
+
+    xaxis.call(topAxis);
+    yaxis.call(leftAxis);
+
+    displaySvg.append('text')
+    .attr('x', xscale(-0.055))
+    .attr('y', myConfig.padding.top / 2)
+    .text('Theta')
+    ;
+
+    displaySvg.append('g')
+      .attr('transform', `rotate(-90)`)
+      .append('text')
+      .attr('y', myConfig.padding.left / 2)
+      .attr('x', -1 * yscale(0.054))
+      .text('Beta')
+      ;
+
 
     // add a line from each point to its parent
     let links = displaySvg.selectAll('path')

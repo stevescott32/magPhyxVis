@@ -1,9 +1,9 @@
 let visConfig = {
-  width: 800,
-  height: 400,
+  width: 1200,
+  height: 600,
   padding: {
-    left: 30,
-    top: 50,
+    left: 100,
+    top: 80,
     bottom: 30,
     right: 5
   }
@@ -13,8 +13,8 @@ let genVisConfig = {
   width: 800,
   height: 20,
   padding: {
-    left: 30,
-    top: 50,
+    left: 100,
+    top: 80,
     bottom: 30,
     right: 5
   }
@@ -43,7 +43,7 @@ for (let i = 0; i < NUM_FILES; i++) {
 // promise the param data
 let paramDataPromises = [];
 for (let i = 1; i <= NUM_FILES; i++) {
-  paramDataPromises.push(d3.csv(`data/commands/commands${('0' + i).slice(-2)}.csv`));
+  paramDataPromises.push(d3.csv(`data1/commands/commands${('0' + i).slice(-2)}.csv`));
 }
 
 // load the param data
@@ -54,7 +54,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
 // promise the event data
 let dataPromises = [];
 for (let i = 0; i <= NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data/events/events${('0' + i).slice(-2)}.csv`))
+  dataPromises.push(d3.csv(`data2/events/events${('0' + i).slice(-2)}.csv`))
 }
 
 // load the event data
