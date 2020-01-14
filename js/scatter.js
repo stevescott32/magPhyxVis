@@ -76,8 +76,8 @@ class Scatter {
     // add an svg to the scatter element
     let svg = d3.select('#scatter')
       .append('svg')
-      .attr('width', visConfig.width)
-      .attr('height', visConfig.height)
+      .attr('width', visConfig.width + visConfig.padding.left + visConfig.padding.right)
+      .attr('height', visConfig.height + visConfig.padding.bottom + visConfig.padding.top)
       .append('g')
       // .attr('transform', `translate(${visConfig.padding.left}, ${visConfig.padding.top})`)
       ;

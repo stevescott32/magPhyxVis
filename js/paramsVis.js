@@ -4,7 +4,7 @@ class ParamsVis {
     this.highlightScale = 2;
 
     this.config = {
-      width: 400,
+      width: 500,
       height: 400,
       padding: {
         left: 200,
@@ -48,27 +48,26 @@ class ParamsVis {
    * Init function - initialize the vis, linking the simulations in order
    * @param simOrder - an array containing the order of points
    */
-  init(data, simOrder) {
+  init(data) {
     let myConfig = this.config;
     console.log('Param data', data);
-    // split each of the command arguments
+
+    let id = 0;
     let parent = -1;
-    let index = 0;
     let derived = data.map((d) => {
       let command = d['columns'][0];
       let split = command.split(' ');
       let value = {
         theta: +split[9],
         beta: +split[10],
-        id: parent + 1,
+        id: id,
         parent: parent,
-        order: simOrder[index],
-        index: index,
+        zorder: d.zorder,
         command: command,
         url: this.getUrlFromCsv(command)
       }
-      parent++;
-      index++;
+      parent = id;
+      id++;
       return value;
     })
     console.log('derived', derived);
@@ -138,13 +137,17 @@ class ParamsVis {
 
 
     // add a line from each point to its parent
-    let links = displaySvg.selectAll('path')
+    console.log('derived', derived);
+    let links = displaySvg.selectAll('.link')
       .data(derived)
       .enter()
       .append('path')
       .attr('d', function (d) {
-        let p = derived[d.parent];
+        let p = derived.filter(dd => {
+          return dd.id == d.parent;
+        })[0];
         if (undefined == p) {
+          console.log('undefined parent for node ' + d.id);
           return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(d.theta)} ${yscale(d.beta)}`;
         }
         return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(p.theta)} ${yscale(p.beta)}`;
@@ -154,6 +157,7 @@ class ParamsVis {
       .style('stroke-width', '2')
       .attr('id', d => { return d.id; })
       .attr('parent', d => { return d.parent; })
+      .attr('class', 'link')
       ;
 
     let paramVis = this;
@@ -169,6 +173,7 @@ class ParamsVis {
       .attr('class', d => { return `group${d.index}`; })
       .style('fill', 'blue')
       .attr('id', d => { return d.id; })
+      .attr('zorder', d => d.zorder)
       .attr('parent', d => { return d.parent; })
       .on('mouseover', function (d) {
         d3.select(this)
@@ -195,6 +200,9 @@ class ParamsVis {
       .on('click', d => {
         window.open(d.url);
       })
+      .append('svg:title')
+        .text((d)=> d.id)
       ;
+
   }
 }
