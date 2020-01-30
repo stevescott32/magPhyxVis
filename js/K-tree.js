@@ -86,13 +86,17 @@ class KTree{
                     this.subdivide();
                     for (let i=0; i<this.points.length; i++){
                         for (let j=0; j<this.children.length; j++){
-                            this.children[j].insertPoint(this.points[i]);
+                            if (this.children[j].insertPoint(this.points[i])){
+                                break;
+                            }
                         }
                     }
                     this.points = [];
                 }
             }
+            return true;
         }
+        return false;
     }
 
 
@@ -158,15 +162,17 @@ setTraverseList(){
 let boundary = new Boundary([0,0], [10,10]);
 let ktree = new KTree(boundary, 1);
 
-let ind = 0;
-for (let i=1; i<3; i++){
-    for (let j=1; j<3; j++){
-        ktree.insertPoint(new Point([i,j]));
-        ind++;
-    }
-}
+ktree.insertPoint(new Point([3,3]));
+ktree.insertPoint(new Point([8,8]));
+ktree.insertPoint(new Point([3,8]));
+ktree.insertPoint(new Point([6,3]));
+ktree.insertPoint(new Point([6,1]));
+ktree.insertPoint(new Point([8,3]));
+ktree.insertPoint(new Point([8,1]));
+
+
 ktree.setTraverseList();
-document.writeln("num inserted: " + ind + "<br>traverseList.length: " + ktree.traverseList.length + "<br>");
+document.writeln(ktree.traverseList.length + "<br>");
 for (let point in ktree.traverseList){
     document.writeln(ktree.traverseList[point] + "<br>");
 }
@@ -199,31 +205,6 @@ for (let point in ktree.traverseList){
 //         }
 //     }
 //     return toReturn;
-// }
-// setTraverseListHelper(){
-//     var traverseList = [];
-//     if (this.isDivided){
-//         for (let i in this.southWest.setTraverseListHelper()){
-//             traverseList.push(this.southWest.setTraverseListHelper()[i]);
-//         }
-//         for (let i in this.southEast.setTraverseListHelper()){
-//             traverseList.push(this.southEast.setTraverseListHelper()[i]);
-//         }
-//         for (let i in this.northWest.setTraverseListHelper()){
-//             traverseList.push(this.northWest.setTraverseListHelper()[i]);
-//         }
-//         for (let i in this.northEast.setTraverseListHelper()){
-//             traverseList.push(this.northEast.setTraverseListHelper()[i]);
-//         }
-//
-//     }
-//     for (let i in this.points){
-//         traverseList.push(this.points[i]);
-//     }
-//     return traverseList;
-// }
-// setTraverseList(){
-//     this.traverseList = this.setTraverseListHelper();
 // }
 
 
