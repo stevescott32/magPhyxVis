@@ -167,6 +167,8 @@ class KTree {
     }
 
 }
+
+/*
 let boundary = new Boundary([0, 0], [10, 10]);
 let ktree = new KTree(boundary, 1);
 
@@ -184,3 +186,4 @@ document.writeln(ktree.traverseList.length + "<br>");
 for (let point in ktree.traverseList) {
     document.writeln(ktree.traverseList[point] + "<br>");
 }
+*/

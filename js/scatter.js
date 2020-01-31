@@ -4,6 +4,16 @@ class Scatter {
     this.highlightScale = 5;
 
     this.divId = 'scatter';
+    this.visConfig = {
+      width: 1200,
+      height: 600,
+      padding: {
+        left: 100,
+        top: 80,
+        bottom: 30,
+        right: 5
+      }
+    };
   }
 
   setParamVis(paramVis) {
@@ -55,7 +65,7 @@ class Scatter {
           }))
         })
       ])
-      .range([visConfig.padding.left, visConfig.width + visConfig.padding.left])
+      .range([this.visConfig.padding.left, this.visConfig.width + this.visConfig.padding.left])
       ;
 
     let yscale = d3.scaleLinear()
@@ -71,23 +81,23 @@ class Scatter {
           }))
         })
       ])
-      .range([visConfig.padding.top, visConfig.height + visConfig.padding.top])
+      .range([this.visConfig.padding.top, this.visConfig.height + this.visConfig.padding.top])
 
     // add an svg to the scatter element
     let svg = d3.select('#scatter')
       .append('svg')
-      .attr('width', visConfig.width + visConfig.padding.left + visConfig.padding.right)
-      .attr('height', visConfig.height + visConfig.padding.bottom + visConfig.padding.top)
+      .attr('width', this.visConfig.width + this.visConfig.padding.left + this.visConfig.padding.right)
+      .attr('height', this.visConfig.height + this.visConfig.padding.bottom + this.visConfig.padding.top)
       .append('g')
-      // .attr('transform', `translate(${visConfig.padding.left}, ${visConfig.padding.top})`)
+      // .attr('transform', `translate(${this.visConfig.padding.left}, ${this.visConfig.padding.top})`)
       ;
 
     // finish setting up the axes
     let xaxis = svg.append('g')
-      .attr('transform', `translate(0, ${visConfig.padding.top})`)
+      .attr('transform', `translate(0, ${this.visConfig.padding.top})`)
       ;
     let yaxis = svg.append('g')
-      .attr('transform', `translate(${visConfig.padding.left}, 0)`)
+      .attr('transform', `translate(${this.visConfig.padding.left}, 0)`)
       ;
 
     let topAxis = d3.axisTop()
@@ -101,14 +111,14 @@ class Scatter {
 
     svg.append('text')
       .attr('x', xscale(0))
-      .attr('y', visConfig.padding.top / 2)
+      .attr('y', this.visConfig.padding.top / 2)
       .text('Theta')
       ;
     
     svg.append('g')
       .attr('transform', `rotate(-90)`)
       .append('text')
-      .attr('y', visConfig.padding.left / 2)
+      .attr('y', this.visConfig.padding.left / 2)
       .attr('x', -1 * yscale(0))
       .text('Phi')
       ;
@@ -195,10 +205,8 @@ class Scatter {
       .text(d => { return `${d}`; })
       ;
 
-
     d3.selectAll('.checkboxes')
       .append('br')
       ;
-
   }
 }
