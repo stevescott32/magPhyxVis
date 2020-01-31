@@ -21,7 +21,7 @@ let genVisConfig = {
 };
 console.log('Starting script');
 
-const NUM_FILES = 100;
+const NUM_FILES = 4;
 let selectedPoints = [];
 
 let eventTypeVis = new EventTypeVis(NUM_FILES);
@@ -37,6 +37,7 @@ eventTypeVis.setParamVis(paramVis);
 eventTypeVis.setScatterVis(scatter);
 
 let dontReorder = false;
+let dataset = 'data6';
 
 function reorderData(data, order) {
   if(dontReorder) return data;
@@ -54,30 +55,33 @@ function reorderData(data, order) {
 // promise the param data
 let paramDataPromises = [];
 for (let i = NUM_FILES - 1; i >= 0; i--) {
-  paramDataPromises.push(d3.csv(`data1/commands/commands${('0' + i).slice(-2)}.csv`));
+  paramDataPromises.push(d3.csv(`data/${dataset}/commands/commands${('0' + i).slice(-2)}.csv`));
 }
-paramDataPromises.push(d3.csv(`data1/commands/zorder.csv`));
+paramDataPromises.push(d3.csv(`data/${dataset}/commands/zorder.csv`));
 
 // load the param data
 Promise.all([...paramDataPromises]).then((paramData) => {
   console.log('paramData', paramData);
   let zorder = paramData.pop();
+  console.log('zorder', zorder);
   let orderedData = reorderData(paramData, zorder);
-  console.log('ordered data', orderedData);
+  console.log('ordered param data', orderedData);
   paramVis.init(orderedData);
 });
 
 // promise the event data
 let dataPromises = [];
 for (let i = 0; i <= NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data4/events/events${('0' + i).slice(-2)}.csv`))
+  dataPromises.push(d3.csv(`${dataset}/events/events${('0' + i).slice(-2)}.csv`))
 }
-dataPromises.push(d3.csv(`data1/commands/zorder.csv`));
+dataPromises.push(d3.csv(`${dataset}/commands/zorder.csv`));
 
 // load the event data
 let dataPromise = Promise.all([...dataPromises]).then(function (data) {
   let zorder = data.pop();
+  // console.log('Event data: ', data);
   let orderedData = reorderData(data, zorder);
+  // console.log('Ordered event data: ', orderedData);
   scatter.init(orderedData);
 
 }).catch(function (err) { })

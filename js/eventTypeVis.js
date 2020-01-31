@@ -4,13 +4,13 @@ class EventTypeVis {
         this.highlightScale = 2;
 
         this.config = {
-            width: 1200,
+            width: 150, // 1200,
             height: (this.circleSize * 2) * numEvents,
             padding: {
                 left: 80,
                 top: 100,
                 bottom: 5,
-                right: 5
+                right: 10
             }
         };
 
@@ -49,6 +49,18 @@ class EventTypeVis {
         if (null == data) { return; }
         d3.selectAll('.event-type-vis').remove();
 
+        console.log('unfiltered data', data);
+        let logs = 0;
+        for(let i = 0; i < data.length; i++) {
+            data[i] = data[i].filter(d => {
+                if(logs++ < 10) {
+                    console.log('d.t', +d[' t']);
+                }
+                return +d[' t'] < 100;
+            })
+        }
+       console.log('filtered data', data);
+
         let timeScale = d3.scaleLinear()
             .domain(
                 [0, d3.max(data, (sim) => {
@@ -57,7 +69,7 @@ class EventTypeVis {
                     })
                 })]
             )
-            .range([this.config.padding.left, this.config.width + this.config.padding.left])
+            .range([this.config.padding.left, 2 * this.config.width + this.config.padding.left])
             ;
 
         let eventCountScale = d3.scaleLinear()
@@ -91,7 +103,7 @@ class EventTypeVis {
         yaxis.call(leftAxis);
 
         this.svg.append('text')
-            .attr('x', timeScale(50))
+            .attr('x', timeScale(25))
             .attr('y', this.config.padding.top / 2)
             .text('Time')
             ;
@@ -123,6 +135,7 @@ class EventTypeVis {
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * this.circleSize * 2; })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
+                if(+d[' t'] > 50) { return 'white'; }
                 return Utils.getFill(d[' event_type']);
             })
             .on('mouseover', function (d) {

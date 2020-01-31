@@ -1,47 +1,4 @@
-/*class Point {
-    coordinates = [];
-    constructor(x, y, id) {
-        this.coordinates[0] = x;
-        this.coordinates[1] = y;
-        this.id = id;
-    }
-    compareTo(p) {
-        return this.coordinates[0] === p.coordinates[0] && this.coordinates[1] === p.coordinates[1];
-    }
-    print() {
-        document.write(this.coordinates[0] + " " + this.coordinates[1]);
-    }
-    asString() {
-        return this.id + " [" + this.coordinates[0] + "," + this.coordinates[1] + "]";
-    }
-}
-
-class Boundary {
-    xy = [];
-    wh = [];
-    constructor(x, y, w, h) {
-        this.xy[0] = x;
-        this.xy[1] = y;
-        this.wh[0] = w;
-        this.wh[1] = h;
-    }
-
-    contains(point) {
-        var px = point.coordinates[0];
-        var py = point.coordinates[1];
-        var bx = this.xy[0];
-        var by = this.xy[1];
-        var w = this.wh[0];
-        var h = this.wh[1];
-        /*
-        if(px >= bx) { console.log('0'); }
-        if(px < bx + w) { console.log('1'); }
-        if(py >= by + h) { console.log('2'); }
-        if(py < by + h) { console.log('3'); }
-        return px >= bx && px < bx + w && py >= by && py < by + h;
-    }
-}
-
+/*
 class QuadTree {
     boundary;
     capacity;

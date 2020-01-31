@@ -1,1 +1,0 @@
-./magphyxc --numEvents 1e3 -d bouncing -i 1.1 0 0 -0.054 0.059 0 -o

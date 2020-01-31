@@ -122,7 +122,8 @@ class ParamsVis {
     yaxis.call(leftAxis);
 
     displaySvg.append('text')
-    .attr('x', xscale(-0.055))
+    .attr('x', xscale(0.0))
+    // .attr('x', xscale(-0.055))
     .attr('y', myConfig.padding.top / 2)
     .text('Theta')
     ;
@@ -131,7 +132,7 @@ class ParamsVis {
       .attr('transform', `rotate(-90)`)
       .append('text')
       .attr('y', myConfig.padding.left / 2)
-      .attr('x', -1 * yscale(0.054))
+      .attr('x', -1 * yscale(0.09))
       .text('Beta')
       ;
 
