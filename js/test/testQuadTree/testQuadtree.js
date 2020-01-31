@@ -60,6 +60,7 @@ function testLevel() {
 
 }
 
+
 // testInsertPoint();
 testLevel();
-console.log('Successfully completed the quad tree tests');
+console.log('Successfully completed the quadtree tests');
