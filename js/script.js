@@ -42,8 +42,10 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       })
     }
     console.log('Ordering data');
-    let orderedData = reorderData(combinedData);
-    console.log('Data is ordered');
+    let ktree = makeKTree(combinedData);
+    console.log('ktree made');
+    let orderedData = reorderData(ktree);
+    console.log('Data is ordered', orderedData);
     let orderedParamData = [];
     let orderedEventsData = [];
     for(let i = 0; i < orderedData.length; i++) {
@@ -52,7 +54,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     }
 
     console.log('Initializing param vis');
-    paramVis.init(orderedParamData);
+    paramVis.init(orderedParamData, ktree);
     console.log('Initializing scatter vis');
     scatter.init(orderedEventsData);
 

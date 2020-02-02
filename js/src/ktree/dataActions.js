@@ -33,7 +33,7 @@ function filterPoints(points, tolerance) {
     console.log('Removed ' + totalRemoved + ' points as being within tolerance');
 
     // shuffle the array so as to avoid causing excessive recursion in the ktree
-    points = shuffle(points);
+    // points = shuffle(points);
 
     // return our new set of points
     return points;
@@ -73,7 +73,16 @@ function getDimensions(dataElement) {
     return dims;
 }
 
-function reorderData(data) {
+function reorderData(ktree) {
+    let orderedData = [];
+    for (let i = 0; i < ktree.traverseList.length; i++) {
+        orderedData.push(ktree.traverseList[i].data);
+    }
+    console.log('My ordered data is ', orderedData);
+    return orderedData;
+}
+
+function makeKTree(data) {
     if (settings.dontReorder) return data;
 
     let points = [];
@@ -87,12 +96,7 @@ function reorderData(data) {
     for (let i = 0; i < points.length; i++) {
         ktree.insertPoint(points[i]);
     }
-
-    let orderedData = [];
     ktree.setTraverseList();
-
-    for (let i = 0; i < ktree.traverseList.length; i++) {
-        orderedData.push(ktree.traverseList[i].data);
-    }
-    return orderedData;
+    return ktree;
 }
+

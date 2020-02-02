@@ -166,6 +166,33 @@ class KTree {
         this.traverseList = this.setTraverseListHelper();
     }
 
+    getBoundaries() {
+        console.log('Getting boundaries');
+        if (this.isDivided) {
+            console.log('This is subdivided and has ' + this.children.length + ' children');
+            let combined = [];
+            for (let i = 0; i < this.children.length; i++) {
+                let childBoundaries = this.children[i].getBoundaries();
+                if (Array.isArray(childBoundaries)) {
+                    for (let j = 0; j < childBoundaries.length; j++) {
+                        console.log('Pushed on another child boundary', childBoundaries[j]);
+                        combined.push(childBoundaries[j]);
+                    }
+
+                } else {
+                    console.log('adding a single value onto combined', childBoundaries);
+                    combined.push(childBoundaries);
+                }
+            }
+            console.log('returning combined', combined);
+            return combined;
+
+        } else {
+            console.log('leaf', this.boundary);
+            return this.boundary;
+        }
+    }
+
 }
 
 /*

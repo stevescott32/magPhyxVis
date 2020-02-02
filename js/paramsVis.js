@@ -48,7 +48,7 @@ class ParamsVis {
    * Init function - initialize the vis, linking the simulations in order
    * @param simOrder - an array containing the order of points
    */
-  init(data) {
+  init(data, ktree) {
     let myConfig = this.config;
     console.log('Param data', data);
 
@@ -139,6 +139,54 @@ class ParamsVis {
 
     // add a line from each point to its parent
     console.log('derived', derived);
+
+    console.log('Drawing boundaries');
+    /*
+    let svg = d3.select('#debug')
+      .append('svg')
+      .attr('width', 500)
+      .attr('height', 500)
+      ;
+      */
+      let bounds = ktree.getBoundaries();
+      console.log('Success in getting bounds', bounds);
+
+      /*
+    let xscale = d3.scaleLinear()
+      .domain([ktree.boundary.dimensionMins[0], ktree.boundary.dimensionMaxs[0]])
+      .range([0, 500])
+      ;
+    let yscale = d3.scaleLinear()
+      .domain([ktree.boundary.dimensionMins[1], ktree.boundary.dimensionMaxs[1]])
+      .range([0, 500])
+      ;
+      */
+
+
+
+      displaySvg.selectAll('.boundaries')
+        .data(bounds)
+        .enter()
+        .append('rect')
+        .attr('x', d => {
+            return xscale(d.dimensionMins[0]);
+        })
+        .attr('y', d => {
+            return yscale(d.dimensionMins[1]);
+        })
+        .attr('width', d => {
+            return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
+        })
+        .attr('height', d => {
+            return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
+        })
+        .style('fill', 'lightgreen')
+        .style('stroke-width', 3)
+        .style('stroke', 'black')
+        .attr('class', 'boundaries')
+        ;
+        console.log('finished debugging');
+
     let links = displaySvg.selectAll('.link')
       .data(derived)
       .enter()
