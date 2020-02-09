@@ -169,48 +169,22 @@ class KTree {
     getBoundaries() {
         console.log('Getting boundaries');
         if (this.isDivided) {
-            console.log('This is subdivided and has ' + this.children.length + ' children');
             let combined = [];
             for (let i = 0; i < this.children.length; i++) {
                 let childBoundaries = this.children[i].getBoundaries();
                 if (Array.isArray(childBoundaries)) {
                     for (let j = 0; j < childBoundaries.length; j++) {
-                        console.log('Pushed on another child boundary', childBoundaries[j]);
                         combined.push(childBoundaries[j]);
                     }
 
                 } else {
-                    console.log('adding a single value onto combined', childBoundaries);
                     combined.push(childBoundaries);
                 }
             }
-            console.log('returning combined', combined);
             return combined;
 
         } else {
-            console.log('leaf', this.boundary);
             return this.boundary;
         }
     }
-
 }
-
-/*
-let boundary = new Boundary([0, 0], [10, 10]);
-let ktree = new KTree(boundary, 1);
-
-ktree.insertPoint(new Point([3, 3]));
-ktree.insertPoint(new Point([8, 8]));
-ktree.insertPoint(new Point([3, 8]));
-ktree.insertPoint(new Point([6, 3]));
-ktree.insertPoint(new Point([6, 1]));
-ktree.insertPoint(new Point([8, 3]));
-ktree.insertPoint(new Point([8, 1]));
-
-
-ktree.setTraverseList();
-document.writeln(ktree.traverseList.length + "<br>");
-for (let point in ktree.traverseList) {
-    document.writeln(ktree.traverseList[point] + "<br>");
-}
-*/

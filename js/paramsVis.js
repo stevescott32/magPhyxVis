@@ -48,7 +48,7 @@ class ParamsVis {
    * Init function - initialize the vis, linking the simulations in order
    * @param simOrder - an array containing the order of points
    */
-  init(data, ktree) {
+  init(data, boundaries) {
     let myConfig = this.config;
     console.log('Param data', data);
 
@@ -106,11 +106,11 @@ class ParamsVis {
       ;
 
     let xaxis = displaySvg.append('g')
-      .attr('transform', `translate(0 ${myConfig.padding.top * (3/4)})`)
+      .attr('transform', `translate(0 ${myConfig.padding.top * (3 / 4)})`)
       ;
     let yaxis = displaySvg.append('g')
-      .attr('transform', `translate(${myConfig.padding.left * (3/4)} 0)`)
-    ;
+      .attr('transform', `translate(${myConfig.padding.left * (3 / 4)} 0)`)
+      ;
 
     let topAxis = d3.axisTop()
       .scale(xscale);
@@ -122,17 +122,17 @@ class ParamsVis {
     yaxis.call(leftAxis);
 
     displaySvg.append('text')
-    .attr('x', xscale(0.0))
-    // .attr('x', xscale(-0.055))
-    .attr('y', myConfig.padding.top / 2)
-    .text('Theta')
-    ;
+      // .attr('x', xscale(0.0))
+      .attr('x', xscale(-0.055))
+      .attr('y', myConfig.padding.top / 2)
+      .text('Theta')
+      ;
 
     displaySvg.append('g')
       .attr('transform', `rotate(-90)`)
       .append('text')
       .attr('y', myConfig.padding.left / 2)
-      .attr('x', -1 * yscale(0.09))
+      .attr('x', -1 * yscale(0.055))
       .text('Beta')
       ;
 
@@ -141,51 +141,30 @@ class ParamsVis {
     console.log('derived', derived);
 
     console.log('Drawing boundaries');
-    /*
-    let svg = d3.select('#debug')
-      .append('svg')
-      .attr('width', 500)
-      .attr('height', 500)
+    console.log('Success in getting bounds', boundaries);
+
+    displaySvg.selectAll('.boundaries')
+      .data(boundaries)
+      .enter()
+      .append('rect')
+      .attr('x', d => {
+        return xscale(d.dimensionMins[0]);
+      })
+      .attr('y', d => {
+        return yscale(d.dimensionMins[1]);
+      })
+      .attr('width', d => {
+        return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
+      })
+      .attr('height', d => {
+        return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
+      })
+      .style('fill', 'white')
+      .style('stroke-width', 3)
+      .style('stroke', 'lightgrey')
+      .attr('class', 'boundaries')
       ;
-      */
-      let bounds = ktree.getBoundaries();
-      console.log('Success in getting bounds', bounds);
-
-      /*
-    let xscale = d3.scaleLinear()
-      .domain([ktree.boundary.dimensionMins[0], ktree.boundary.dimensionMaxs[0]])
-      .range([0, 500])
-      ;
-    let yscale = d3.scaleLinear()
-      .domain([ktree.boundary.dimensionMins[1], ktree.boundary.dimensionMaxs[1]])
-      .range([0, 500])
-      ;
-      */
-
-
-
-      displaySvg.selectAll('.boundaries')
-        .data(bounds)
-        .enter()
-        .append('rect')
-        .attr('x', d => {
-            return xscale(d.dimensionMins[0]);
-        })
-        .attr('y', d => {
-            return yscale(d.dimensionMins[1]);
-        })
-        .attr('width', d => {
-            return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
-        })
-        .attr('height', d => {
-            return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
-        })
-        .style('fill', 'lightgreen')
-        .style('stroke-width', 3)
-        .style('stroke', 'black')
-        .attr('class', 'boundaries')
-        ;
-        console.log('finished debugging');
+    console.log('finished debugging');
 
     let links = displaySvg.selectAll('.link')
       .data(derived)
@@ -250,7 +229,7 @@ class ParamsVis {
         window.open(d.url);
       })
       .append('svg:title')
-        .text((d)=> d.id)
+      .text((d) => d.id)
       ;
 
   }

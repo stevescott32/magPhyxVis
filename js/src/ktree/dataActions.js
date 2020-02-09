@@ -83,8 +83,6 @@ function reorderData(ktree) {
 }
 
 function makeKTree(data) {
-    if (settings.dontReorder) return data;
-
     let points = [];
     for (let i = 0; i < data.length; i++) {
         points.push(new Point(getDimensions(data[i].param), data[i]));
