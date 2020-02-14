@@ -1,8 +1,15 @@
+/**
+ * ParamVis: Class to encapsulate the code for the 
+ * parameter visualization.
+ */
 class ParamsVis {
   constructor() {
+    // size for each dot in the vis
     this.circleSize = 5;
     this.highlightScale = 2;
 
+    // define the size of the svg for the param vis and
+    // the padding around the vis
     this.config = {
       width: 500,
       height: 400,
@@ -13,6 +20,7 @@ class ParamsVis {
         right: 15
       }
     };
+    // define a base url that the specific params can use to link to the MagPhyx simulation
     // sample url: http://edwardsjohnmartin.github.io/MagPhyx/?initparams=1,0,0,0.721905,-0.0589265,0.0455992
     this.baseUrl = 'http://edwardsjohnmartin.github.io/MagPhyx/?initparams=';
 
@@ -38,6 +46,7 @@ class ParamsVis {
     this.eventVis = eventVis;
   }
 
+  // given a row number, create a url so the simulation can be replayed in MagPhyx
   getUrlFromCsv(row) {
     let split = row.split(' ');
     let result = `${this.baseUrl}${split[6]},${split[7]},${split[8]},${split[9]},${split[10]},${split[11]}`;
@@ -46,12 +55,16 @@ class ParamsVis {
 
   /**
    * Init function - initialize the vis, linking the simulations in order
-   * @param simOrder - an array containing the order of points
+   * @param data - an array containing the data in order 
+   * @param boundaries - the boundaries of the k tree to display in the vis
    */
   init(data, boundaries) {
     let myConfig = this.config;
     console.log('Param data', data);
 
+    // create a derived data set that gives each point a reference to the id
+    // of the point before it, a url to link to, the correct theta and beta
+    // from the command.
     let id = 0;
     let parent = -1;
     let derived = data.map((d) => {
@@ -70,7 +83,6 @@ class ParamsVis {
       id++;
       return value;
     })
-    console.log('derived', derived);
 
     // set up the x axis
     let xscale = d3.scaleLinear()
@@ -137,12 +149,7 @@ class ParamsVis {
       ;
 
 
-    // add a line from each point to its parent
-    console.log('derived', derived);
-
-    console.log('Drawing boundaries');
-    console.log('Success in getting bounds', boundaries);
-
+    // add a rectangle around each boundary
     displaySvg.selectAll('.boundaries')
       .data(boundaries)
       .enter()
@@ -164,8 +171,8 @@ class ParamsVis {
       .style('stroke', 'lightgrey')
       .attr('class', 'boundaries')
       ;
-    console.log('finished debugging');
 
+    // draw a line from each point to its parent
     let links = displaySvg.selectAll('.link')
       .data(derived)
       .enter()
@@ -175,7 +182,6 @@ class ParamsVis {
           return dd.id == d.parent;
         })[0];
         if (undefined == p) {
-          console.log('undefined parent for node ' + d.id);
           return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(d.theta)} ${yscale(d.beta)}`;
         }
         return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(p.theta)} ${yscale(p.beta)}`;
@@ -212,7 +218,7 @@ class ParamsVis {
         if (null != paramVis.scatter) {
           paramVis.scatter.highlightSimulation(d.index);
           paramVis.eventVis.highlightSimulation(d.index);
-        } else { console.log('null param scatter vis'); }
+        } 
       })
       .on('mouseout', function (d) {
         d3.select(this)
@@ -223,9 +229,10 @@ class ParamsVis {
         if (null != paramVis.scatter) {
           paramVis.scatter.unhighlightSimulation(d.index);
           paramVis.eventVis.unhighlightSimulation(d.index);
-        } else { console.log('null param scatter vis'); }
+        } 
       })
       .on('click', d => {
+        // open the magPhyx simulation
         window.open(d.url);
       })
       .append('svg:title')

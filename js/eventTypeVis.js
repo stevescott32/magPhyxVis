@@ -1,3 +1,7 @@
+/**
+ * Class for the vis containing a timeline chart for the selected
+ * event type
+ */
 class EventTypeVis {
     constructor(numEvents) {
         this.circleSize = 2;
@@ -45,6 +49,7 @@ class EventTypeVis {
             ;
     }
 
+    // update the event type vis with the new data
     update(data) {
         if (null == data) { return; }
         d3.selectAll('.event-type-vis').remove();
@@ -59,7 +64,6 @@ class EventTypeVis {
                 return +d[' t'] < 100;
             })
         }
-       console.log('filtered data', data);
 
         let timeScale = d3.scaleLinear()
             .domain(
@@ -127,6 +131,7 @@ class EventTypeVis {
         let paramVis = this.paramVis;
         let scatter = this.scatter;
 
+        // append a circle for every event in the vis
         sims.selectAll('circle')
             .data(d => { return d; })
             .enter()
