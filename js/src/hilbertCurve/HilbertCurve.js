@@ -67,6 +67,110 @@ class Boundary {
 
 
 
+class KTree {
+    depth;
+    boundary;
+    children = [];
+    capacity;
+    traverseList = [];
+    points = [];
+    isDivided = false;
+    constructor(boundary, capacity) {
+        this.boundary = boundary;
+        this.capacity = capacity;
+        this.depth = 0;
+    }
+
+    insertPoint(point) {
+        if (this.boundary.contains(point)) {
+            if (this.isDivided) {
+                for (let i = 0; i < this.children.length; i++) {
+                    this.children[i].insertPoint(point);
+                }
+            }
+            else {
+                this.points.push(point);
+                if (this.points.length > this.capacity) {
+                    this.subdivide();
+                    for (let i = 0; i < this.points.length; i++) {
+                        for (let j = 0; j < this.children.length; j++) {
+                            if (this.children[j].insertPoint(this.points[i])) {
+                                break;
+                            }
+                        }
+                    }
+                    this.points = [];
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    subdivide() {
+        for (let i = 0; i < 2 ** this.boundary.dimensionMins.length; i++) {
+            let map = this.iterate(this.boundary.dimensionMins.length, i);
+            let mins = [];
+            let maxs = [];
+            for (let j = 0; j < map.length; j++) {
+                if (map[j] === "0") {
+                    mins.push(this.boundary.dimensionMins[j]);
+                    maxs.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
+                }
+                else if (map[j] === "1") {
+                    mins.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
+                    maxs.push(this.boundary.dimensionMaxs[j]);
+                }
+                else {
+                    document.writeln("failed <br>");
+                }
+            }
+            this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
+        }
+        this.isDivided = true;
+
+
+    }
+
+    iterate(dimensions, index) {
+        let arr = [];
+        let binary = (index >>> 0).toString(2);
+        for (let i = 0; i < binary.length; i++) {
+            arr.push(binary[i]);
+        }
+        arr = this.fillOutArray(arr, dimensions);
+        return arr;
+    }
+
+    fillOutArray(arr, dimensions) {
+        while (arr.length < dimensions) {
+            arr.splice(0, 0, "0");
+        }
+        return arr;
+    }
+
+    getBoundaries() {
+        console.log('Getting boundaries');
+        if (this.isDivided) {
+            let combined = [];
+            for (let i = 0; i < this.children.length; i++) {
+                let childBoundaries = this.children[i].getBoundaries();
+                if (Array.isArray(childBoundaries)) {
+                    for (let j = 0; j < childBoundaries.length; j++) {
+                        combined.push(childBoundaries[j]);
+                    }
+
+                } else {
+                    combined.push(childBoundaries);
+                }
+            }
+            return combined;
+
+        } else {
+            return this.boundary;
+        }
+    }
+}
 
 
 

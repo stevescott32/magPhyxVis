@@ -1,4 +1,3 @@
-
 class Point {
     coordinates = [];
     constructor(coordinates, data) {
