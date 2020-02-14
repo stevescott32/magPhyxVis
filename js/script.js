@@ -1,3 +1,8 @@
+/**
+ * This file is the starting point for the program.
+ * It loads the data and initializes the visualizations.
+ */
+
 console.log('Starting script');
 
 let settings = {
@@ -17,6 +22,7 @@ paramVis.setEventVis(eventTypeVis);
 eventTypeVis.setParamVis(paramVis);
 eventTypeVis.setScatterVis(scatter);
 
+// create promises so all data can load asynchronous
 // promise the param data
 let paramDataPromises = [];
 for (let i = 0; i < settings.NUM_FILES; i++) {
@@ -35,6 +41,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
   Promise.all([...dataPromises]).then(function (eventData) {
     console.log('All data loaded');
     let combinedData = [];
+    // combine data so it is ordered together
     for(let i = 0; i < paramData.length; i++) {
       combinedData.push({
         param: paramData[i],
@@ -42,23 +49,24 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       })
     }
     let ktree = makeKTree(combinedData);
-    let orderedData = reorderData(ktree);
-    console.log('Z-ordered data: ', orderedData);
-    if(!settings.reorderData) {
-      console.log('Settings specified not to reorder the data');
+    let orderedData = []; 
+    // place the data in order
+    if(settings.reorderData) {
+      orderedData = reorderData(ktree);
+    } else {
       let points = [];
       for (let i = 0; i < combinedData.length; i++) {
           points.push(new Point(getDimensions(combinedData[i].param), combinedData[i]));
       }
 
-      console.log('Points: ', points);
       points = filterPoints(points, 0.0005);
       orderedData = [];
       for (let i = 0; i < points.length; i++) {
           orderedData.push(points[i].data);
       }
     }     
-    console.log('Data is ordered', orderedData);
+
+    // split the ordered data into params and event data
     let orderedParamData = [];
     let orderedEventsData = [];
     for(let i = 0; i < orderedData.length; i++) {
@@ -66,9 +74,8 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       orderedEventsData.push(orderedData[i].events);
     }
 
-    console.log('Initializing param vis');
+    // initialize the param and the scatter vis
     paramVis.init(orderedParamData, ktree.getBoundaries());
-    console.log('Initializing scatter vis');
     scatter.init(orderedEventsData);
 
   }).catch(function (err) { })

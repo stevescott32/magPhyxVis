@@ -1,3 +1,6 @@
+/**
+ * Class for a vis displaying a scatter plot of all events
+ */
 class Scatter {
   constructor() {
     this.circleSize = 1;
@@ -142,7 +145,7 @@ class Scatter {
     let paramVis = this.paramVis;
     let eventVis = this.eventVis;
 
-    // add circle everywhere a data point is.
+    // add a circle for every event 
     let circles = fileGroups.selectAll('circle')
       .data((d) => {
         return d;
@@ -183,6 +186,7 @@ class Scatter {
       .attr('class', 'checkboxes')
       ;
 
+    // create buttons so the user can select which event type to display
     d3.selectAll('.checkboxes')
       .append('input')
       .attr('type', 'radio')
