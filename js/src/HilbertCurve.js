@@ -67,7 +67,7 @@ class Boundary {
 
 
 
-class KTree {
+class HilbertCurve {
     depth;
     boundary;
     children = [];
@@ -75,9 +75,11 @@ class KTree {
     traverseList = [];
     points = [];
     isDivided = false;
-    constructor(boundary, capacity) {
+    orientationAgainstParent;
+    constructor(boundary, capacity, orientationAgainstParent) {
         this.boundary = boundary;
         this.capacity = capacity;
+        this.orientationAgainstParent = orientationAgainstParent;
         this.depth = 0;
     }
 
@@ -108,28 +110,39 @@ class KTree {
     }
 
     subdivide() {
-        for (let i = 0; i < 2 ** this.boundary.dimensionMins.length; i++) {
-            let map = this.iterate(this.boundary.dimensionMins.length, i);
-            let mins = [];
-            let maxs = [];
-            for (let j = 0; j < map.length; j++) {
-                if (map[j] === "0") {
-                    mins.push(this.boundary.dimensionMins[j]);
-                    maxs.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-                }
-                else if (map[j] === "1") {
-                    mins.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-                    maxs.push(this.boundary.dimensionMaxs[j]);
-                }
-                else {
-                    document.writeln("failed <br>");
-                }
-            }
-            this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
+        var x = this.boundary.xy[0];
+        var y = this.boundary.xy[1];
+        var w = this.boundary.wh[0];
+        var h = this.boundary.wh[1];
+
+        var nw = new Boundary(x, y, w / 2, h / 2);
+        var ne = new Boundary(x + w / 2, y, w / 2, h / 2);
+        var sw = new Boundary(x, y + h / 2, w / 2, h / 2);
+        var se = new Boundary(x + w / 2, y + h / 2, w / 2, h / 2);
+
+        if (this.orientationAgainstParent === 0) {
+            this.children[0] = new HilbertCurve(sw, this.capacity, -1);
+            this.children[1] = new HilbertCurve(nw, this.capacity, 0);
+            this.children[2] = new HilbertCurve(ne, this.capacity, 0);
+            this.children[3] = new HilbertCurve(se, this.capacity, 1);
         }
+        // southwest
+        else if (this.orientationAgainstParent === -1){
+            this.children[0] = new HilbertCurve(sw, this.capacity, -1);
+            this.children[3] = new HilbertCurve(nw, this.capacity, 0);
+            this.children[2] = new HilbertCurve(ne, this.capacity, 0);
+            this.children[1] = new HilbertCurve(se, this.capacity, 1);
+        }
+        // southeast
+        else if (this.orientationAgainstParent === 1){
+            this.children[2] = new HilbertCurve(sw, this.capacity, -1);
+            this.children[1] = new HilbertCurve(nw, this.capacity, 0);
+            this.children[0] = new HilbertCurve(ne, this.capacity, 0);
+            this.children[3] = new HilbertCurve(se, this.capacity, 1);
+        }
+
+
         this.isDivided = true;
-
-
     }
 
     iterate(dimensions, index) {
@@ -181,7 +194,5 @@ class KTree {
 
 
 
-
-let p = new Point([0, 0]);
-document.writeln("Hello world");
-document.writeln(p);
+let hc = new HilbertCurve(new Boundary([2,2], [10, 10]), 1, 0);
+hc.insertPoint(new Point([3,3]));
