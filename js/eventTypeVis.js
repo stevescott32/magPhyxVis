@@ -50,8 +50,9 @@ class EventTypeVis {
     }
 
     // update the event type vis with the new data
-    update(data) {
+    update(data, distances) {
         if (null == data) { return; }
+        console.log('distances', distances);
         d3.selectAll('.event-type-vis').remove();
 
         console.log('unfiltered data', data);
@@ -81,12 +82,33 @@ class EventTypeVis {
             .range([this.config.padding.top, this.config.height + this.config.padding.top])
             ;
 
+        let distanceScale = d3.scaleLinear()
+            .domain([d3.min(distances), d3.max(distances)])
+            .range([0, 20])
+            ;
+
+
         this.svg = d3.select(`#${this.divId}`)
             .append('svg')
             .attr('class', 'event-type-vis')
             .attr('id', 'event-type-svg')
             .attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
+            ;
+
+        let distanceBars = this.svg.selectAll('.distanceBars')
+            .data(distances)
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => {
+                return 20 - distanceScale(d);
+            })
+            .attr('y', (d, i) => { return this.config.padding.top + i * this.circleSize * 2; })
+            .attr('width', (d) => {
+                return distanceScale(d)
+            })
+            .attr('height', 1 /*eventCountScale(1)*/)
+            .attr('class', 'distanceBars')
             ;
 
 

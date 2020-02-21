@@ -82,6 +82,28 @@ function reorderData(ktree) {
     return orderedData;
 }
 
+function calcDistances(data) {
+    let distances = [];
+    let derived = data.map((d) => {
+      let command = d['columns'][0];
+      let split = command.split(' ');
+      let value = {
+        theta: +split[9],
+        beta: +split[10],
+      }
+      return value;
+    })
+    for (let d = 1; d < derived.length; d++) {
+        let myDist = Math.sqrt(
+            Math.pow((derived[d].theta - derived[d - 1].theta), 2) + 
+            Math.pow((derived[d].beta - derived[d - 1].beta), 2) 
+        )
+        console.log("A distance item", derived[d]);
+        distances.push(myDist);
+    }
+    return distances;
+}
+
 function makeKTree(data) {
     let points = [];
     for (let i = 0; i < data.length; i++) {

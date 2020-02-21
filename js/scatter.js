@@ -173,44 +173,5 @@ class Scatter {
         selectedPoints.push(d);
       })
       ;
-
-    let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
-
-    // add the event type selection boxes
-    d3.select('#event-groups')
-      .append('form')
-      .selectAll('input')
-      .data(eventTypes)
-      .enter()
-      .append('g')
-      .attr('class', 'checkboxes')
-      ;
-
-    // create buttons so the user can select which event type to display
-    d3.selectAll('.checkboxes')
-      .append('input')
-      .attr('type', 'radio')
-      .attr('name', 'event-type')
-      .attr('value', (d) => { return d; })
-      .text(d => { return `${d}`; })
-      .on('click', (type) => {
-        console.log('type', type);
-        let filteredData = data.map((d) => {
-          return d.filter(d => {
-            return d[' event_type'] == type;
-          })
-        })
-        eventTypeVis.update(filteredData);
-      })
-      ;
-
-    d3.selectAll('.checkboxes')
-      .append('label')
-      .text(d => { return `${d}`; })
-      ;
-
-    d3.selectAll('.checkboxes')
-      .append('br')
-      ;
   }
 }
