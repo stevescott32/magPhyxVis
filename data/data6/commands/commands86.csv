@@ -1,0 +1,1 @@
+./magphyxc --numEvents 1e3 -d bouncing -i 1.5 80 80 -0.054000000000000006 0.0563 0 -o events/events86.csv 
