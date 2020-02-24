@@ -1,4 +1,3 @@
-/*
 class QuadTree {
     boundary;
     capacity;
@@ -20,11 +19,11 @@ class QuadTree {
         }
         if (!this.boundary.contains(point)) {
             // console.log('Point out of the boundary');
-            // console.log('Point', point); 
+            // console.log('Point', point);
             // console.log('Boundary ', this.boundary);
-            return; 
-        } 
-        if (this.points.length < this.capacity && !this.isDivided) 
+            return;
+        }
+        if (this.points.length < this.capacity && !this.isDivided)
             this.points.push(point);
         else {
             if (!this.isDivided) this.subdivide();
@@ -149,7 +148,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       let oneData = paramData[i];
       let command = oneData['columns'][0];
       let split = command.split(' ');
-  
+
       let theta = +split[9];
       let beta = +split[10];
       console.log('theta', theta);

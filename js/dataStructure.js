@@ -65,7 +65,9 @@ class Boundary {
         return toReturn;
     }
 }
-
+/*
+Inherited by Hilbert Curve and KTree (not QuadTree)
+ */
 class DataStructure {
     boundary;
     children = [];
@@ -104,30 +106,6 @@ class DataStructure {
         return false;
     }
 
-    // subdivide() {
-    //     for (let i = 0; i < 2 ** this.boundary.dimensionMins.length; i++) {
-    //         let map = this.iterate(this.boundary.dimensionMins.length, i);
-    //         let mins = [];
-    //         let maxs = [];
-    //         for (let j = 0; j < map.length; j++) {
-    //             if (map[j] === "0") {
-    //                 mins.push(this.boundary.dimensionMins[j]);
-    //                 maxs.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-    //             }
-    //             else if (map[j] === "1") {
-    //                 mins.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-    //                 maxs.push(this.boundary.dimensionMaxs[j]);
-    //             }
-    //             else {
-    //                 document.writeln("failed <br>");
-    //             }
-    //         }
-    //         this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
-    //     }
-    //     this.isDivided = true;
-    //
-    //
-    // }
 
     iterate(dimensions, index) {
         let arr = [];
@@ -188,60 +166,56 @@ class DataStructure {
     }
 }
 
-// class KTree extends DataStructure{
-//     constructor(boundary, capacity) {
-//         super(boundary, capacity);
-//     }
-//     subdivide() {
-//         for (let i = 0; i < 2 ** this.boundary.dimensionMins.length; i++) {
-//             let map = this.iterate(this.boundary.dimensionMins.length, i);
-//             let mins = [];
-//             let maxs = [];
-//             for (let j = 0; j < map.length; j++) {
-//                 if (map[j] === "0") {
-//                     mins.push(this.boundary.dimensionMins[j]);
-//                     maxs.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-//                 }
-//                 else if (map[j] === "1") {
-//                     mins.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
-//                     maxs.push(this.boundary.dimensionMaxs[j]);
-//                 }
-//                 else {
-//                     document.writeln("failed <br>");
-//                 }
-//             }
-//             this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
-//         }
-//         this.isDivided = true;
-//
-//
-//     }
-//
-// }
-// kt = new KTree(new Boundary([0,0], [10,10]), 1);
-// for (let i=0; i<9; i++){
-//     for (let j=0; j<9; j++){
-//         kt.insertPoint(new Point([i,j]));
-//     }
-// }
-// kt.setTraverseList();
-// document.writeln(kt.traverseList );
-
-
-class HilbertCurve extends DataStructure{
-    constructor(boundary, capacity){
+class KTree extends DataStructure{
+    constructor(boundary, capacity) {
         super(boundary, capacity);
     }
     subdivide() {
-        var x = this.boundary.dimensionMins[0];
-        var y = this.boundary.dimensionMins[1];
-        var w = this.boundary.dimensionMaxs[0];
-        var h = this.boundary.dimensionMaxs[1];
+        for (let i = 0; i < 2 ** this.boundary.dimensionMins.length; i++) {
+            let map = this.iterate(this.boundary.dimensionMins.length, i);
+            let mins = [];
+            let maxs = [];
+            for (let j = 0; j < map.length; j++) {
+                if (map[j] === "0") {
+                    mins.push(this.boundary.dimensionMins[j]);
+                    maxs.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
+                }
+                else if (map[j] === "1") {
+                    mins.push((this.boundary.dimensionMaxs[j] + this.boundary.dimensionMins[j]) / 2);
+                    maxs.push(this.boundary.dimensionMaxs[j]);
+                }
+                else {
+                    console.log("failed subdivide");
+                }
+            }
+            this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
+        }
+        this.isDivided = true;
 
-        var nw = new Boundary(x, y, w / 2, h / 2);
-        var ne = new Boundary(x + w / 2, y, w / 2, h / 2);
-        var sw = new Boundary(x, y + h / 2, w / 2, h / 2);
-        var se = new Boundary(x + w / 2, y + h / 2, w / 2, h / 2);
+
+    }
+
+}
+
+
+
+class HilbertCurve extends DataStructure{
+    orientationAgainstParent;
+    constructor(boundary, capacity, orientationAgainstParent){
+        super(boundary, capacity);
+        this.orientationAgainstParent = orientationAgainstParent;
+    }
+    subdivide() {
+        var xMin = this.boundary.dimensionMins[0];
+        var yMin = this.boundary.dimensionMins[1];
+        var xMax = this.boundary.dimensionMaxs[0];
+        var yMax = this.boundary.dimensionMaxs[1];
+
+
+        var sw = new Boundary([xMin, yMin], [(xMin + xMax)/2, (yMin + yMax) / 2]);
+        var nw = new Boundary([xMin, (yMin + yMax) / 2], [(xMin + xMax)/2, yMax]);
+        var ne = new Boundary([(xMin + xMax) / 2, (yMin + yMax) / 2], [xMax, yMax]);
+        var se = new Boundary([(xMin + xMax) / 2, yMin], [xMax, (yMin + yMax) / 2]);
 
         if (this.orientationAgainstParent === 0) {
             this.children[0] = new HilbertCurve(sw, this.capacity, -1);
@@ -263,68 +237,7 @@ class HilbertCurve extends DataStructure{
             this.children[0] = new HilbertCurve(ne, this.capacity, 0);
             this.children[3] = new HilbertCurve(se, this.capacity, 1);
         }
-
-
         this.isDivided = true;
     }
 }
-
-
-hc = new HilbertCurve(new Boundary([0,0],[10,10]));
-for (let i=0; i<2; i++){
-    for (let j=0; j<5; j++){
-        hc.insertPoint(new Point([i,j]));
-    }
-}
-
-hc.setTraverseList();
-document.writeln(hc.traverseList);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//
-// class formatDate extends Date {
-//
-//     getFormattedDate() {
-//         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-//             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-//         return `${this.getDate()}-${months[this.getMonth()]}-${this.getFullYear()}`;
-//     }
-//
-// }
-//
-// console.log(new formatDate('August 19, 1975 23:15:30').getFormattedDate());
-// // expected output: "19-Aug-1975"
-
 
