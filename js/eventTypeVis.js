@@ -29,12 +29,16 @@ class EventTypeVis {
         this.scatter = scatter;
     }
 
+    setEventCols(eventCols) {
+        this.eventCols = eventCols;
+    }
+
     highlightSimulation(simulation) {
+        console.log(`Highlighting group${simulation} in eventTypeVis`);
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simulation}`)
-            .style('z-index', 1)
             .selectAll('circle')
-            .attr('r', () => { return this.circleSize * this.highlightScale; })
+            // .attr('r', () => { return this.circleSize * this.highlightScale; })
             .classed('event-highlighted', true)
             ;
     }
@@ -44,13 +48,19 @@ class EventTypeVis {
             .selectAll(`.group${simulation}`)
             .selectAll('circle')
             .attr('r', () => { return this.circleSize; })
-            .style('z-index', -1)
+            .classed('event-highlighted', false)
+            ;
+    }
+
+    unhighlightAllSimulations() {
+        d3.selectAll(`.event-highlighted`)
+            .attr('r', () => { return this.circleSize; })
             .classed('event-highlighted', false)
             ;
     }
 
     // update the event type vis with the new data
-    update(data, distances) {
+    update(data, paramData, distances) {
         if (null == data) { return; }
         console.log('distances', distances);
         d3.selectAll('.event-type-vis').remove();
@@ -59,9 +69,9 @@ class EventTypeVis {
         let logs = 0;
         for(let i = 0; i < data.length; i++) {
             data[i] = data[i].filter(d => {
-                if(logs++ < 10) {
-                    console.log('d.t', +d[' t']);
-                }
+                // if(logs++ < 10) {
+                  //   console.log('d.t', +d[' t']);
+                // }
                 return +d[' t'] < 100;
             })
         }
@@ -95,6 +105,17 @@ class EventTypeVis {
             .attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
             ;
+
+        this.dimComparisonSvg = d3.select(`#${this.divId}`)
+          .append('svg')
+          .attr('x', 0)
+          .attr('y', 0)
+          .attr('width', 500)
+          .attr('height', 500)
+          .append('g')
+          .attr('transform', `translate(250, 250) rotate(180)`)
+          ;
+
 
         let distanceBars = this.svg.selectAll('.distanceBars')
             .data(distances)
@@ -155,9 +176,12 @@ class EventTypeVis {
 
         // append a circle for every event in the vis
         sims.selectAll('circle')
-            .data(d => { return d; })
+            .data((d, i) => { 
+                return d; 
+            })
             .enter()
             .append('circle')
+            .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * this.circleSize * 2; })
             .attr('r', d => { return this.circleSize; })
@@ -178,9 +202,55 @@ class EventTypeVis {
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d) {
-                console.log('clicked', d);
-                selectedPoints.push(d);
+                eventVis.updateDimensionComparison(d, paramData);
             })
             ;
+    }
+
+    updateDimensionComparison(point, paramData) {
+        d3.selectAll('.dimensionBars').remove();
+        this.unhighlightAllSimulations();
+        this.highlightSimulation(point.simulationIndex);
+        this.highlightSimulation(point.simulationIndex + 1);
+
+        let firstParam = parseCommand(paramData[point.simulationIndex]);
+        let secondParam = parseCommand(paramData[point.simulationIndex + 1]);
+        let diff = [];
+        for(let key in firstParam) {
+            console.log(`diff for ${key}: ${Math.abs(firstParam[key] - secondParam[key])}`);
+            let oneDiff = {
+                col: key,
+                diff: Math.abs(firstParam[key] - secondParam[key])
+            }
+            diff.push(oneDiff);
+        }
+        // console.log('Did it!', diff);
+        let barScale = d3.scaleLinear()
+            .domain([0, d3.max(diff, (d) => {
+                    return d.diff;
+                })])
+            .range([2, 50])
+            ;
+
+        let dimBars = this.dimComparisonSvg.selectAll('.dimensionBars')
+          .data(diff)
+
+        dimBars.merge(dimBars.enter())
+          .append('rect')
+          .attr('x', (d, i) => {
+              return i * 20;
+          })
+          .attr('y', (d) => {
+              return 0; 
+          })
+          .attr('width', 15)
+          .attr('height', (d) => {
+              return barScale(d.diff);
+          })
+          .attr('col', (d) => d.col)
+          .attr('diff', (d) => d.diff)
+          .attr('class', 'dimensionBars')
+          .style('fill', 'blue')
+          ;
     }
 }

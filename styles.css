@@ -1,4 +1,5 @@
 .event-highlighted {
+    fill: black; 
     stroke: grey; 
-    stroke-width: 3 
+    stroke-width: 1;
 }

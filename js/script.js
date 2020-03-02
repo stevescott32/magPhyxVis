@@ -69,7 +69,11 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     // split the ordered data into params and event data
     let orderedParamData = [];
     let orderedEventsData = [];
+    console.log('Target for data indexing', orderedData[1].events);
     for(let i = 0; i < orderedData.length; i++) {
+      for(let j = 0; j < orderedData[i].events.length; j++) {
+        orderedData[i].events[j].simulationIndex = i;
+      }
       orderedParamData.push(orderedData[i].param);
       orderedEventsData.push(orderedData[i].events);
     }
@@ -81,6 +85,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     let distances = calcDistances(orderedParamData);
 
     let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
+    eventTypeVis.setEventCols(eventTypes);
 
     // add the event type selection boxes
     d3.select('#event-groups')
@@ -106,7 +111,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
             return d[' event_type'] == type;
           })
         })
-        eventTypeVis.update(filteredData, distances);
+        eventTypeVis.update(filteredData, orderedParamData, distances);
       })
       ;
 

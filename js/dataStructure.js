@@ -144,7 +144,7 @@ class DataStructure {
     }
 
     getBoundaries() {
-        console.log('Getting boundaries');
+        // console.log('Getting boundaries');
         if (this.isDivided) {
             let combined = [];
             for (let i = 0; i < this.children.length; i++) {
