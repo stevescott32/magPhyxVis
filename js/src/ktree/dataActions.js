@@ -112,7 +112,7 @@ function calcDistances(data) {
     return distances;
 }
 
-function makeKTree(data) {
+function makeHilbertCurve(data) {
     let points = [];
     for (let i = 0; i < data.length; i++) {
         points.push(new Point(getDimensions(data[i].param), data[i]));
@@ -121,7 +121,23 @@ function makeKTree(data) {
     points = filterPoints(points, 0.0005);
     let boundary = new Boundary([-0.06, 0.05], [-0.05, 0.06]);
     // let ktree = new KTree(boundary, 1);
-    let ktree = new HilbertCurve(boundary, 1, 0);
+    let hilbertCurve = new HilbertCurve(boundary, 1, 0);
+    for (let i = 0; i < points.length; i++) {
+        hilbertCurve.insertPoint(points[i]);
+    }
+    hilbertCurve.setTraverseList();
+    return hilbertCurve;
+}
+
+function makeKtTree(data) {
+    let points = [];
+    for (let i = 0; i < data.length; i++) {
+        points.push(new Point(getDimensions(data[i].param), data[i]));
+    }
+
+    points = filterPoints(points, 0.0005);
+    let boundary = new Boundary([-0.06, 0.05], [-0.05, 0.06]);
+    let ktree = new KTree(boundary, 1);
     for (let i = 0; i < points.length; i++) {
         ktree.insertPoint(points[i]);
     }

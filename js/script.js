@@ -48,11 +48,13 @@ Promise.all([...paramDataPromises]).then((paramData) => {
         events: eventData[i]
       })
     }
-    let ktree = makeKTree(combinedData);
-    let orderedData = []; 
+    let hilbertCurve = makeHilbertCurve(combinedData);
+    let ktree = makeKtTree(combinedData);
+    ktree.setTraverseList();
+    let orderedData = ktree.traverseList;
     // place the data in order
     if(settings.reorderData) {
-      orderedData = reorderData(ktree);
+      orderedData = reorderData(hilbertCurve);
     } else {
       let points = [];
       for (let i = 0; i < combinedData.length; i++) {
@@ -79,7 +81,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     }
 
     // initialize the param and the scatter vis
-    paramVis.init(orderedParamData, ktree.getBoundaries());
+    paramVis.init(orderedParamData, hilbertCurve.getBoundaries());
     scatter.init(orderedEventsData);
 
     let distances = calcDistances(orderedParamData);
