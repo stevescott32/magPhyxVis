@@ -52,6 +52,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     let ktree = makeKtTree(combinedData);
     ktree.setTraverseList();
     let orderedData = ktree.traverseList;
+
     // place the data in order
     if(settings.reorderData) {
       orderedData = reorderData(hilbertCurve);

@@ -145,3 +145,15 @@ function makeKtTree(data) {
     return ktree;
 }
 
+function makeTravelingSalesman(data){
+    let points = [];
+    for (let i = 0; i < data.length; i++) {
+        points.push(new Point(getDimensions(data[i].param), data[i]));
+    }
+
+    points = filterPoints(points, 0.0005);
+     let travelingSalesman = new TravelingSalesman(points);
+     travelingSalesman.setTraverseList();
+    return travelingSalesman;
+}
+

@@ -14,11 +14,13 @@ class TravelingSalesman{
     getNearest(current){
         let nearestIndex;
         let nearestDistance = Infinity;
-        for (let i=0; i<this.points.length; i++){
-            let distance = current.getDistanceToPoint(this.points[i]);
-            if (distance !== 0 && distance < nearestDistance){
-                nearestIndex = i;
-                nearestDistance = distance;
+        for (let i=0; i<this.points.length; i++) {
+            if (this.points[i] !== null) {
+                let distance = current.getDistanceToPoint(this.points[i]);
+                if (distance !== 0 && distance < nearestDistance) {
+                    nearestIndex = i;
+                    nearestDistance = distance;
+                }
             }
         }
         if (nearestDistance === 0) console.log("Failed in getNearest (nearestDistance = 0");
@@ -28,19 +30,15 @@ class TravelingSalesman{
 
 
     setTraverseList(){
-        let current = this.points[0];
+        let currentIndex = 0;
         let len = this.points.length;
 
         for (let i=0; i<len; i++){
-            let nearestIndex = this.getNearest(current);
-            this.traverseList[i] = current;
-            this.points.splice(current, 1);
-            current = this.points[nearestIndex];
-            console.log("points: ");
-            for (let p of this.points){
-                console.log(p.toString());
-            }
-            document.writeln(current.toString() + "<br>");
+            this.traverseList[i] = this.points[currentIndex];
+            let nearestIndex = this.getNearest(this.points[currentIndex]);
+            this.points[currentIndex] = null;
+            currentIndex = nearestIndex;
+
         }
     }
 }
@@ -75,15 +73,12 @@ class Point{
 }
 
 let vertexes = [
-    [1],
-    [2],
-    [3],
-    [4],
+    [0,1],
+    [0,4],
+    [0,3],
+    [10,10],
+    [1,1]
 ];
-// vertexes.splice(2, 1);
-// for (let v of vertexes){
-//     document.writeln(v + "<br>");
-// }
 
 
 let travelingSalesman = new TravelingSalesman(vertexes);
