@@ -65,13 +65,8 @@ class EventTypeVis {
         console.log('distances', distances);
         d3.selectAll('.event-type-vis').remove();
 
-        console.log('unfiltered data', data);
-        let logs = 0;
-        for(let i = 0; i < data.length; i++) {
+        for (let i = 0; i < data.length; i++) {
             data[i] = data[i].filter(d => {
-                // if(logs++ < 10) {
-                  //   console.log('d.t', +d[' t']);
-                // }
                 return +d[' t'] < 100;
             })
         }
@@ -107,14 +102,15 @@ class EventTypeVis {
             ;
 
         this.dimComparisonSvg = d3.select(`#${this.divId}`)
-          .append('svg')
-          .attr('x', 0)
-          .attr('y', 0)
-          .attr('width', 500)
-          .attr('height', 500)
-          .append('g')
-          .attr('transform', `translate(250, 250) rotate(180)`)
-          ;
+            .append('svg')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('width', 500)
+            .attr('height', 500)
+            .append('g')
+            .attr('class', 'dimSvg')
+            // .attr('transform', `translate(250, 250) rotate(180)`)
+            ;
 
 
         let distanceBars = this.svg.selectAll('.distanceBars')
@@ -176,8 +172,8 @@ class EventTypeVis {
 
         // append a circle for every event in the vis
         sims.selectAll('circle')
-            .data((d, i) => { 
-                return d; 
+            .data((d, i) => {
+                return d;
             })
             .enter()
             .append('circle')
@@ -186,7 +182,7 @@ class EventTypeVis {
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * this.circleSize * 2; })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                if(+d[' t'] > 50) { return 'white'; }
+                if (+d[' t'] > 50) { return 'white'; }
                 return Utils.getFill(d[' event_type']);
             })
             .on('mouseover', function (d) {
@@ -208,6 +204,19 @@ class EventTypeVis {
     }
 
     updateDimensionComparison(point, paramData) {
+        let myConfig = {
+            padding: {
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
+            },
+            height: {
+                min: 2,
+                max: 150
+            }
+        }
+        d3.selectAll('.dimSvg').selectAll('.tick').remove();
         d3.selectAll('.dimensionBars').remove();
         this.unhighlightAllSimulations();
         this.highlightSimulation(point.simulationIndex);
@@ -216,41 +225,74 @@ class EventTypeVis {
         let firstParam = parseCommand(paramData[point.simulationIndex]);
         let secondParam = parseCommand(paramData[point.simulationIndex + 1]);
         let diff = [];
-        for(let key in firstParam) {
-            console.log(`diff for ${key}: ${Math.abs(firstParam[key] - secondParam[key])}`);
-            let oneDiff = {
-                col: key,
-                diff: Math.abs(firstParam[key] - secondParam[key])
+        for (let key in firstParam) {
+            if (key != 'id' && key != 'parent' && key != 'originalCommand'
+                && key != 'command' && key != 'url') {
+                console.log(`diff for ${key}: ${Math.abs(firstParam[key] - secondParam[key])}`);
+                let oneDiff = {
+                    col: key,
+                    diff: Math.abs(firstParam[key] - secondParam[key])
+                }
+                diff.push(oneDiff);
             }
-            diff.push(oneDiff);
         }
-        // console.log('Did it!', diff);
         let barScale = d3.scaleLinear()
             .domain([0, d3.max(diff, (d) => {
-                    return d.diff;
-                })])
-            .range([2, 50])
+                return d.diff;
+            })])
+            .range([myConfig.height.min, myConfig.height.max])
             ;
 
         let dimBars = this.dimComparisonSvg.selectAll('.dimensionBars')
-          .data(diff)
+            .data(diff)
 
         dimBars.merge(dimBars.enter())
-          .append('rect')
-          .attr('x', (d, i) => {
-              return i * 20;
-          })
-          .attr('y', (d) => {
-              return 0; 
-          })
-          .attr('width', 15)
-          .attr('height', (d) => {
-              return barScale(d.diff);
-          })
-          .attr('col', (d) => d.col)
-          .attr('diff', (d) => d.diff)
-          .attr('class', 'dimensionBars')
-          .style('fill', 'blue')
-          ;
+            .append('rect')
+            .attr('x', (d, i) => {
+                return i * 20;
+            })
+            .attr('y', (d) => {
+                return 0;
+            })
+            .attr('width', 15)
+            .attr('height', (d) => {
+                return barScale(d.diff);
+            })
+            .attr('col', (d) => d.col)
+            .attr('diff', (d) => d.diff)
+            .attr('class', 'dimensionBars')
+            .style('fill', 'blue')
+            ;
+
+        // let xaxis = this.dimComparisonSvg.append('g')
+        //     .attr('transform', `translate(0 ${myConfig.padding.top * (3 / 4)})`)
+        //     ;
+        let yaxis = this.dimComparisonSvg.append('g')
+            .attr('transform', `translate(130 0)`)
+            ;
+
+        // let topAxis = d3.axisTop()
+        //     .scale(xscale);
+        let leftAxis = d3.axisRight()
+            .scale(barScale)
+            ;
+
+        // xaxis.call(topAxis);
+        yaxis.call(leftAxis);
+
+        /* this.dimComparisonSvg.append('text')
+            // .attr('x', xscale(0.0))
+            .attr('x', bar(0))
+            .attr('y', myConfig.padding.top / 2)
+            .text('Theta')
+            ;*/
+
+        this.dimComparisonSvg.append('g')
+            .attr('transform', `rotate(90)`)
+            .append('text')
+            .attr('y', myConfig.padding.left + 30)
+            .attr('x', 30)
+            .text('Std. Dev.')
+            ;
     }
 }

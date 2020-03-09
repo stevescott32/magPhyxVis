@@ -60,16 +60,9 @@ function shuffle(array) {
 }
 
 function getDimensions(dataElement) {
-    let command = dataElement['columns'][0];
-    let split = command.split(' ');
-
-    let value = {
-        theta: +split[9],
-        beta: +split[10],
-    }
     dims = [];
-    dims.push(value.theta.toFixed(5));
-    dims.push(value.beta.toFixed(5));
+    dims.push(dataElement['theta'].toFixed(5));
+    dims.push(dataElement['beta'].toFixed(5));
     return dims;
 }
 
@@ -83,18 +76,53 @@ function reorderData(ktree) {
 }
 
 function parseCommand(param) {
-      let command = param['columns'][0];
-      let split = command.split(' ');
-      let value = {
+    // TODO: don't call this method on commands that are already parsed
+    if (param.constructor == Object) {
+        return param;
+    }
+    let command = param['columns'][0];
+    let split = command.split(' ');
+    let value = {
         r: +split[6],
         angleFromOrigin: +split[7],
         momentAngle: +split[8],
         theta: +split[9],
         beta: +split[10],
         angularMomentum: +split[11]
-      }
-      return value;
+    }
+    return value;
 }
+
+function standardizeParamData(paramData) {
+    console.log("Standardizing param data");
+    let parsed = [];
+    for (let i = 0; i < paramData.length; i++) {
+        parsed.push(parseCommand(paramData[i]));
+    }
+
+    let means = {};
+    let stdDevs = {};
+    for (let key in parsed[0]) {
+        stdDevs[key] = Utils.standardDeviation(parsed, key);
+        means[key] = Utils.dictionaryAverage(parsed, key);
+    }
+    console.log('Means', means);
+    console.log('stdDevs', stdDevs);
+    let result = [];
+    for(let i = 0; i < paramData.length; i++) {
+        result.push({});
+        for(let key in parsed[i]) {
+            if(stdDevs[key] == 0) { result[i][key] = 0; }
+            else {
+                result[i][key] = (parsed[i][key] - means[key]) / stdDevs[key];
+            }
+        }
+        result[i]['originalCommand'] = paramData[i];
+    }
+
+    return result;
+}
+
 
 function calcDistances(data) {
     let distances = [];
@@ -106,7 +134,6 @@ function calcDistances(data) {
             Math.pow((derived[d].theta - derived[d - 1].theta), 2) + 
             Math.pow((derived[d].beta - derived[d - 1].beta), 2) 
         )
-        // console.log("A distance item", derived[d]);
         distances.push(myDist);
     }
     return distances;
@@ -118,8 +145,8 @@ function makeHilbertCurve(data) {
         points.push(new Point(getDimensions(data[i].param), data[i]));
     }
 
-    points = filterPoints(points, 0.0005);
-    let boundary = new Boundary([-0.06, 0.05], [-0.05, 0.06]);
+    points = filterPoints(points, 0.1);
+    let boundary = new Boundary([-3, -3], [3, 3]);
     // let ktree = new KTree(boundary, 1);
     let hilbertCurve = new HilbertCurve(boundary, 1, 0);
     for (let i = 0; i < points.length; i++) {
@@ -135,8 +162,8 @@ function makeKtTree(data) {
         points.push(new Point(getDimensions(data[i].param), data[i]));
     }
 
-    points = filterPoints(points, 0.0005);
-    let boundary = new Boundary([-0.06, 0.05], [-0.05, 0.06]);
+    points = filterPoints(points, 0.1);
+    let boundary = new Boundary([-3, -3], [3, 3]);
     let ktree = new KTree(boundary, 1);
     for (let i = 0; i < points.length; i++) {
         ktree.insertPoint(points[i]);

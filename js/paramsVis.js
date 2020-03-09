@@ -48,6 +48,7 @@ class ParamsVis {
 
   // given a row number, create a url so the simulation can be replayed in MagPhyx
   getUrlFromCsv(row) {
+    // console.log('Why isnt this working', row);
     let split = row.split(' ');
     let result = `${this.baseUrl}${split[6]},${split[7]},${split[8]},${split[9]},${split[10]},${split[11]}`;
     return result;
@@ -68,17 +69,12 @@ class ParamsVis {
     let id = 0;
     let parent = -1;
     let derived = data.map((d) => {
-      let command = d['columns'][0];
-      let split = command.split(' ');
-      let value = {
-        theta: +split[9],
-        beta: +split[10],
-        id: id,
-        parent: parent,
-        zorder: d.zorder,
-        command: command,
-        url: this.getUrlFromCsv(command)
-      }
+      let value = d;
+      value['id'] = id;
+      value['parent'] = parent;
+      value['command'] = d.originalCommand['columns'][0];
+      value['url'] = this.getUrlFromCsv(d.originalCommand['columns'][0]);
+
       parent = id;
       id++;
       return value;
@@ -115,37 +111,6 @@ class ParamsVis {
       .append('svg')
       .attr('width', myConfig.width + myConfig.padding.left + myConfig.padding.right)
       .attr('height', myConfig.height + myConfig.padding.top + myConfig.padding.bottom)
-      ;
-
-    let xaxis = displaySvg.append('g')
-      .attr('transform', `translate(0 ${myConfig.padding.top * (3 / 4)})`)
-      ;
-    let yaxis = displaySvg.append('g')
-      .attr('transform', `translate(${myConfig.padding.left * (3 / 4)} 0)`)
-      ;
-
-    let topAxis = d3.axisTop()
-      .scale(xscale);
-    let leftAxis = d3.axisLeft()
-      .scale(yscale)
-      ;
-
-    xaxis.call(topAxis);
-    yaxis.call(leftAxis);
-
-    displaySvg.append('text')
-      // .attr('x', xscale(0.0))
-      .attr('x', xscale(-0.055))
-      .attr('y', myConfig.padding.top / 2)
-      .text('Theta')
-      ;
-
-    displaySvg.append('g')
-      .attr('transform', `rotate(-90)`)
-      .append('text')
-      .attr('y', myConfig.padding.left / 2)
-      .attr('x', -1 * yscale(0.055))
-      .text('Beta')
       ;
 
 
@@ -239,5 +204,35 @@ class ParamsVis {
       .text((d) => d.id)
       ;
 
+    let xaxis = displaySvg.append('g')
+      .attr('transform', `translate(0 ${myConfig.padding.top * (3 / 4)})`)
+      ;
+    let yaxis = displaySvg.append('g')
+      .attr('transform', `translate(${myConfig.padding.left * (3 / 4)} 0)`)
+      ;
+
+    let topAxis = d3.axisTop()
+      .scale(xscale);
+    let leftAxis = d3.axisLeft()
+      .scale(yscale)
+      ;
+
+    xaxis.call(topAxis);
+    yaxis.call(leftAxis);
+
+    displaySvg.append('text')
+      // .attr('x', xscale(0.0))
+      .attr('x', xscale(0))
+      .attr('y', myConfig.padding.top / 2)
+      .text('Theta')
+      ;
+
+    displaySvg.append('g')
+      .attr('transform', `rotate(-90)`)
+      .append('text')
+      .attr('y', myConfig.padding.left / 2)
+      .attr('x', -1 * yscale(0))
+      .text('Beta')
+      ;
   }
 }

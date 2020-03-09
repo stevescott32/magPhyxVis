@@ -40,6 +40,8 @@ Promise.all([...paramDataPromises]).then((paramData) => {
   // load the event data
   Promise.all([...dataPromises]).then(function (eventData) {
     console.log('All data loaded');
+    paramData = standardizeParamData(paramData);
+
     let combinedData = [];
     // combine data so it is ordered together
     for(let i = 0; i < paramData.length; i++) {
@@ -62,7 +64,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
           points.push(new Point(getDimensions(combinedData[i].param), combinedData[i]));
       }
 
-      points = filterPoints(points, 0.0005);
+      points = filterPoints(points, 0.1);
       orderedData = [];
       for (let i = 0; i < points.length; i++) {
           orderedData.push(points[i].data);
@@ -128,6 +130,8 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       ;
       // */
 
-  }).catch(function (err) { })
+  }).catch(function (err) { 
+    console.log('Error: ', err);
+  })
 });
 
