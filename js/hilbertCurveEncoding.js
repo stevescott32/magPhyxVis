@@ -51,7 +51,7 @@ class HilbertCurveEncoding{
         for (let point in this.points){
             encodedPoints[point] = [];
             for (let i = 0; i<this.dimensions; i++){
-                let multiplier = (this.points[point][i] - this.dimensionMins[i]) / (this.dimensionMaxs[i] - this.dimensionMins[i]);
+                let multiplier = parseInt((this.points[point][i] - this.dimensionMins[i]) / (this.dimensionMaxs[i] - this.dimensionMins[i]));
                 encodedPoints[point][i] = this.MAX_NUMBER*multiplier;
                 console.log(multiplier);
             }
