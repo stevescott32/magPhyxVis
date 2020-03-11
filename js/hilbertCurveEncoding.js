@@ -44,7 +44,7 @@ class HilbertCurveEncoding{
 
 
 
-    encode(point){
+    scale(point){
         let encodedPoints = [];
 
 
