@@ -48,13 +48,24 @@ class Utils {
         let avg = sum / data.length;
         return avg;
     }
-    
-    static arrayAverage(data){
-        let sum = data.reduce(function(sum, value){
-          return sum + value;
+
+    static arrayAverage(data) {
+        let sum = data.reduce(function (sum, value) {
+            return sum + value;
         }, 0);
-      
+
         let avg = sum / data.length;
         return avg;
-      }
+    }
+
+    // calculate the Euclidean distance between pointA and pointB,
+    // based on the six dimensions of the magnet data
+    static calculateDistance(pointA, pointB) {
+        let dims = ['r', 'angleFromOrigin', 'momentAngle', 'theta', 'beta', 'angularMomentum'];
+        let diffsSquared = 0;
+        for (let d = 0; d < dims.length; d++) {
+            diffsSquared += Math.pow((pointA[dims[d]] - pointB[dims[d]]), 2)
+        }
+        return Math.sqrt(diffsSquared);
+    }
 }

@@ -173,11 +173,16 @@ class EventTypeVis {
         // append a circle for every event in the vis
         sims.selectAll('circle')
             .data((d, i) => {
-                return d;
+                data = d;
+                for(let a = 0; a < data.length; a++) {
+                    data[a]['parentIndex'] = i;
+                }
+                return data;
             })
             .enter()
             .append('circle')
             .attr('simulationIndex', d => { return d.simulationIndex; })
+            .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return this.config.padding.top + d.parentIndex * this.circleSize * 2; })
             .attr('r', d => { return this.circleSize; })
@@ -197,10 +202,34 @@ class EventTypeVis {
                 scatter.unhighlightSimulation(d.index);
                 paramVis.unhighlightSimulation(d.index);
             })
-            .on('click', function (d) {
-                eventVis.updateDimensionComparison(d, paramData);
+            .on('click', function (d, i) {
+                // eventVis.updateDimensionComparison(d, paramData);
+                eventVis.colorDimsByDistance(d['parentIndex'], paramData);
             })
             ;
+    }
+
+    colorDimsByDistance(pointIndex, paramData) {
+        console.log('point index: ', pointIndex);
+        let targetPoint = paramData[pointIndex];
+        let distances = [];
+        for (let i = 0; i < paramData.length; i++) {
+            let distance = Utils.calculateDistance(targetPoint, paramData[i]);
+            distances.push(distance);
+        }
+        let colorScale = d3.scaleLinear()
+            .range(["#ffffff", "#000000"])
+            // .range(["#000000", "#ffffff"])
+            .domain([0, d3.max(distances)])
+            ;
+
+        for (let i = 0; i < distances.length; i++) {
+            this.svg.selectAll(`.group${i}`)
+                .selectAll('circle')
+                .style('fill', colorScale(distances[i]))
+                .attr('distance', distances[i])
+                ;
+        }
     }
 
     updateDimensionComparison(point, paramData) {
