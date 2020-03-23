@@ -15,7 +15,9 @@ class EventTypeVis {
                 top: 100,
                 bottom: 5,
                 right: 10
-            }
+            },
+            tolerance: 0.1, // amount to add to the slider max for floating comparison
+            stepCount: 30, // how many steps the slider should have
         };
 
         this.divId = 'event-type-vis';
@@ -34,7 +36,7 @@ class EventTypeVis {
     }
 
     highlightSimulation(simulation) {
-        console.log(`Highlighting group${simulation} in eventTypeVis`);
+        // console.log(`Highlighting group${simulation} in eventTypeVis`);
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simulation}`)
             .selectAll('circle')
@@ -59,11 +61,42 @@ class EventTypeVis {
             ;
     }
 
-    // update the event type vis with the new data
+    // methods outside of this class should call this update method,
+    // not the update helper
     update(data, paramData, distances) {
+        this.diffMin = d3.min(distances);
+        this.diffMax = d3.max(distances) + this.config.tolerance;
+        this.originalData = [...data];
+        this.originalParamData = [...paramData];
+        this.originalDistances = [...distances];
+
+        // append a slider
+        d3.selectAll('.eventTypeSlider').remove();
+        d3.select(`#${this.divId}`)
+            .append('p')
+            .text('Filter Param Distances')
+            ;
+        let slider = d3.select(`#${this.divId}`)
+            .append('input')
+            .attr('class', 'eventTypeSlider')
+            .attr('type', 'range')
+            .attr('name', 'Filter Points')
+            .attr('min', this.diffMin)
+            .attr('max', this.diffMax)
+            .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
+            .attr('onclick', 'eventTypeVis.updateSlider(this.value)')
+            ;
+        d3.select(`#${this.divId}`)
+            .append('br')
+            .attr('class', 'eventTypeSlider')
+
+        this.updateHelper(data, paramData, distances);
+    }
+
+    // update the event type vis with the new data
+    updateHelper(data, paramData, distances) {
         if (null == data) { return; }
         console.log('distances', distances);
-        d3.selectAll('.event-type-vis').remove();
 
         for (let i = 0; i < data.length; i++) {
             data[i] = data[i].filter(d => {
@@ -87,12 +120,7 @@ class EventTypeVis {
             .range([this.config.padding.top, this.config.height + this.config.padding.top])
             ;
 
-        let distanceScale = d3.scaleLinear()
-            .domain([d3.min(distances), d3.max(distances)])
-            .range([0, 20])
-            ;
-
-
+        d3.selectAll('.event-type-vis').remove();
         this.svg = d3.select(`#${this.divId}`)
             .append('svg')
             .attr('class', 'event-type-vis')
@@ -101,17 +129,22 @@ class EventTypeVis {
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
             ;
 
+        let distanceScale = d3.scaleLinear()
+            .domain([d3.min(distances), d3.max(distances)])
+            .range([0, 20])
+            ;
+
+        d3.selectAll('.distance-svg').remove();
         this.dimComparisonSvg = d3.select(`#${this.divId}`)
             .append('svg')
+            .attr('class', 'distance-svg')
             .attr('x', 0)
             .attr('y', 0)
             .attr('width', 500)
             .attr('height', 500)
             .append('g')
             .attr('class', 'dimSvg')
-            // .attr('transform', `translate(250, 250) rotate(180)`)
             ;
-
 
         let distanceBars = this.svg.selectAll('.distanceBars')
             .data(distances)
@@ -124,10 +157,9 @@ class EventTypeVis {
             .attr('width', (d) => {
                 return distanceScale(d)
             })
-            .attr('height', 1 /*eventCountScale(1)*/)
+            .attr('height', 1)
             .attr('class', 'distanceBars')
             ;
-
 
         let xaxis = this.svg.append('g')
             .attr('transform', `translate(0, ${this.config.padding.left + 10})`)
@@ -174,7 +206,7 @@ class EventTypeVis {
         sims.selectAll('circle')
             .data((d, i) => {
                 data = d;
-                for(let a = 0; a < data.length; a++) {
+                for (let a = 0; a < data.length; a++) {
                     data[a]['parentIndex'] = i;
                 }
                 return data;
@@ -207,6 +239,22 @@ class EventTypeVis {
                 eventVis.colorDimsByDistance(d['parentIndex'], paramData);
             })
             ;
+    }
+
+    updateSlider(value) {
+        let filteredData = [];
+        let filteredPamaData = [];
+        let filteredDistances = [];
+        for (let i = 0; i < this.originalDistances.length; i++) {
+            // console.log(`Comparing ${this.originalDistances[i]}`);
+            if (this.originalDistances[i] <= value) {
+                filteredData.push(this.originalData[i]);
+                filteredPamaData.push(this.originalParamData[i]);
+                filteredDistances.push(this.originalDistances[i]);
+            }
+        }
+        console.log('Filtered data', filteredData);
+        this.updateHelper(filteredData, filteredPamaData, filteredDistances);
     }
 
     colorDimsByDistance(pointIndex, paramData) {
