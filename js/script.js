@@ -8,7 +8,12 @@ console.log('Starting script');
 let settings = {
   NUM_FILES: 100, // change this to vary how many files of events/commands will be used
   reorderData: true, // change this to false to turn off z-ordering
-  dataset: 'data7' // change this to use a different data set
+  dataset: 'data7', // change this to use a different data set
+    // data4 - grid data
+    // data6 - random data
+    // data7 - random data
+    // 
+  hilbert: true, // false = use z order, true = use hilbert order
 }
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
 let paramVis = new ParamsVis();
@@ -50,15 +55,21 @@ Promise.all([...paramDataPromises]).then((paramData) => {
         events: eventData[i]
       })
     }
-    let hilbertCurve = makeHilbertCurve(combinedData);
+    let orderEngine;
+
     let ktree = makeKtTree(combinedData);
+    if(settings.hilbert) {
+      orderEngine = makeHilbertCurve(combinedData);
+    } else {
+      orderEngine = ktree;
+    }
     ktree.setTraverseList();
     let orderedData = ktree.traverseList;
 
     // place the data in order
     if(settings.reorderData) {
-      orderedData = reorderData(hilbertCurve);
-    } else {
+      orderedData = reorderData(orderEngine);
+    } else { // leave data in the order that simulations were generated
       let points = [];
       for (let i = 0; i < combinedData.length; i++) {
           points.push(new Point(getDimensions(combinedData[i].param), combinedData[i]));
@@ -84,7 +95,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     }
 
     // initialize the param and the scatter vis
-    paramVis.init(orderedParamData, hilbertCurve.getBoundaries());
+    paramVis.init(orderedParamData, orderEngine.getBoundaries());
     scatter.init(orderedEventsData);
 
     let distances = calcDistances(orderedParamData);
