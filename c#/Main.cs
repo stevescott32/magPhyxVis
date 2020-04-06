@@ -11,16 +11,53 @@ namespace Main
     {
         static void Main(string[] args)
         {
-            string[][] parsedData = readFile();
+
+
+
+            string address = @"C:\Users\Jaxon\Desktop\research\magPhyxVis\magPhyxVis\data\data1\events\arranged_events00.csv";
+
+
+            createNewFileOfArrangedCoordinates(address);
+
+
+
+        }
+
+        public static void createNewFileOfArrangedCoordinates(string address){
+            List<Tuple<string, BigInteger>> coordsAndHindex = linesAndHI();
+
+            coordsAndHindex.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+
+            string[] arrangedCoordinates = arrangedCoordinateString(coordsAndHindex);
+
+            System.IO.File.WriteAllLines(address, arrangedCoordinates);
+
+
+        }
+
+        public static string[] arrangedCoordinateString(List<Tuple<string, BigInteger>> coordsAndHindex){
+            string[] arrangedCoords = new string[coordsAndHindex.Count];
+            for (int i=0; i<coordsAndHindex.Count; i++){
+                arrangedCoords[i] = coordsAndHindex[i].Item1;
+            }
+            
+
+            return arrangedCoords;
+        }
+
+        public static List<Tuple<string, BigInteger>> linesAndHI(){
+                        string[][] parsedData = readFile();
+            /*
+            TODO: find out how bits per dimension works!"
+            */
             int bpd = FindBitsPerDimension(800);
 
             /*
             TODO: dynamically create this number!!
             */
             float SCALAR = (float)Math.Pow(10,6);
-
-
-
+    
+           List<Tuple<string, BigInteger>> linesAndHIndex = new List<Tuple<string, BigInteger>>();
             // for each line in data file
             for (int i=1; i<parsedData.Length; i++){
                 var coords = parsedData[i][2..(parsedData[i].Length)];
@@ -33,36 +70,35 @@ namespace Main
                     int coordinate = (int)scaledCoordinate;
                     scaledIntCoordinates[j] = coordinate;
                 }
-                //    foreach(int coord in scaledIntCoordinates){
-                //        Console.Write(coord + " : ");
-                //    }
-                //    Console.WriteLine(" ");
-
-                // get hilbert index from ith line of data
-                HilbertPoint hilbertPoint = new HilbertPoint(scaledIntCoordinates, bpd);
-                Console.WriteLine(hilbertPoint.HilbertIndex);
-
                 // create new list, fill indices with original line and append hilbert index
                 string[] coordinatesWithAppendedHilbertIndex = new string[parsedData[i].Length + 1];
                 for (int j=0; j<parsedData[i].Length; j++){
                     coordinatesWithAppendedHilbertIndex[j] = parsedData[i][j];
-                    Console.WriteLine(parsedData[i][j]);
                 }
-                // coordinatesWithAppendedHilbertIndex[coordinatesWithAppendedHilbertIndex.Length - 1] = hilbertPoint.HilbertIndex.toString();
-                
+                HilbertPoint hilbertPoint = new HilbertPoint(scaledIntCoordinates, bpd);
 
+                var tuple = new Tuple<string, BigInteger>(  lineToString(parsedData[i])  , hilbertPoint.HilbertIndex );  
 
-
-
-            }       
-
- 
-
+                linesAndHIndex.Add(tuple);   
+            }   
+            return linesAndHIndex;
         }
+        public static string lineToString(string[] line){
+            string toReturn = "";
+            for (int i=0; i<line.Length; i++){
+                toReturn += line[i]+" ";
+            }
+            return toReturn;
+        }
+
+
+
+
+
         public static string[][] readFile(){
             string[][] lines;
-            string[] lines1 = System.IO.File.ReadAllLines(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events100.csv");
-            using (TextFieldParser parser = new TextFieldParser(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events100.csv")){
+            string[] lines1 = System.IO.File.ReadAllLines(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events00.csv");
+            using (TextFieldParser parser = new TextFieldParser(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events00.csv")){
             lines = new string[lines1.Length][];
             parser.Delimiters = new string[] { "," };
             int index = 0;
@@ -79,15 +115,7 @@ namespace Main
         }
         return lines;
         }
-        public void writeData(string[][] lines){
-            foreach (string[] line in lines){
-                foreach(string column in line){
-                    Console.Write(column + " : ");
-                }
-                Console.WriteLine(" ");
 
-            }
-        }
 
         public static int FindBitsPerDimension(int max)
 		{
