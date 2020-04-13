@@ -3,6 +3,7 @@ using System.Numerics;
 using HilbertTransformation;
 using System.Collections.Generic;
 using Microsoft.VisualBasic.FileIO;
+using System.IO;
 
 
 namespace Main
@@ -24,7 +25,7 @@ namespace Main
                 if (i<=9){
                     index = String.Format("0{0}", i);
                 }else{index = i.ToString();}
-                string address_i = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\commands\commands{0}.csv", index);
+                string address_i = String.Format(@"..\data\data1\commands\commands{0}.csv", index);
                 string[] command_line_i = readCommandFile(address_i);
                 commandLines_HI_index.Add(commandLine_HI_initIndex(command_line_i, i));
                 
@@ -32,6 +33,8 @@ namespace Main
             commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
   
             makeNewCommandFiles(commandLines_HI_index);
+
+
 
         }
 
@@ -41,7 +44,7 @@ namespace Main
                 if (i<=9){
                     index = String.Format("0{0}", i);
                 }else{index = i.ToString();}
-                string address = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\commands\hilbert_sorted_commands{0}.csv", index);               
+                string address = String.Format(@"..\data\data1\commands\hilbert_sorted_commands{0}.csv", index);               
                 string[] data = new string[1];
                 data[0] = tuples[i].Item1;
                 System.IO.File.WriteAllLines(address, data);
@@ -59,8 +62,8 @@ namespace Main
                 if (tuples[i].Item3 <= 9){
                     tuplesIndex = String.Format("0{0}", tuples[i].Item3);
                 }else{tuplesIndex = tuples[i].Item3.ToString();}
-            string eventAddress = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events{0}.csv", index);
-            string newEventAddress = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\hilbert_sorted_events{0}.csv", tuplesIndex); 
+            string eventAddress = String.Format(@"..\data\data1\events\events{0}.csv", index);
+            string newEventAddress = String.Format(@"..\data\data1\events\hilbert_sorted_events{0}.csv", tuplesIndex); 
             string[] data = System.IO.File.ReadAllLines(eventAddress);
             System.IO.File.WriteAllLines(newEventAddress, data);
             }
