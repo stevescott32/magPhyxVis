@@ -30,10 +30,7 @@ namespace Main
                 
             }
             commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-            foreach(var tuple in commandLines_HI_index){
-                Console.WriteLine(tuple);
-            }
-
+  
             makeNewCommandFiles(commandLines_HI_index);
 
         }
@@ -48,6 +45,24 @@ namespace Main
                 string[] data = new string[1];
                 data[0] = tuples[i].Item1;
                 System.IO.File.WriteAllLines(address, data);
+            }
+            correlateEventsAnd_Commands(tuples);
+        }
+
+        public static void correlateEventsAnd_Commands(List<Tuple<string, BigInteger, int>> tuples){
+            for (int i=0; i<tuples.Count; i++){
+                string index;
+                string tuplesIndex;
+                if (i<=9){
+                    index = String.Format("0{0}", i);
+                }else{index = i.ToString();}
+                if (tuples[i].Item3 <= 9){
+                    tuplesIndex = String.Format("0{0}", tuples[i].Item3);
+                }else{tuplesIndex = tuples[i].Item3.ToString();}
+            string eventAddress = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\events{0}.csv", index);
+            string newEventAddress = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\events\hilbert_sorted_events{0}.csv", tuplesIndex); 
+            string[] data = System.IO.File.ReadAllLines(eventAddress);
+            System.IO.File.WriteAllLines(newEventAddress, data);
             }
         }
         
