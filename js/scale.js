@@ -1,4 +1,4 @@
-class HilbertCurveEncoding{
+class PointScaling{
     MAX_NUMBER = 2 ** 31;
     points = [];
     encodedPoints = [];
@@ -11,7 +11,7 @@ class HilbertCurveEncoding{
         this.dimensions = dimensions;
         this.dimensionMins = this.getPointsMins();
         this.dimensionMaxs = this.getPointMaxs();
-        this.encodedPoints = this.encode(this.points);
+        this.encodedPoints = this.scale(this.points);
     }
     getPointsMins(){
         let mins = [];
@@ -98,9 +98,9 @@ let vertexes = [
     [1,1,3],
     [-1, 0,9]
 ];
-let hilbertCodeEncoding = new HilbertCurveEncoding(vertexes, 3);
+let hilbertCodeEncoding = new PointScaling(vertexes, 3);
 
 
-for (let point of hilbertCodeEncoding.encodedPoints){
+for (let point of PointScaling.encodedPoints){
     document.writeln("[" + point + "]" + "<br>");
 }
