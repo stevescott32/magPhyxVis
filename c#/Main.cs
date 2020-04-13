@@ -14,16 +14,11 @@ namespace Main
 
 
 
-            string address = @"C:\Users\Jaxon\Desktop\research\magPhyxVis\magPhyxVis\data\data1\events\arranged_events00.csv";
 
 
-            // createNewFileOfArrangedEventCoordinates(address);
-
-            string[] command_line = readCommandFile(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\commands\commands00.csv");
     
-            var command_line_and_HIndex = command_line_HIndex(command_line);
 
-            List<Tuple<string,BigInteger>> all_command_lines = new List<Tuple<string, BigInteger>>();
+            List<Tuple<string,BigInteger,int>> commandLines_HI_index = new List<Tuple<string, BigInteger,int>>();
             for (int i=0; i<100; i++){
                 string index;
                 if (i<=9){
@@ -31,23 +26,32 @@ namespace Main
                 }else{index = i.ToString();}
                 string address_i = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\commands\commands{0}.csv", index);
                 string[] command_line_i = readCommandFile(address_i);
-                all_command_lines.Add(command_line_HIndex(command_line_i));
+                commandLines_HI_index.Add(commandLine_HI_initIndex(command_line_i, i));
                 
             }
-            all_command_lines.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-            foreach(var tuple in all_command_lines){
+            commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+            foreach(var tuple in commandLines_HI_index){
                 Console.WriteLine(tuple);
             }
 
-
-
-            
-
-
-
+            makeNewCommandFiles(commandLines_HI_index);
 
         }
-        public static Tuple<string, BigInteger> command_line_HIndex(string[] command_line){
+
+        public static void makeNewCommandFiles(List<Tuple<string, BigInteger, int>> tuples){
+            for (int i=0; i<tuples.Count; i++){
+                string index;
+                if (i<=9){
+                    index = String.Format("0{0}", i);
+                }else{index = i.ToString();}
+                string address = String.Format(@"C:\Users\Jaxon\Desktop\Research\magPhyxVis\magPhyxVis\data\data1\commands\hilbert_sorted_commands{0}.csv", index);               
+                string[] data = new string[1];
+                data[0] = tuples[i].Item1;
+                System.IO.File.WriteAllLines(address, data);
+            }
+        }
+        
+        public static Tuple<string, BigInteger, int> commandLine_HI_initIndex(string[] command_line, int index){
             int bpd = FindBitsPerDimension(6);
             float SCALAR = (float)Math.Pow(10,3);
             var coords = parseCommandLine(command_line);
@@ -70,8 +74,8 @@ namespace Main
 
 
 
-            Tuple<string, BigInteger> lineAndHI = new Tuple<string, BigInteger>(lineToString(command_line), hilbertPoint.HilbertIndex);
-            return lineAndHI;
+            Tuple<string, BigInteger, int> line_HI_index = new Tuple<string, BigInteger, int>(lineToString(command_line), hilbertPoint.HilbertIndex, index);
+            return line_HI_index;
         }
 
 
