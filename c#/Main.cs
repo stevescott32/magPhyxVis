@@ -11,34 +11,56 @@ namespace Main
     class Program
     {
         static void Main(string[] args)
-        {
+        {   
 
+
+
+            // List<Tuple<string,BigInteger,int>> commandLines_HI_index = new List<Tuple<string, BigInteger,int>>();
+            // for (int i=0; i<100; i++){
+            //     string index;
+            //     if (i<=9){
+            //         index = String.Format("0{0}", i);
+            //     }else{index = i.ToString();}
+            //     string address_i = String.Format(@"..\data\data1\commands\commands{0}.csv", index);
+            //     string[] command_line_i = readCommandFile(address_i);
+            //     commandLines_HI_index.Add(commandLine_HI_initIndex(command_line_i, i));
+                
+            // }
+            // commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+            List<Tuple<string,BigInteger,int>> commandLines_HI_index = makeSortedTuples(1);
+
+
+  
+            makeNewCommandFiles(commandLines_HI_index, 2);
+
+
+
+        }
+
+        public static List<Tuple<string, BigInteger, int>> makeSortedTuples(int folderNumber){
+                
             List<Tuple<string,BigInteger,int>> commandLines_HI_index = new List<Tuple<string, BigInteger,int>>();
             for (int i=0; i<100; i++){
                 string index;
                 if (i<=9){
                     index = String.Format("0{0}", i);
                 }else{index = i.ToString();}
-                string address_i = String.Format(@"..\data\data1\commands\commands{0}.csv", index);
+                string address_i = String.Format(@"..\data\data{0}\commands\commands{1}.csv", folderNumber, index);
                 string[] command_line_i = readCommandFile(address_i);
                 commandLines_HI_index.Add(commandLine_HI_initIndex(command_line_i, i));
                 
             }
             commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-  
-            makeNewCommandFiles(commandLines_HI_index);
-
-
-
+            return commandLines_HI_index;
         }
 
-        public static void makeNewCommandFiles(List<Tuple<string, BigInteger, int>> tuples){
+        public static void makeNewCommandFiles(List<Tuple<string, BigInteger, int>> tuples, int folderNumber){
             for (int i=0; i<tuples.Count; i++){
                 string index;
                 if (i<=9){
                     index = String.Format("0{0}", i);
                 }else{index = i.ToString();}
-                string address = String.Format(@"..\data\data1\commands\hilbert_sorted_commands{0}.csv", index);               
+                string address = String.Format(@"..\data\data{0}\commands\hilbert_sorted_commands{1}.csv",folderNumber, index);               
                 string[] data = new string[1];
                 data[0] = tuples[i].Item1;
                 System.IO.File.WriteAllLines(address, data);
@@ -46,7 +68,7 @@ namespace Main
             correlateEventsAndCommands(tuples);
         }
 
-        public static void correlateEventsAndCommands(List<Tuple<string, BigInteger, int>> tuples){
+        public static void correlateEventsAndCommands(List<Tuple<string, BigInteger, int>> tuples, int folderNumber){
             for (int i=0; i<tuples.Count; i++){
                 string index;
                 string tuplesIndex;
@@ -56,8 +78,8 @@ namespace Main
                 if (tuples[i].Item3 <= 9){
                     tuplesIndex = String.Format("0{0}", tuples[i].Item3);
                 }else{tuplesIndex = tuples[i].Item3.ToString();}
-            string eventAddress = String.Format(@"..\data\data1\events\events{0}.csv", index);
-            string newEventAddress = String.Format(@"..\data\data1\events\hilbert_sorted_events{0}.csv", tuplesIndex); 
+            string eventAddress = String.Format(@"..\data\data{0}\events\events{1}.csv", folderNumber, index);
+            string newEventAddress = String.Format(@"..\data\data{0}\events\hilbert_sorted_events{1}.csv", folderNumber, tuplesIndex); 
             string[] data = System.IO.File.ReadAllLines(eventAddress);
             System.IO.File.WriteAllLines(newEventAddress, data);
             }
