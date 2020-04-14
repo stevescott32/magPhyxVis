@@ -13,25 +13,10 @@ namespace Main
         static void Main(string[] args)
         {   
 
+            int dataFolder = 1;
 
-
-            // List<Tuple<string,BigInteger,int>> commandLines_HI_index = new List<Tuple<string, BigInteger,int>>();
-            // for (int i=0; i<100; i++){
-            //     string index;
-            //     if (i<=9){
-            //         index = String.Format("0{0}", i);
-            //     }else{index = i.ToString();}
-            //     string address_i = String.Format(@"..\data\data1\commands\commands{0}.csv", index);
-            //     string[] command_line_i = readCommandFile(address_i);
-            //     commandLines_HI_index.Add(commandLine_HI_initIndex(command_line_i, i));
-                
-            // }
-            // commandLines_HI_index.Sort((a, b) => a.Item2.CompareTo(b.Item2));
-            List<Tuple<string,BigInteger,int>> commandLines_HI_index = makeSortedTuples(1);
-
-
-  
-            makeNewCommandFiles(commandLines_HI_index, 2);
+            List<Tuple<string,BigInteger,int>> commandLines_HI_index = makeSortedTuples(dataFolder);
+            makeNewCommandFiles(commandLines_HI_index, dataFolder);
 
 
 
