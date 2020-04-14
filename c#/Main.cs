@@ -65,7 +65,7 @@ namespace Main
                 data[0] = tuples[i].Item1;
                 System.IO.File.WriteAllLines(address, data);
             }
-            correlateEventsAndCommands(tuples);
+            correlateEventsAndCommands(tuples, folderNumber);
         }
 
         public static void correlateEventsAndCommands(List<Tuple<string, BigInteger, int>> tuples, int folderNumber){
