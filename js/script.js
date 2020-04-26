@@ -18,6 +18,8 @@ let settings = {
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
+let simulationDistance = new SimulationDistance();
+
   
 // let each vis know about the other event vis
 scatter.setParamVis(paramVis);
@@ -37,7 +39,8 @@ for (let i = 0; i < settings.NUM_FILES; i++) {
 // promise the event data
 let dataPromises = [];
 for (let i = 0; i <= settings.NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data/${settings.dataset}/events/events${('0' + i).slice(-2)}.csv`))
+  dataPromises.push(d3.csv(`data/${settings.dataset}/events/events${('0' + i).slice(-2)}.csv`));
+
 }
 
 // load the param data
@@ -128,6 +131,8 @@ Promise.all([...paramDataPromises]).then((paramData) => {
           })
         })
         eventTypeVis.update(filteredData, orderedParamData, distances);
+        simulationDistance.update(filteredData, orderedData, distances);
+        
       })
       ;
 
