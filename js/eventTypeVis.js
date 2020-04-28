@@ -237,9 +237,17 @@ class EventTypeVis {
             })
             .on('click', function (d, i) {
                 // eventVis.updateDimensionComparison(d, paramData);
-                eventVis.colorDimsByDistance(d['parentIndex'], paramData);
+                // eventVis.colorDimsByDistance(d['parentIndex'], paramData);
+                eventVis.reOrderSimulationsByOutputDistance()
             })
             ;
+    }
+
+    reOrderSimulationsByOutputDistance(){
+        console.log("in reorder simulation by output distance");
+        let simulationDistances = new SimulationDistance();
+        console.log(this.circleSize);
+        
     }
 
     updateSlider(value) {
@@ -389,48 +397,51 @@ class SimulationDistance {
         this.paramData = paramData;
         this.paramDistances = paramDistances;
         
-        let dataZeroTimes = []
-        data[0].forEach(element => {
-            dataZeroTimes.push(element);
-        });
-        let dataOneTimes = [];
-        data[1].forEach(time =>{
-            dataOneTimes.push(time);
-        })
+        
 
-        console.log(dataZeroTimes);
-        console.log(dataOneTimes);
-        let smallArrayEventDistances = this.getEventsDistance(dataZeroTimes, dataOneTimes);
-        let largeArrayEventDistances = this.getEventsDistance(dataOneTimes, dataZeroTimes);
-        this.getCorrelatingEventDistances(smallArrayEventDistances, dataZeroTimes, largeArrayEventDistances, dataOneTimes); 
+        
+        let correlatingEventDistances = this.getCorrelatingEventDistances(data[0], data[1]);
+        console.log(correlatingEventDistances);
+        console.log(this.getSimulationDistanceBySum(correlatingEventDistances));
+        
     }
+    getSimulationDistanceBySum(correlatingEventDistances){
+        let sum = 0;
+        correlatingEventDistances.forEach(distance => {
+            sum += distance;
+        });
+        return sum;
+    }
+    
+    // returns array of distances of sets of points
+    getCorrelatingEventDistances(events1,  events2){
+        let smallEvents = events1.length < events2.length ? events1 : events2;
+        let largeEvents = events1.length > events2.length ? events1 : events2;
+        let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents);
+        let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents);
+        
 
-    getCorrelatingEventDistances(smallEventsDistances, smallEvents, largeEventsDistances, largeEvents){
-        let correlatingPoints = [];
+        let correlatingPointsDistances = [];
         for (let i=0; i<largeEventsDistances.length; i++){
             let possibleCorrelatingPoint = largeEventsDistances[i];
             if (smallEventsDistances[possibleCorrelatingPoint] == i){
-                let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t']
-                - largeEvents[i][' t']);
-                console.log(smallEvents[possibleCorrelatingPoint][' t'] + " " + largeEvents[i][' t'] + " " + distance);
-                correlatingPoints.push(distance);
+                let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t'] - largeEvents[i][' t']);
+                correlatingPointsDistances.push(distance);
             }
         }
-        console.log(correlatingPoints);
-        return correlatingPoints;
+        return correlatingPointsDistances;
 
     }
-
+    // returns array of indexes from correlating array of closest event
     getEventsDistance(events1, events2){
         let correlatingEventDistances = [];
         for (let i=0; i<events1.length; i++){
-            correlatingEventDistances.push(  
-                this.getClosestEventIndex(events1[i][' t'], events2) );
+            correlatingEventDistances.push(this.getClosestEventIndex(events1[i][' t'], events2) );
         }
-        console.log(correlatingEventDistances);
         return correlatingEventDistances;
     }
 
+    // returns index of closest event in correlating array
     getClosestEventIndex(value, arr){
         let minIndex = 0;
         let minValue = Number.MAX_SAFE_INTEGER;
@@ -448,22 +459,7 @@ class SimulationDistance {
         return minIndex;
     }
 
-    getClosestEventDistance(value, arr){
-        let minIndex = 0;
-        let minValue = Number.MAX_SAFE_INTEGER;
-        
-        
-
-        for (let i=0; i<arr.length; i++){
-            let difference = Math.abs(value - arr[i][' t']);
-            if (difference < minValue){
-                minValue = difference;
-                minIndex = i;
-            }
-        }
-
-        return minValue;
-    }
+    
 
 
 }
