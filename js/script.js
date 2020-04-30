@@ -130,6 +130,8 @@ Promise.all([...paramDataPromises]).then((paramData) => {
             return d[' event_type'] == type;
           })
         })
+        console.log("filtered data: " );
+        console.log(filteredData);
         eventTypeVis.update(filteredData, orderedParamData, distances);
         simulationDistance.update(filteredData, orderedData, distances);
         

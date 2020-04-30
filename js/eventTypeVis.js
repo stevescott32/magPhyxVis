@@ -237,18 +237,15 @@ class EventTypeVis {
             })
             .on('click', function (d, i) {
                 // eventVis.updateDimensionComparison(d, paramData);
-                // eventVis.colorDimsByDistance(d['parentIndex'], paramData);
-                eventVis.reOrderSimulationsByOutputDistance()
+                eventVis.colorDimsByDistance(d['parentIndex'], paramData);
+
+                let simulationDistances = new SimulationDistance();
+                simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
             })
             ;
     }
-
-    reOrderSimulationsByOutputDistance(){
-        console.log("in reorder simulation by output distance");
-        let simulationDistances = new SimulationDistance();
-        console.log(this.circleSize);
-        
-    }
+    
+    
 
     updateSlider(value) {
         let filteredData = [];
@@ -386,12 +383,29 @@ class EventTypeVis {
 
 
 class SimulationDistance {
-    data = [];
+    // data = [];
     paramData = [];
     paramDistances = [];
     constructor(){
 
     }
+
+    reorder(data, simulationIndex){
+        console.log("in simulationData.reorder()");
+        console.log(data);
+        console.log(simulationIndex);
+
+        
+
+
+
+    }
+
+
+
+
+
+
     update(data, paramData, paramDistances){
         this.data = data;
         this.paramData = paramData;
