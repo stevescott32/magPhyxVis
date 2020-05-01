@@ -18,7 +18,6 @@ let settings = {
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
-let simulationDistance = new SimulationDistance();
 
   
 // let each vis know about the other event vis
@@ -133,7 +132,6 @@ Promise.all([...paramDataPromises]).then((paramData) => {
         console.log("filtered data: " );
         console.log(filteredData);
         eventTypeVis.update(filteredData, orderedParamData, distances);
-        simulationDistance.update(filteredData, orderedData, distances);
         
       })
       ;

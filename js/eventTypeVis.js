@@ -240,7 +240,9 @@ class EventTypeVis {
                 eventVis.colorDimsByDistance(d['parentIndex'], paramData);
 
                 let simulationDistances = new SimulationDistance();
-                simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
+                let reorderedDta = simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
+
+                eventVis.update(reorderedDta, eventVis.originalParamData, eventVis.originalDistances);
             })
             ;
     }
@@ -390,35 +392,60 @@ class SimulationDistance {
 
     }
 
-    reorder(data, simulationIndex){
-        console.log("in simulationData.reorder()");
+    reorder(data, simulationIndex, paramData, distances){
         console.log(data);
-        console.log(simulationIndex);
 
+        let data_sum = [];
+
+        for(let i=0; i<data.length; i++){
+            // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
+            console.log(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
+            let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
+            console.log(min);
+            data_sum.push({
+                "data" : data[i],
+                "min" : min
+            });
+        }
+
+        data_sum.sort((obj1, obj2) => obj1['min'] - obj2['min']);
         
+        console.log(data_sum);
 
+        let reOrderedData = [];
+        data_sum.forEach(element => {
+            reOrderedData.push(element['data'])
+        });
 
+        return reOrderedData;
+    }
 
+    getMinInArray(arr){
+        let min = Number.MAX_VALUE;
+        arr.forEach(num => {
+            if (num < min){
+                min = num;
+            }
+        });
+        return min;
     }
 
 
 
 
-
-
-    update(data, paramData, paramDistances){
-        this.data = data;
-        this.paramData = paramData;
-        this.paramDistances = paramDistances;
+    // update(data, paramData, paramDistances){
+    //     this.data = data;
+    //     this.paramData = paramData;
+    //     this.paramDistances = paramDistances;
         
         
 
         
-        let correlatingEventDistances = this.getCorrelatingEventDistances(data[0], data[1]);
-        console.log(correlatingEventDistances);
-        console.log(this.getSimulationDistanceBySum(correlatingEventDistances));
+    //     let correlatingEventDistances = this.getCorrelatingEventDistances(data[0], data[1]);
+    //     console.log(correlatingEventDistances);
+    //     console.log(this.getSimulationDistanceBySum(correlatingEventDistances));
         
-    }
+    // }
     getSimulationDistanceBySum(correlatingEventDistances){
         let sum = 0;
         correlatingEventDistances.forEach(distance => {
