@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Events Correlation Test</title>
+    <style>
+        .content {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            height: 80vh;
+        }
+    </style>
+</head>
+<body>
+<div id="root">
+    <div class="content">
+        <svg width="100%" height="100%">
+
+        </svg>
+    </div>
+</div>
+
+<script src="d3.js"></script>
+<script src="js/eventTypeVis.js"></script>
+<script>
+
+    const root = d3.select('#root');
+
+    const svg = d3.select('svg');
+
+    const bounds = svg.node().getBoundingClientRect();
+
+    const height = 100;
+
+    const generateChart = (group_name, data, params = {}) => {
+        params = {
+            ...params,
+            color: params.color || "black",
+            offsetY: params.offsetY || 0
+        }
+
+        let group = svg.select('g#' + group_name)
+
+        if (group.empty()) {
+            group = svg
+                .append('g')
+                .attr('id', group_name)
+                .attr('transform', `translate(0, ${params.offsetY})`)
+        }
+
+        let rect = group.select('rect.background');
+        if (rect.empty()) {
+            rect = group.append('rect')
+                .attr('class', 'background')
+                .attr('fill', 'white')
+                .attr('stroke-width', 2)
+                .attr('stroke', 'black')
+                .attr('height', height)
+                .attr('width', bounds.width)
+        }
+
+        let bar = group.select('rect.bar')
+        if (bar.empty()) {
+            bar = group.append('rect')
+                .attr('class', 'bar')
+                .attr('width', 2)
+                .style('pointer-events', 'none')
+                .attr('fill', 'black')
+                .attr('height', height)
+        }
+
+        let pointGroup = group.select('g.points')
+        if (pointGroup.empty()) {
+            pointGroup = group.append('g')
+                .attr('class', 'points')
+        }
+
+        let distanceScale = d3.scaleLinear()
+            .domain([0, bounds.width])
+            .range([0, bounds.width])
+
+        const pointSel = pointGroup
+            .selectAll('circle')
+            .data(data)
+
+        pointSel.enter()
+            .append('circle')
+            .merge(pointSel)
+            .attr('fill', params.color)
+            .attr('cx', d => d)
+            .attr('cy', height / 2)
+            .attr('r', 5)
+
+        rect.on('mousemove', function () {
+            const coordinates= d3.mouse(this);
+            const x = coordinates[0];
+
+            bar.style('visibility', 'visible')
+                .attr('x', x)
+        })
+
+        rect.on('mouseout', function () {
+            bar.style('visibility', 'hidden')
+        })
+
+        rect.on('mousedown', function() {
+            const coordinates= d3.mouse(this);
+            const x = coordinates[0];
+            data.push(x)
+            generateChart(group_name, data, params)
+        })
+
+    };
+
+    generateChart('event1', [], { color: 'green' });
+    generateChart('event2', [], { color: 'red', offsetY: height + 20 });
+
+</script>
+</body>
+</html>
