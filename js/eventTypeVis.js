@@ -246,8 +246,8 @@ class EventTypeVis {
             })
             ;
     }
-    
-    
+
+
 
     updateSlider(value) {
         let filteredData = [];
@@ -409,7 +409,7 @@ class SimulationDistance {
         }
 
         data_sum.sort((obj1, obj2) => obj1['min'] - obj2['min']);
-        
+
         console.log(data_sum);
 
         let reOrderedData = [];
@@ -437,14 +437,14 @@ class SimulationDistance {
     //     this.data = data;
     //     this.paramData = paramData;
     //     this.paramDistances = paramDistances;
-        
-        
 
-        
+
+
+
     //     let correlatingEventDistances = this.getCorrelatingEventDistances(data[0], data[1]);
     //     console.log(correlatingEventDistances);
     //     console.log(this.getSimulationDistanceBySum(correlatingEventDistances));
-        
+
     // }
     getSimulationDistanceBySum(correlatingEventDistances){
         let sum = 0;
@@ -453,14 +453,15 @@ class SimulationDistance {
         });
         return sum;
     }
-    
+
     // returns array of distances of sets of points
     getCorrelatingEventDistances(events1,  events2){
         let smallEvents = events1.length < events2.length ? events1 : events2;
         let largeEvents = events1.length > events2.length ? events1 : events2;
-        let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents);
-        let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents);
-        
+        const valueSelector = d => d[' t']
+        let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents, valueSelector);
+        let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents, valueSelector);
+
 
         let correlatingPointsDistances = [];
         for (let i=0; i<largeEventsDistances.length; i++){
@@ -474,23 +475,23 @@ class SimulationDistance {
 
     }
     // returns array of indexes from correlating array of closest event
-    getEventsDistance(events1, events2){
+    getEventsDistance(events1, events2, valueSelector){
         let correlatingEventDistances = [];
         for (let i=0; i<events1.length; i++){
-            correlatingEventDistances.push(this.getClosestEventIndex(events1[i][' t'], events2) );
+            correlatingEventDistances.push(this.getClosestEventIndex(valueSelector(events1[i]), events2, valueSelector) );
         }
         return correlatingEventDistances;
     }
 
     // returns index of closest event in correlating array
-    getClosestEventIndex(value, arr){
+    getClosestEventIndex(value, arr, valueSelector){
         let minIndex = 0;
         let minValue = Number.MAX_SAFE_INTEGER;
-        
-        
+
+
 
         for (let i=0; i<arr.length; i++){
-            let difference = Math.abs(value - arr[i][' t']);
+            let difference = Math.abs(value - valueSelector(arr[i]));
             if (difference < minValue){
                 minValue = difference;
                 minIndex = i;
@@ -500,7 +501,7 @@ class SimulationDistance {
         return minIndex;
     }
 
-    
+
 
 
 }

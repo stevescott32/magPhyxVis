@@ -12,10 +12,18 @@
             width: 80vw;
             height: 80vh;
         }
+
+        header button {
+            padding: 10px 20px;
+        }
     </style>
 </head>
 <body>
 <div id="root">
+    <header>
+        <button class="match-a-to-b">MATCH A TO B</button>
+        <button class="match-b-to-a">MATCH B TO A</button>
+    </header>
     <div class="content">
         <svg width="100%" height="100%">
 
@@ -29,7 +37,7 @@
 
     const root = d3.select('#root');
 
-    const svg = d3.select('svg');
+    const svg = root.select('svg');
 
     const bounds = svg.node().getBoundingClientRect();
 
@@ -76,6 +84,7 @@
         if (pointGroup.empty()) {
             pointGroup = group.append('g')
                 .attr('class', 'points')
+                .attr('pointer-events', 'none')
         }
 
         let distanceScale = d3.scaleLinear()
@@ -115,8 +124,58 @@
 
     };
 
-    generateChart('event1', [], { color: 'green' });
-    generateChart('event2', [], { color: 'red', offsetY: height + 20 });
+    const dataA = [];
+    const dataB = [];
+
+    const getGroupOffset = (index = 0) => index * (height + 20);
+    const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
+    const sd = new SimulationDistance();
+
+    const drawCorrelation = (data1, data2, index1, index2, color) => {
+        const indices = sd.getEventsDistance(data1, data2, d => d)
+
+        const distanceScale = d3.scaleLinear()
+            .domain([0, bounds.width])
+            .range([0, bounds.width])
+
+        let arrows = svg.select('g.arrows')
+        if (arrows.empty()) {
+            arrows = svg.append('g')
+                .attr('class', 'arrows')
+        }
+
+        const arrowSel = arrows.selectAll('line')
+            .data(indices);
+
+        arrowSel.enter()
+            .append('line')
+            .merge(arrowSel)
+            .attr('x1', (_, i) => distanceScale(data1[i]))
+            .attr('y1', getYMid(index1))
+            .attr('x2', (d, i) => distanceScale(data2[d]))
+            .attr('y2', getYMid(index2))
+            .attr('stroke', color)
+            .attr('stroke-width', 2);
+
+        arrowSel.exit()
+            .remove();
+
+    }
+
+    const register_button_handlers = () => {
+        root.select('.match-a-to-b').on('click', function() {
+            drawCorrelation(dataA, dataB, 0, 1, 'green')
+        })
+        root.select('.match-b-to-a').on('click', function() {
+            drawCorrelation(dataB, dataA, 1, 0, 'red')
+        })
+    }
+
+    register_button_handlers()
+
+    generateChart('event1', dataA, { color: 'green' });
+    generateChart('event2', dataB, { color: 'red', offsetY: getGroupOffset(1) });
+
 
 </script>
 </body>
