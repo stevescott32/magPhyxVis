@@ -122,72 +122,53 @@ class EventTypeVis {
         this.originalParamData = [...paramData];
         this.originalDistances = [...distances];
 
-        // append a slider
-        const sliderContainer = this.createSlider(
-            d3.select(`#${this.divId}`),
-            'filter-slider-container',
-            'Filter Param Distances',
-            function() {
-                self.updateSlider(this.value)
-            }
-        )
+        const sliders = d3.select(`#${this.divId}`).select('.sliders');
 
-        let slider = sliderContainer.select('input')
+        sliders.select('.filter-distances')
+            .select('input')
             .attr('min', this.diffMin)
             .attr('max', this.diffMax)
             .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
+            .on('click', function() {
+                self.updateSlider(+this.value)
+            })
 
-        // append a slider
         const minw = 200, maxw = window.innerWidth;
-        const widthSliderContainer = this.createSlider(
-            d3.select(`#${this.divId}`),
-            'width-slider-container',
-            'Graph Width',
-            function() {
-                self.config.width = +this.value;
-                self.updateHelper(data, paramData, distances);
-            }
-        )
-
-        widthSliderContainer.select('input')
+        sliders.select('.graph-width')
+            .select('input')
             .attr('min', minw)
             .attr('value', self.config.width)
             .attr('max', maxw)
             .attr('step', 0.1)
+            .on('click', function() {
+                self.config.width = +this.value;
+                self.updateHelper(data, paramData, distances);
+            })
 
         const minh = 200, maxh = window.innerHeight * 10;
-        const heightSliderContainer = this.createSlider(
-            d3.select(`#${this.divId}`),
-            'height-slider-container',
-            'Graph Height',
-            function() {
-                self.config.height = +this.value;
-                self.updateHelper(data, paramData, distances);
-            }
-        )
-
-        heightSliderContainer.select('input')
+        sliders.select('.graph-height')
+            .select('input')
             .attr('min', minh)
             .attr('value', self.config.height)
             .attr('max', maxh)
             .attr('step', 0.1)
+            .on('click', function() {
+                self.config.height = +this.value;
+                self.updateHelper(data, paramData, distances);
+            })
 
         const minr = 2, maxr = 10;
-        const circleRadiusSliderContainer = this.createSlider(
-            d3.select(`#${this.divId}`),
-            'circle-slider-container',
-            'Circle Radius',
-            function() {
-                self.circleSize = +this.value;
-                self.updateHelper(data, paramData, distances);
-            }
-        )
-
-        circleRadiusSliderContainer.select('input')
+        sliders.select('.circle-radius')
+            .select('input')
             .attr('min', minr)
             .attr('value', self.circleSize)
             .attr('max', maxr)
             .attr('step', 0.1)
+            .on('click', function() {
+                self.circleSize = +this.value;
+                self.updateHelper(data, paramData, distances);
+            })
+
         this.updateHelper(data, paramData, distances);
 
     }
@@ -263,8 +244,6 @@ class EventTypeVis {
 
     // update the event type vis with the new data
     updateHelper(data, paramData, distances) {
-        this.orderedData = data;
-
         const self = this;
 
         if (null == data) { return; }
@@ -310,6 +289,7 @@ class EventTypeVis {
 
         const distanceBarsSel = this.svg.selectAll('.distanceBars')
             .data(distances)
+
         distanceBarsSel
             .enter()
             .append('rect')
@@ -323,7 +303,6 @@ class EventTypeVis {
             })
             .attr('height', 1)
             .attr('class', 'distanceBars')
-            ;
 
         this.svg.selectAll('g.axis').remove();
         let xaxis = this.svg.append('g').attr('class', 'axis')
@@ -403,26 +382,22 @@ class EventTypeVis {
                 return Utils.getFill(d[' event_type']);
             })
             .on('mouseover', function (d) {
-                d3.select(this)
-                    .attr('r', () => { return self.circleSize * self.highlightScale; });
                 if (self.state.match) {
-                    if (self.state.match.hover != null) {
-                        self.unhighlightSimulation(self.state.match.hover)
-                    }
                     self.state.match.hover = d.simulationIndex
                     self.highlightSimulation(d.simulationIndex)
                 }
                 scatter.highlightSimulation(d.index);
                 paramVis.highlightSimulation(d.index);
+                d3.select(this)
+                    .attr('r', () => { return self.circleSize * self.highlightScale; });
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {
                     if (self.state.match.hover != null) {
-                        if (self.state.match.hover === self.state.match.eventA || self.state.match.hover === self.state.match.eventB) {
-                            return;
+                        if (self.state.match.hover !== self.state.match.eventA && self.state.match.hover !== self.state.match.eventB) {
+                            self.unhighlightSimulation(self.state.match.hover)
+                            delete self.state.match.hover
                         }
-                        self.unhighlightSimulation(self.state.match.hover)
-                        delete self.state.match.hover
                     }
                 }
                 d3.select(this)
@@ -450,7 +425,6 @@ class EventTypeVis {
                             self.state.match = {}
                         }
                     }
-                    delete self.state.match.hover
                 } else {
                     // eventVis.updateDimensionComparison(d, paramData);
                     self.colorDimsByDistance(d['parentIndex'], paramData);

@@ -22,8 +22,28 @@
   <div id='event-groups'></div>
   <div id='event-type-vis'>
     <div class="header">
-      <button class="match-a-to-b">Match Event A to B</button>
-      <button class="match-exact">Match Exact</button>
+      <div class="sliders">
+        <div class="slider filter-distances">
+          <div>Filter Param Distances</div>
+          <input type="range" />
+        </div>
+        <div class="slider graph-width">
+          <div>Graph Width</div>
+          <input type="range" />
+        </div>
+        <div class="slider graph-height">
+          <div>Graph Height</div>
+          <input type="range" />
+        </div>
+        <div class="slider circle-radius">
+          <div>Circle Radius</div>
+          <input type="range" />
+        </div>
+      </div>
+      <div>
+        <button class="match-a-to-b">Match Event A to B</button>
+        <button class="match-exact">Match Exact</button>
+      </div>
     </div>
   </div>
   <div id="scatter"></div>
