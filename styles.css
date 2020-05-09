@@ -1,5 +1,14 @@
 .event-highlighted {
-    fill: black; 
+    fill: black !important;
     stroke: grey; 
     stroke-width: 1;
+}
+
+.header button {
+    padding: 20px 40px;
+}
+
+.header button.match {
+    background: silver;
+    border: 1px solid black;
 }

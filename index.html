@@ -13,14 +13,19 @@
   <script type="application/javascript" src="js/eventTypeVis.js"></script>
   <script type="application/javascript" src="js/paramsVis.js"></script>
   <script type="application/javascript" src="js/scatter.js"></script>
-  <script type="application/javascript" src="js/script.js"></script>
+  <script type="application/javascript" defer src="js/script.js"></script>
 </head>
 
 <body>
   <div id="debug"></div>
   <div id="param-vis"></div>
   <div id='event-groups'></div>
-  <div id='event-type-vis'></div>
+  <div id='event-type-vis'>
+    <div class="header">
+      <button class="match-a-to-b">Match Event A to B</button>
+      <button class="match-exact">Match Exact</button>
+    </div>
+  </div>
   <div id="scatter"></div>
 
   <br />

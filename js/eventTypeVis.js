@@ -20,7 +20,30 @@ class EventTypeVis {
             stepCount: 30, // how many steps the slider should have
         };
 
+        this.state = {
+            match: null
+        }
+
         this.divId = 'event-type-vis';
+
+        this.registerHeaderEvents();
+    }
+
+    registerHeaderEvents() {
+        const root = d3.select('#' + this.divId)
+        const header = root.select('.header')
+        const self = this;
+        header.select('.match-a-to-b')
+            .on('click', function () {
+                const prevMatch = this.classList.contains("match")
+                if (prevMatch) {
+                    this.classList.remove('match')
+                    self.state.matchh = null;
+                } else {
+                    this.classList.add('match')
+                    self.state.match = {}
+                }
+            })
     }
 
     setParamVis(paramVis) {
@@ -114,6 +137,7 @@ class EventTypeVis {
 
         widthSliderContainer.select('input')
             .attr('min', minw)
+            .attr('value', self.config.width)
             .attr('max', maxw)
             .attr('step', 0.1)
 
@@ -130,15 +154,34 @@ class EventTypeVis {
 
         heightSliderContainer.select('input')
             .attr('min', minh)
+            .attr('value', self.config.height)
             .attr('max', maxh)
             .attr('step', 0.1)
 
+        const minr = 2, maxr = 10;
+        const circleRadiusSliderContainer = this.createSlider(
+            d3.select(`#${this.divId}`),
+            'circle-slider-container',
+            'Circle Radius',
+            function() {
+                self.circleSize = +this.value;
+                self.updateHelper(data, paramData, distances);
+            }
+        )
+
+        circleRadiusSliderContainer.select('input')
+            .attr('min', minr)
+            .attr('value', self.circleSize)
+            .attr('max', maxr)
+            .attr('step', 0.1)
         this.updateHelper(data, paramData, distances);
 
     }
 
     // update the event type vis with the new data
     updateHelper(data, paramData, distances) {
+        const self = this;
+
         if (null == data) { return; }
         console.log('distances', distances);
 
@@ -269,23 +312,47 @@ class EventTypeVis {
             .on('mouseover', function (d) {
                 d3.select(this)
                     .attr('r', () => { return eventVis.circleSize * eventVis.highlightScale; });
+                if (self.state.match && self.state.match.eventB == null) {
+                    if (self.state.match.hover != null) {
+                        self.unhighlightSimulation(self.state.match.hover)
+                    }
+                    self.state.match.hover = d.simulationIndex
+                    self.highlightSimulation(d.simulationIndex)
+                }
                 scatter.highlightSimulation(d.index);
                 paramVis.highlightSimulation(d.index);
             })
             .on('mouseout', function (d) {
+                if (self.state.match) {
+                    if (self.state.match.hover != null) {
+                        self.unhighlightSimulation(self.state.match.hover)
+                        delete self.state.match.hover
+                    }
+                }
                 d3.select(this)
                     .attr('r', () => { return eventVis.circleSize; });
                 scatter.unhighlightSimulation(d.index);
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
-                // eventVis.updateDimensionComparison(d, paramData);
-                eventVis.colorDimsByDistance(d['parentIndex'], paramData);
+                if (self.state.match) {
+                    if (self.state.match.eventA == null) {
+                        self.state.match.eventA = d.simulationIndex
+                        self.highlightSimulation(d.simulationIndex);
+                    } else if (self.state.match.eventB == null) {
+                        self.state.match.eventB = d.simulationIndex
+                        self.highlightSimulation(d.simulationIndex);
+                    }
+                    delete self.state.match.hover
+                } else {
+                    // eventVis.updateDimensionComparison(d, paramData);
+                    eventVis.colorDimsByDistance(d['parentIndex'], paramData);
 
-                let simulationDistances = new SimulationDistance();
-                let reorderedDta = simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
+                    let simulationDistances = new SimulationDistance();
+                    let reorderedDta = simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
 
-                eventVis.update(reorderedDta, eventVis.originalParamData, eventVis.originalDistances);
+                    eventVis.update(reorderedDta, eventVis.originalParamData, eventVis.originalDistances);
+                }
             })
             ;
     }
