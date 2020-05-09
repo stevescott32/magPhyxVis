@@ -18,7 +18,8 @@ class EventTypeVis {
             },
             tolerance: 0.1, // amount to add to the slider max for floating comparison
             stepCount: 30, // how many steps the slider should have
-            filterTimeThreshold: 100
+            filterTimeThreshold: 100,
+            distanceThreshold: null
         };
 
         this.state = {
@@ -51,8 +52,8 @@ class EventTypeVis {
         if (!this.state.match) {
             return;
         }
-        this.unhighlightSimulation(this.state.match.eventA)
-        this.unhighlightSimulation(this.state.match.eventB)
+        this.unhighlightSimulation(this.state.match.eventA.simulationIndex)
+        this.unhighlightSimulation(this.state.match.eventB.simulationIndex)
         const root = d3.select('#' + this.divId)
         root.select('svg').select('g.arrows').remove()
         this.state.match = null;
@@ -96,21 +97,6 @@ class EventTypeVis {
             ;
     }
 
-    // creates a slider if it doesn't exist
-    createSlider(root, className, title, onSliderClick) {
-        let sliderContainer = root.select('div.' + className);
-        if (sliderContainer.empty()) {
-            sliderContainer = root.append('div').attr('class', className)
-            sliderContainer.append('p')
-                .text(title)
-            sliderContainer.append('input')
-                .attr('class', 'eventTypeSlider')
-                .attr('type', 'range')
-                .on('click', onSliderClick)
-        }
-        return sliderContainer;
-    }
-
     // methods outside of this class should call this update method,
     // not the update helper
     update(data, paramData, distances) {
@@ -122,7 +108,8 @@ class EventTypeVis {
         this.originalParamData = [...paramData];
         this.originalDistances = [...distances];
 
-        const sliders = d3.select(`#${this.divId}`).select('.sliders');
+        const root = d3.select(`#${this.divId}`)
+        const sliders = root.select('.sliders');
 
         sliders.select('.filter-distances')
             .select('input')
@@ -130,7 +117,14 @@ class EventTypeVis {
             .attr('max', this.diffMax)
             .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
             .on('click', function() {
-                self.updateSlider(+this.value)
+                self.config.distanceThreshold = +this.value;
+                // because events may not be in the new data set
+                if (self.state.match) {
+                    self.removeEventsMatch()
+                    root.select('.header').select('.match-a-to-b')
+                        .dispatch('click')
+                }
+                self.updateHelper(data, paramData, distances);
             })
 
         const minw = 200, maxw = window.innerWidth;
@@ -145,7 +139,7 @@ class EventTypeVis {
                 self.updateHelper(data, paramData, distances);
             })
 
-        const minh = 200, maxh = window.innerHeight * 10;
+        const minh = 200, maxh = window.innerHeight * 5;
         sliders.select('.graph-height')
             .select('input')
             .attr('min', minh)
@@ -173,17 +167,18 @@ class EventTypeVis {
 
     }
 
-    correlateEvents(simulationIndexA, simulationIndexB) {
+    correlateEvents(infoA, infoB) {
         const simulationDistance = new SimulationDistance();
         const data = this.getTimeFilteredData(this.originalData)
-        const dataA = data[simulationIndexA]
-        const dataB = data[simulationIndexB]
+        const dataA = data[infoA.simulationIndex]
+        const dataB = data[infoB.simulationIndex]
+        console.log({infoA, infoB})
 
         const indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t'])
 
-        const timeScale = this.getTimeScale(data);
+        const timeScale = this.getTimeScale(this.lastRenderedData);
 
-        const eventCountScale = this.getEventCountScale(data);
+        const eventCountScale = this.getEventCountScale(this.lastRenderedData);
 
         const svg = d3.select(`#${this.divId}`).select('svg')
         let arrows = svg.select('g.arrows')
@@ -195,8 +190,8 @@ class EventTypeVis {
         const arrowSel = arrows.selectAll('line')
             .data(indices);
 
-        const posSimulationIndexA = simulationIndexA;
-        const posSimulationIndexB = simulationIndexB;
+        const posSimulationIndexA = infoA.renderIndex;
+        const posSimulationIndexB = infoB.renderIndex;
 
         arrowSel.enter()
             .append('line')
@@ -248,11 +243,15 @@ class EventTypeVis {
 
         if (null == data) { return; }
 
+        if (this.config.distanceThreshold) {
+            [data, paramData, distances] = this.getDataFilteredByDistance(this.config.distanceThreshold)
+        }
+        this.getTimeFilteredData(data).forEach((d, i) => data[i] = d)
+        this.lastRenderedData = data;
+
         if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
             self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
         }
-
-        this.getTimeFilteredData(data).forEach((d, i) => data[i] = d)
 
         let timeScale = this.getTimeScale(data)
 
@@ -289,6 +288,8 @@ class EventTypeVis {
 
         const distanceBarsSel = this.svg.selectAll('.distanceBars')
             .data(distances)
+
+        distanceBarsSel.exit().remove();
 
         distanceBarsSel
             .enter()
@@ -342,7 +343,12 @@ class EventTypeVis {
             .text('Simulation')
             ;
 
-        const simsSel = this.svg.selectAll('.oneSimulation')
+        let simulationGroup = this.svg.select('g.simulations')
+        if (simulationGroup.empty()) {
+            simulationGroup = this.svg.append('g')
+                .attr('class', 'simulations')
+        }
+        const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data)
 
         const sims = simsSel
@@ -394,7 +400,10 @@ class EventTypeVis {
             .on('mouseout', function (d) {
                 if (self.state.match) {
                     if (self.state.match.hover != null) {
-                        if (self.state.match.hover !== self.state.match.eventA && self.state.match.hover !== self.state.match.eventB) {
+                        const indexA = (self.state.match.eventA || {}).simulationIndex;
+                        const indexB = (self.state.match.eventB || {}).simulationIndex;
+
+                        if (self.state.match.hover !== indexA && self.state.match.hover !== indexB) {
                             self.unhighlightSimulation(self.state.match.hover)
                             delete self.state.match.hover
                         }
@@ -407,17 +416,21 @@ class EventTypeVis {
             })
             .on('click', function (d, i) {
                 if (self.state.match) {
-                    if (self.state.match.eventA != null && self.state.match.eventB != null) {
+                    if (self.state.match.eventA && self.state.match.eventB) {
                         // there was an old match
                         self.removeEventsMatch()
                         self.state.match = {}
                     }
-                    if (self.state.match.eventA == null) {
-                        self.state.match.eventA = d.simulationIndex
+                    if (!self.state.match.eventA) {
+                        const simulationGroup = this.parentNode;
+                        const renderIndex = [...simulationGroup.parentNode.children].indexOf(simulationGroup)
+                        self.state.match.eventA = { simulationIndex: d.simulationIndex, renderIndex }
                         self.highlightSimulation(d.simulationIndex);
-                    } else if (self.state.match.eventB == null) {
+                    } else if (!self.state.match.eventB) {
                         if (d.simulationIndex !== self.state.match.eventA) {
-                            self.state.match.eventB = d.simulationIndex
+                            const simulationGroup = this.parentNode;
+                            const renderIndex = [...simulationGroup.parentNode.children].indexOf(simulationGroup)
+                            self.state.match.eventB = { simulationIndex: d.simulationIndex, renderIndex }
                             self.highlightSimulation(d.simulationIndex);
                             self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
                         } else {
@@ -440,7 +453,7 @@ class EventTypeVis {
 
 
 
-    updateSlider(value) {
+    getDataFilteredByDistance(value) {
         let filteredData = [];
         let filteredPamaData = [];
         let filteredDistances = [];
@@ -453,7 +466,7 @@ class EventTypeVis {
             }
         }
         console.log('Filtered data', filteredData);
-        this.updateHelper(filteredData, filteredPamaData, filteredDistances);
+        return [filteredData, filteredPamaData, filteredDistances]
     }
 
     colorDimsByDistance(pointIndex, paramData) {
