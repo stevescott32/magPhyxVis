@@ -48,6 +48,9 @@ class EventTypeVis {
     }
 
     removeEventsMatch() {
+        if (!this.state.match) {
+            return;
+        }
         this.unhighlightSimulation(this.state.match.eventA)
         this.unhighlightSimulation(this.state.match.eventB)
         const root = d3.select('#' + this.divId)
@@ -111,6 +114,8 @@ class EventTypeVis {
     // methods outside of this class should call this update method,
     // not the update helper
     update(data, paramData, distances) {
+        const self = this;
+
         this.diffMin = d3.min(distances);
         this.diffMax = d3.max(distances) + this.config.tolerance;
         this.originalData = [...data];
@@ -126,7 +131,7 @@ class EventTypeVis {
                 self.updateSlider(this.value)
             }
         )
-        const self = this;
+
         let slider = sliderContainer.select('input')
             .attr('min', this.diffMin)
             .attr('max', this.diffMax)
@@ -209,13 +214,16 @@ class EventTypeVis {
         const arrowSel = arrows.selectAll('line')
             .data(indices);
 
+        const posSimulationIndexA = simulationIndexA;
+        const posSimulationIndexB = simulationIndexB;
+
         arrowSel.enter()
             .append('line')
             .merge(arrowSel)
             .attr('x1', (_, i) => timeScale(dataA[i][' t']))
-            .attr('y1', eventCountScale(simulationIndexA))
+            .attr('y1', eventCountScale(posSimulationIndexA))
             .attr('x2', (d, i) => timeScale(dataB[d][' t']))
-            .attr('y2', eventCountScale(simulationIndexB))
+            .attr('y2', eventCountScale(posSimulationIndexB))
             .attr('stroke', 'green')
             .attr('stroke-width', 2);
 
@@ -255,6 +263,8 @@ class EventTypeVis {
 
     // update the event type vis with the new data
     updateHelper(data, paramData, distances) {
+        this.orderedData = data;
+
         const self = this;
 
         if (null == data) { return; }
@@ -359,12 +369,11 @@ class EventTypeVis {
         const sims = simsUpd
             .enter()
             .append('g')
-            .attr('class', (d, i) => { return `oneSimulation group${i}`; })
             .merge(simsUpd)
+            .attr('class', (d, i) => { return `oneSimulation group${d[0].simulationIndex}`; })
 
         sims.exit().remove();
 
-        let eventVis = this;
         let paramVis = this.paramVis;
         let scatter = this.scatter;
 
@@ -395,8 +404,8 @@ class EventTypeVis {
             })
             .on('mouseover', function (d) {
                 d3.select(this)
-                    .attr('r', () => { return eventVis.circleSize * eventVis.highlightScale; });
-                if (self.state.match && self.state.match.eventB == null) {
+                    .attr('r', () => { return self.circleSize * self.highlightScale; });
+                if (self.state.match) {
                     if (self.state.match.hover != null) {
                         self.unhighlightSimulation(self.state.match.hover)
                     }
@@ -409,18 +418,21 @@ class EventTypeVis {
             .on('mouseout', function (d) {
                 if (self.state.match) {
                     if (self.state.match.hover != null) {
+                        if (self.state.match.hover === self.state.match.eventA || self.state.match.hover === self.state.match.eventB) {
+                            return;
+                        }
                         self.unhighlightSimulation(self.state.match.hover)
                         delete self.state.match.hover
                     }
                 }
                 d3.select(this)
-                    .attr('r', () => { return eventVis.circleSize; });
+                    .attr('r', () => { return self.circleSize; });
                 scatter.unhighlightSimulation(d.index);
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
                 if (self.state.match) {
-                    if (self.state.match.eventA != null & self.state.match.eventB != null) {
+                    if (self.state.match.eventA != null && self.state.match.eventB != null) {
                         // there was an old match
                         self.removeEventsMatch()
                         self.state.match = {}
@@ -429,19 +441,24 @@ class EventTypeVis {
                         self.state.match.eventA = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex);
                     } else if (self.state.match.eventB == null) {
-                        self.state.match.eventB = d.simulationIndex
-                        self.highlightSimulation(d.simulationIndex);
-                        self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
+                        if (d.simulationIndex !== self.state.match.eventA) {
+                            self.state.match.eventB = d.simulationIndex
+                            self.highlightSimulation(d.simulationIndex);
+                            self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
+                        } else {
+                            self.removeEventsMatch()
+                            self.state.match = {}
+                        }
                     }
                     delete self.state.match.hover
                 } else {
                     // eventVis.updateDimensionComparison(d, paramData);
-                    eventVis.colorDimsByDistance(d['parentIndex'], paramData);
+                    self.colorDimsByDistance(d['parentIndex'], paramData);
 
                     let simulationDistances = new SimulationDistance();
-                    let reorderedDta = simulationDistances.reorder(eventVis.originalData, d3.select(this).attr("simulationIndex"));
+                    let reorderedDta = simulationDistances.reorder(self.originalData, d3.select(this).attr("simulationIndex"));
 
-                    eventVis.update(reorderedDta, eventVis.originalParamData, eventVis.originalDistances);
+                    self.update(reorderedDta, self.originalParamData, self.originalDistances);
                 }
             })
             ;

@@ -82,7 +82,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       for (let i = 0; i < points.length; i++) {
           orderedData.push(points[i].data);
       }
-    }     
+    }
 
     // split the ordered data into params and event data
     let orderedParamData = [];
@@ -131,6 +131,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
         })
         console.log("filtered data: " );
         console.log(filteredData);
+        eventTypeVis.removeEventsMatch()
         eventTypeVis.update(filteredData, orderedParamData, distances);
         
       })
