@@ -61,6 +61,21 @@ class EventTypeVis {
             ;
     }
 
+    // creates a slider if it doesn't exist
+    createSlider(root, className, title, onSliderClick) {
+        let sliderContainer = root.select('div.' + className);
+        if (sliderContainer.empty()) {
+            sliderContainer = root.append('div').attr('class', className)
+            sliderContainer.append('p')
+                .text(title)
+            sliderContainer.append('input')
+                .attr('class', 'eventTypeSlider')
+                .attr('type', 'range')
+                .on('click', onSliderClick)
+        }
+        return sliderContainer;
+    }
+
     // methods outside of this class should call this update method,
     // not the update helper
     update(data, paramData, distances) {
@@ -71,24 +86,52 @@ class EventTypeVis {
         this.originalDistances = [...distances];
 
         // append a slider
-        d3.selectAll('.eventTypeSlider').remove();
-        d3.select(`#${this.divId}`)
-            .append('p')
-            .text('Filter Param Distances')
-            ;
-        let slider = d3.select(`#${this.divId}`)
-            .append('input')
-            .attr('class', 'eventTypeSlider')
-            .attr('type', 'range')
-            .attr('name', 'Filter Points')
+        const sliderContainer = this.createSlider(
+            d3.select(`#${this.divId}`),
+            'filter-slider-container',
+            'Filter Param Distances',
+            function() {
+                self.updateSlider(this.value)
+            }
+        )
+        const self = this;
+        let slider = sliderContainer.select('input')
             .attr('min', this.diffMin)
             .attr('max', this.diffMax)
             .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
-            .attr('onclick', 'eventTypeVis.updateSlider(this.value)')
-            ;
-        d3.select(`#${this.divId}`)
-            .append('br')
-            .attr('class', 'eventTypeSlider')
+
+        // append a slider
+        const minw = 200, maxw = window.innerWidth;
+        const widthSliderContainer = this.createSlider(
+            d3.select(`#${this.divId}`),
+            'width-slider-container',
+            'Graph Width',
+            function() {
+                self.config.width = +this.value;
+                self.updateHelper(data, paramData, distances);
+            }
+        )
+
+        widthSliderContainer.select('input')
+            .attr('min', minw)
+            .attr('max', maxw)
+            .attr('step', 0.1)
+
+        const minh = 200, maxh = window.innerHeight * 10;
+        const heightSliderContainer = this.createSlider(
+            d3.select(`#${this.divId}`),
+            'height-slider-container',
+            'Graph Height',
+            function() {
+                self.config.height = +this.value;
+                self.updateHelper(data, paramData, distances);
+            }
+        )
+
+        heightSliderContainer.select('input')
+            .attr('min', minh)
+            .attr('max', maxh)
+            .attr('step', 0.1)
 
         this.updateHelper(data, paramData, distances);
 
@@ -154,7 +197,7 @@ class EventTypeVis {
             .attr('x', (d, i) => {
                 return 20 - distanceScale(d);
             })
-            .attr('y', (d, i) => { return this.config.padding.top + i * this.circleSize * 2; })
+            .attr('y', (d, i) => { return eventCountScale(i) })
             .attr('width', (d) => {
                 return distanceScale(d)
             })
@@ -217,7 +260,7 @@ class EventTypeVis {
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
-            .attr('cy', d => { return this.config.padding.top + d.parentIndex * this.circleSize * 2; })
+            .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
                 if (+d[' t'] > 50) { return 'white'; }
