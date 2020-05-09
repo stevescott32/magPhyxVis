@@ -342,16 +342,16 @@ class EventTypeVis {
             .text('Simulation')
             ;
 
-        const simsUpd = this.svg.selectAll('.oneSimulation')
+        const simsSel = this.svg.selectAll('.oneSimulation')
             .data(data)
 
-        const sims = simsUpd
+        const sims = simsSel
             .enter()
             .append('g')
-            .merge(simsUpd)
+            .merge(simsSel)
             .attr('class', (d, i) => { return `oneSimulation group${d[0].simulationIndex}`; })
 
-        sims.exit().remove();
+        simsSel.exit().remove();
 
         let paramVis = this.paramVis;
         let scatter = this.scatter;
