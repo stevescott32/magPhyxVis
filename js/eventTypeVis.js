@@ -18,6 +18,7 @@ class EventTypeVis {
             },
             tolerance: 0.1, // amount to add to the slider max for floating comparison
             stepCount: 30, // how many steps the slider should have
+            filterTimeThreshold: 100
         };
 
         this.state = {
@@ -38,12 +39,20 @@ class EventTypeVis {
                 const prevMatch = this.classList.contains("match")
                 if (prevMatch) {
                     this.classList.remove('match')
-                    self.state.matchh = null;
+                    self.removeEventsMatch()
                 } else {
                     this.classList.add('match')
                     self.state.match = {}
                 }
             })
+    }
+
+    removeEventsMatch() {
+        this.unhighlightSimulation(this.state.match.eventA)
+        this.unhighlightSimulation(this.state.match.eventB)
+        const root = d3.select('#' + this.divId)
+        root.select('svg').select('g.arrows').remove()
+        this.state.match = null;
     }
 
     setParamVis(paramVis) {
@@ -178,20 +187,52 @@ class EventTypeVis {
 
     }
 
-    // update the event type vis with the new data
-    updateHelper(data, paramData, distances) {
-        const self = this;
+    correlateEvents(simulationIndexA, simulationIndexB) {
+        const simulationDistance = new SimulationDistance();
+        const data = this.getTimeFilteredData(this.originalData)
+        const dataA = data[simulationIndexA]
+        const dataB = data[simulationIndexB]
 
-        if (null == data) { return; }
-        console.log('distances', distances);
+        const indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t'])
 
-        for (let i = 0; i < data.length; i++) {
-            data[i] = data[i].filter(d => {
-                return +d[' t'] < 100;
-            })
+        const timeScale = this.getTimeScale(data);
+
+        const eventCountScale = this.getEventCountScale(data);
+
+        const svg = d3.select(`#${this.divId}`).select('svg')
+        let arrows = svg.select('g.arrows')
+        if (arrows.empty()) {
+            arrows = svg.append('g')
+                .attr('class', 'arrows')
         }
 
-        let timeScale = d3.scaleLinear()
+        const arrowSel = arrows.selectAll('line')
+            .data(indices);
+
+        arrowSel.enter()
+            .append('line')
+            .merge(arrowSel)
+            .attr('x1', (_, i) => timeScale(dataA[i][' t']))
+            .attr('y1', eventCountScale(simulationIndexA))
+            .attr('x2', (d, i) => timeScale(dataB[d][' t']))
+            .attr('y2', eventCountScale(simulationIndexB))
+            .attr('stroke', 'green')
+            .attr('stroke-width', 2);
+
+        arrowSel.exit()
+            .remove();
+
+    }
+
+    getEventCountScale(data) {
+        return d3.scaleLinear()
+            .domain([0, data.length])
+            .range([this.config.padding.top, this.config.height + this.config.padding.top])
+        ;
+    }
+
+    getTimeScale(data) {
+        return d3.scaleLinear()
             .domain(
                 [0, d3.max(data, (sim) => {
                     return d3.max(sim, (d) => {
@@ -200,21 +241,45 @@ class EventTypeVis {
                 })]
             )
             .range([this.config.padding.left, 2 * this.config.width + this.config.padding.left])
-            ;
+    }
 
-        let eventCountScale = d3.scaleLinear()
-            .domain([0, data.length])
-            .range([this.config.padding.top, this.config.height + this.config.padding.top])
-            ;
+    getTimeFilteredData(data) {
+        data = [...data]
+        for (let i = 0; i < data.length; i++) {
+            data[i] = data[i].filter(d => {
+                return +d[' t'] < this.config.filterTimeThreshold;
+            })
+        }
+        return data;
+    }
 
-        d3.selectAll('.event-type-vis').remove();
-        this.svg = d3.select(`#${this.divId}`)
-            .append('svg')
-            .attr('class', 'event-type-vis')
-            .attr('id', 'event-type-svg')
-            .attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
+    // update the event type vis with the new data
+    updateHelper(data, paramData, distances) {
+        const self = this;
+
+        if (null == data) { return; }
+
+        if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
+            self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
+        }
+
+        this.getTimeFilteredData(data).forEach((d, i) => data[i] = d)
+
+        let timeScale = this.getTimeScale(data)
+
+        let eventCountScale = this.getEventCountScale(data);
+
+        const root = d3.select(`#${this.divId}`);
+
+        this.svg = root.select('svg.event-type-vis')
+        if (this.svg.empty()) {
+            this.svg = root.append('svg')
+                .attr('class', 'event-type-vis')
+                .attr('id', 'event-type-svg')
+        }
+
+        this.svg.attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
-            ;
 
         let distanceScale = d3.scaleLinear()
             .domain([d3.min(distances), d3.max(distances)])
@@ -233,10 +298,12 @@ class EventTypeVis {
             .attr('class', 'dimSvg')
             ;
 
-        let distanceBars = this.svg.selectAll('.distanceBars')
+        const distanceBarsSel = this.svg.selectAll('.distanceBars')
             .data(distances)
+        distanceBarsSel
             .enter()
             .append('rect')
+            .merge(distanceBarsSel)
             .attr('x', (d, i) => {
                 return 20 - distanceScale(d);
             })
@@ -248,10 +315,11 @@ class EventTypeVis {
             .attr('class', 'distanceBars')
             ;
 
-        let xaxis = this.svg.append('g')
+        this.svg.selectAll('g.axis').remove();
+        let xaxis = this.svg.append('g').attr('class', 'axis')
             .attr('transform', `translate(0, ${this.config.padding.left + 10})`)
             ;
-        let yaxis = this.svg.append('g')
+        let yaxis = this.svg.append('g').attr('class', 'axis')
             .attr('transform', `translate(${this.config.padding.top - 30}, 0)`)
             ;
 
@@ -264,42 +332,58 @@ class EventTypeVis {
         xaxis.call(topAxis);
         yaxis.call(leftAxis);
 
-        this.svg.append('text')
-            .attr('x', timeScale(25))
+        let labels = this.svg.select('g.labels')
+        if (labels.empty()) {
+            labels = this.svg.append('g')
+                .attr('class', 'labels')
+        } else {
+            labels.selectAll('text').remove();
+        }
+
+        labels.append('text')
+            .attr('x', this.config.padding.left + this.config.width / 2)
             .attr('y', this.config.padding.top / 2)
             .text('Time')
             ;
 
-        this.svg.append('g')
+        labels.append('text')
             .attr('transform', `rotate(-90)`)
-            .append('text')
             .attr('y', this.config.padding.left / 2)
-            .attr('x', -1 * eventCountScale(50))
+            .attr('x', -(this.config.padding.top + this.config.height / 2))
             .text('Simulation')
             ;
 
-        let sims = this.svg.selectAll('.oneSimulation')
+        const simsUpd = this.svg.selectAll('.oneSimulation')
             .data(data)
+
+        const sims = simsUpd
             .enter()
             .append('g')
             .attr('class', (d, i) => { return `oneSimulation group${i}`; })
-            ;
+            .merge(simsUpd)
+
+        sims.exit().remove();
 
         let eventVis = this;
         let paramVis = this.paramVis;
         let scatter = this.scatter;
 
         // append a circle for every event in the vis
-        sims.selectAll('circle')
+        const circleSel = sims.selectAll('circle')
             .data((d, i) => {
                 data = d;
                 for (let a = 0; a < data.length; a++) {
                     data[a]['parentIndex'] = i;
                 }
                 return data;
-            })
+            });
+
+        circleSel.exit().remove();
+
+        circleSel
             .enter()
             .append('circle')
+            .merge(circleSel)
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
@@ -336,12 +420,18 @@ class EventTypeVis {
             })
             .on('click', function (d, i) {
                 if (self.state.match) {
+                    if (self.state.match.eventA != null & self.state.match.eventB != null) {
+                        // there was an old match
+                        self.removeEventsMatch()
+                        self.state.match = {}
+                    }
                     if (self.state.match.eventA == null) {
                         self.state.match.eventA = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex);
                     } else if (self.state.match.eventB == null) {
                         self.state.match.eventB = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex);
+                        self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
                     }
                     delete self.state.match.hover
                 } else {
