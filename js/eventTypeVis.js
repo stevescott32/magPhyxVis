@@ -113,6 +113,12 @@ class EventTypeVis {
         this.originalDistances = [...distances];
 
         const root = d3.select(`#${this.divId}`)
+
+        root.select('.match-exact').on('click', function() {
+            self.state.matchExact = this.checked;
+            self.updateHelper(data, paramData, distances);
+        })
+
         const sliders = root.select('.sliders');
 
         sliders.select('.filter-distances')
@@ -167,18 +173,35 @@ class EventTypeVis {
                 self.updateHelper(data, paramData, distances);
             })
 
+        const mint = 0, maxt = 1200;
+        sliders.select('.time-range')
+            .select('input')
+            .attr('min', mint)
+            .attr('value', self.config.filterTimeThreshold)
+            .attr('max', maxt)
+            .attr('step', 0.1)
+            .on('click', function() {
+                self.config.filterTimeThreshold = +this.value;
+                self.updateHelper(data, paramData, distances);
+            })
+
         this.updateHelper(data, paramData, distances);
 
     }
 
     correlateEvents(infoA, infoB, timeScale, eventCountScale) {
         const simulationDistance = new SimulationDistance();
+
         const dataA = this.filterEventByTimeThreshold(this.originalData[infoA.simulationIndex])
         const dataB = this.filterEventByTimeThreshold(this.originalData[infoB.simulationIndex])
-        console.log({infoA, infoB})
-        console.log({dataA, dataB})
+        console.log(dataA, dataB)
 
-        const indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t'])
+        let indices = []
+        if (this.state.matchExact) {
+            indices = simulationDistance.getCorrelatingEventDistances(dataA, dataB)[1]
+        } else {
+            indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t']).map((d, i) => [i, d])
+        }
 
         const svg = d3.select(`#${this.divId}`).select('svg')
         let arrows = svg.select('g.arrows')
@@ -193,9 +216,9 @@ class EventTypeVis {
         arrowSel.enter()
             .append('line')
             .merge(arrowSel)
-            .attr('x1', (_, i) => timeScale(dataA[i][' t']))
+            .attr('x1', d => timeScale(dataA[d[0]][' t']))
             .attr('y1', eventCountScale(infoA.renderIndex))
-            .attr('x2', (d, i) => timeScale(dataB[d][' t']))
+            .attr('x2', d => timeScale(dataB[d[1]][' t']))
             .attr('y2', eventCountScale(infoB.renderIndex))
             .attr('stroke', 'green')
             .attr('stroke-width', 2);
@@ -615,7 +638,7 @@ class SimulationDistance {
         let main_datum;
         for(let i=0; i<data.length; i++){
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
-            let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
+            let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
             console.log('distance', min, 'sim indx', data[i][0].simulationIndex, i);
             if (i !== simulationIndex) {
                 data_sum.push({
@@ -680,24 +703,25 @@ class SimulationDistance {
 
     // returns array of distances of sets of points
     getCorrelatingEventDistances(events1,  events2){
-        let smallEvents = events1.length < events2.length ? events1 : events2;
-        let largeEvents = events1.length > events2.length ? events1 : events2;
+        let smallEvents = events1
+        let largeEvents = events2
         const valueSelector = d => d[' t']
         let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents, valueSelector);
         let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents, valueSelector);
 
-
         let correlatingPointsDistances = [];
+        const pairs = []
         for (let i=0; i<largeEventsDistances.length; i++){
             let possibleCorrelatingPoint = largeEventsDistances[i];
             if (smallEventsDistances[possibleCorrelatingPoint] == i){
                 let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t'] - largeEvents[i][' t']);
                 correlatingPointsDistances.push(distance);
+                pairs.push([possibleCorrelatingPoint, i])
             }
         }
-        return correlatingPointsDistances;
-
+        return [correlatingPointsDistances, pairs];
     }
+
     // returns array of indexes from correlating array of closest event
     getEventsDistance(events1, events2, valueSelector){
         let correlatingEventDistances = [];
