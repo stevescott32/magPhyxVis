@@ -8,7 +8,7 @@ class EventTypeVis {
         this.highlightScale = 2;
 
         this.config = {
-            width: 150, // 1200,
+            width: 850, // 1200,
             height: (this.circleSize * 2) * numEvents,
             padding: {
                 left: 80,
@@ -18,7 +18,7 @@ class EventTypeVis {
             },
             tolerance: 0.1, // amount to add to the slider max for floating comparison
             stepCount: 30, // how many steps the slider should have
-            filterTimeThreshold: 100,
+            filterTimeThreshold: 180,
             distanceThreshold: null
         };
 
@@ -52,8 +52,12 @@ class EventTypeVis {
         if (!this.state.match) {
             return;
         }
-        this.unhighlightSimulation(this.state.match.eventA.simulationIndex)
-        this.unhighlightSimulation(this.state.match.eventB.simulationIndex)
+        if (this.state.match.eventA) {
+            this.unhighlightSimulation(this.state.match.eventA.simulationIndex)
+        }
+        if (this.state.match.eventB) {
+            this.unhighlightSimulation(this.state.match.eventB.simulationIndex)
+        }
         const root = d3.select('#' + this.divId)
         root.select('svg').select('g.arrows').remove()
         this.state.match = null;
@@ -167,18 +171,14 @@ class EventTypeVis {
 
     }
 
-    correlateEvents(infoA, infoB) {
+    correlateEvents(infoA, infoB, timeScale, eventCountScale) {
         const simulationDistance = new SimulationDistance();
-        const data = this.getTimeFilteredData(this.originalData)
-        const dataA = data[infoA.simulationIndex]
-        const dataB = data[infoB.simulationIndex]
+        const dataA = this.filterEventByTimeThreshold(this.originalData[infoA.simulationIndex])
+        const dataB = this.filterEventByTimeThreshold(this.originalData[infoB.simulationIndex])
         console.log({infoA, infoB})
+        console.log({dataA, dataB})
 
         const indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t'])
-
-        const timeScale = this.getTimeScale(this.lastRenderedData);
-
-        const eventCountScale = this.getEventCountScale(this.lastRenderedData);
 
         const svg = d3.select(`#${this.divId}`).select('svg')
         let arrows = svg.select('g.arrows')
@@ -190,16 +190,13 @@ class EventTypeVis {
         const arrowSel = arrows.selectAll('line')
             .data(indices);
 
-        const posSimulationIndexA = infoA.renderIndex;
-        const posSimulationIndexB = infoB.renderIndex;
-
         arrowSel.enter()
             .append('line')
             .merge(arrowSel)
             .attr('x1', (_, i) => timeScale(dataA[i][' t']))
-            .attr('y1', eventCountScale(posSimulationIndexA))
+            .attr('y1', eventCountScale(infoA.renderIndex))
             .attr('x2', (d, i) => timeScale(dataB[d][' t']))
-            .attr('y2', eventCountScale(posSimulationIndexB))
+            .attr('y2', eventCountScale(infoB.renderIndex))
             .attr('stroke', 'green')
             .attr('stroke-width', 2);
 
@@ -224,15 +221,19 @@ class EventTypeVis {
                     })
                 })]
             )
-            .range([this.config.padding.left, 2 * this.config.width + this.config.padding.left])
+            .range([this.config.padding.left, this.config.width + this.config.padding.left])
+    }
+
+    filterEventByTimeThreshold(event) {
+        return event.filter(d => {
+            return d[' t'] < this.config.filterTimeThreshold;
+        })
     }
 
     getTimeFilteredData(data) {
         data = [...data]
         for (let i = 0; i < data.length; i++) {
-            data[i] = data[i].filter(d => {
-                return +d[' t'] < this.config.filterTimeThreshold;
-            })
+            data[i] = this.filterEventByTimeThreshold(data[i])
         }
         return data;
     }
@@ -247,15 +248,14 @@ class EventTypeVis {
             [data, paramData, distances] = this.getDataFilteredByDistance(this.config.distanceThreshold)
         }
         this.getTimeFilteredData(data).forEach((d, i) => data[i] = d)
-        this.lastRenderedData = data;
-
-        if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
-            self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
-        }
 
         let timeScale = this.getTimeScale(data)
 
         let eventCountScale = this.getEventCountScale(data);
+
+        if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
+            self.correlateEvents(self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
+        }
 
         const root = d3.select(`#${this.divId}`);
 
@@ -365,11 +365,10 @@ class EventTypeVis {
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
             .data((d, i) => {
-                data = d;
-                for (let a = 0; a < data.length; a++) {
-                    data[a]['parentIndex'] = i;
+                for (let a = 0; a < d.length; a++) {
+                    d[a]['parentIndex'] = i;
                 }
-                return data;
+                return d;
             });
 
         circleSel.exit().remove();
@@ -378,13 +377,14 @@ class EventTypeVis {
             .enter()
             .append('circle')
             .merge(circleSel)
+            .attr('time', d => { return d[' t']; })
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                if (+d[' t'] > 50) { return 'white'; }
+                // if (+d[' t'] > 50) { return 'white'; }
                 return Utils.getFill(d[' event_type']);
             })
             .on('mouseover', function (d) {
@@ -432,7 +432,7 @@ class EventTypeVis {
                             const renderIndex = [...simulationGroup.parentNode.children].indexOf(simulationGroup)
                             self.state.match.eventB = { simulationIndex: d.simulationIndex, renderIndex }
                             self.highlightSimulation(d.simulationIndex);
-                            self.correlateEvents(self.state.match.eventA, self.state.match.eventB)
+                            self.correlateEvents(self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
                         } else {
                             self.removeEventsMatch()
                             self.state.match = {}
@@ -445,7 +445,7 @@ class EventTypeVis {
                     let simulationDistances = new SimulationDistance();
                     let reorderedDta = simulationDistances.reorder(self.originalData, d3.select(this).attr("simulationIndex"));
 
-                    self.update(reorderedDta, self.originalParamData, self.originalDistances);
+                    self.updateHelper(reorderedDta, self.originalParamData, self.originalDistances);
                 }
             })
             ;
@@ -597,29 +597,30 @@ class SimulationDistance {
     }
 
     reorder(data, simulationIndex, paramData, distances){
-        console.log(data);
+        console.log('reorder data by sim index ', simulationIndex);
 
         let data_sum = [];
 
+        console.log('ddata length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
         for(let i=0; i<data.length; i++){
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
-            console.log(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
-            console.log(min);
+            console.log('distance', min, 'sim indx', data[i][0].simulationIndex, i);
             data_sum.push({
                 "data" : data[i],
                 "min" : min
             });
         }
+        console.log('finished')
 
         data_sum.sort((obj1, obj2) => obj1['min'] - obj2['min']);
-
-        console.log(data_sum);
 
         let reOrderedData = [];
         data_sum.forEach(element => {
             reOrderedData.push(element['data'])
         });
+
+        console.log('reordered data', reOrderedData)
 
         return reOrderedData;
     }

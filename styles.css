@@ -4,6 +4,10 @@
     stroke-width: 1;
 }
 
+.event-type-vis {
+    width: 100%;
+}
+
 .header button {
     padding: 20px 40px;
 }

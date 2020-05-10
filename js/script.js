@@ -91,6 +91,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     for(let i = 0; i < orderedData.length; i++) {
       for(let j = 0; j < orderedData[i].events.length; j++) {
         orderedData[i].events[j].simulationIndex = i;
+        orderedData[i].events[j][' t'] = +orderedData[i].events[j][' t']
       }
       orderedParamData.push(orderedData[i].param);
       orderedEventsData.push(orderedData[i].events);
