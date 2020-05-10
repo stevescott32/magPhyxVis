@@ -244,14 +244,23 @@ class EventTypeVis {
 
         if (null == data) { return; }
 
-        if (this.config.distanceThreshold) {
-            [data, paramData, distances] = this.getDataFilteredByDistance(this.config.distanceThreshold)
+        const simulationDistances = new SimulationDistance();
+        if (self.state.reorderSimulationIndex != null) {
+            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex);
+        } else {
+            data = data.map( (d, i) => ({
+                simulationIndex: i,
+                data: d
+            }))
         }
-        this.getTimeFilteredData(data).forEach((d, i) => data[i] = d)
 
-        let timeScale = this.getTimeScale(data)
+        [data, paramData, distances] = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
 
-        let eventCountScale = this.getEventCountScale(data);
+        data = this.getTimeFilteredData(data)
+
+        const timeScale = this.getTimeScale(data)
+
+        const eventCountScale = this.getEventCountScale(data);
 
         if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
             self.correlateEvents(self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
@@ -296,6 +305,7 @@ class EventTypeVis {
             .append('rect')
             .merge(distanceBarsSel)
             .attr('x', (d, i) => {
+                console.log('datum', d)
                 return 20 - distanceScale(d);
             })
             .attr('y', (d, i) => { return eventCountScale(i) })
@@ -442,10 +452,9 @@ class EventTypeVis {
                     // eventVis.updateDimensionComparison(d, paramData);
                     self.colorDimsByDistance(d['parentIndex'], paramData);
 
-                    let simulationDistances = new SimulationDistance();
-                    let reorderedDta = simulationDistances.reorder(self.originalData, d3.select(this).attr("simulationIndex"));
+                    self.state.reorderSimulationIndex = +d3.select(this).attr("simulationIndex")
 
-                    self.updateHelper(reorderedDta, self.originalParamData, self.originalDistances);
+                    self.updateHelper(self.originalData, self.originalParamData, self.originalDistances);
                 }
             })
             ;
@@ -453,18 +462,19 @@ class EventTypeVis {
 
 
 
-    getDataFilteredByDistance(value) {
+    getDataFilteredByDistance(data, value) {
         let filteredData = [];
         let filteredPamaData = [];
         let filteredDistances = [];
-        for (let i = 0; i < this.originalDistances.length; i++) {
+        console.log(this.originalDistances)
+        data.forEach(({ simulationIndex, data }) => {
             // console.log(`Comparing ${this.originalDistances[i]}`);
-            if (this.originalDistances[i] <= value) {
-                filteredData.push(this.originalData[i]);
-                filteredPamaData.push(this.originalParamData[i]);
-                filteredDistances.push(this.originalDistances[i]);
+            if (value == null || this.originalDistances[simulationIndex] <= value) {
+                filteredData.push(this.originalData[simulationIndex]);
+                filteredPamaData.push(this.originalParamData[simulationIndex]);
+                filteredDistances.push(this.originalDistances[simulationIndex]);
             }
-        }
+        })
         console.log('Filtered data', filteredData);
         return [filteredData, filteredPamaData, filteredDistances]
     }
@@ -598,26 +608,35 @@ class SimulationDistance {
 
     reorder(data, simulationIndex, paramData, distances){
         console.log('reorder data by sim index ', simulationIndex);
+        console.log('data length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
 
-        let data_sum = [];
+        const data_sum = [];
 
-        console.log('ddata length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
+        let main_datum;
         for(let i=0; i<data.length; i++){
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             console.log('distance', min, 'sim indx', data[i][0].simulationIndex, i);
-            data_sum.push({
-                "data" : data[i],
-                "min" : min
-            });
+            if (i !== simulationIndex) {
+                data_sum.push({
+                    "data": data[i],
+                    "min": min,
+                    simulationIndex: i,
+                });
+            } else {
+                main_datum = {
+                    simulationIndex: i,
+                    data: data[i],
+                    min: 0
+                };
+            }
         }
-        console.log('finished')
 
         data_sum.sort((obj1, obj2) => obj1['min'] - obj2['min']);
 
-        let reOrderedData = [];
+        const reOrderedData = [main_datum];
         data_sum.forEach(element => {
-            reOrderedData.push(element['data'])
+            reOrderedData.push(element)
         });
 
         console.log('reordered data', reOrderedData)
