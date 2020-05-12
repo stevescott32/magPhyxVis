@@ -210,16 +210,25 @@ class EventTypeVis {
                 .attr('class', 'arrows')
         }
 
-        const arrowSel = arrows.selectAll('line')
+        const arrowSel = arrows.selectAll('path')
             .data(indices);
 
+
         arrowSel.enter()
-            .append('line')
+            .append('path')
             .merge(arrowSel)
-            .attr('x1', d => timeScale(dataA[d[0]][' t']))
-            .attr('y1', eventCountScale(infoA.renderIndex))
-            .attr('x2', d => timeScale(dataB[d[1]][' t']))
-            .attr('y2', eventCountScale(infoB.renderIndex))
+            .attr('marker-mid', this.state.matchExact ? 'none' : 'url(#arrow)')
+            .attr('d', d => {
+                // Coordinates of mid point on line to add new vertex.
+                const sourceX =  timeScale(dataA[d[0]][' t']);
+                const sourceY = eventCountScale(infoA.renderIndex)
+                const targetX = timeScale(dataB[d[1]][' t'])
+                const targetY = eventCountScale(infoB.renderIndex)
+                const midX = (targetX - sourceX) / 2 + sourceX;
+                const midY = (targetY - sourceY) / 2 + sourceY;
+
+                return 'M' + sourceX + ',' + sourceY + 'L' + midX + ',' + midY + 'L' + targetX + ',' + targetY;
+            })
             .attr('stroke', 'green')
             .attr('stroke-width', 2);
 
@@ -296,6 +305,20 @@ class EventTypeVis {
             this.svg = root.append('svg')
                 .attr('class', 'event-type-vis')
                 .attr('id', 'event-type-svg')
+
+            this.svg.append("svg:defs")
+                .append("marker")
+                .attr("id","arrow")
+                .attr("viewBox","0 -5 10 10")
+                .attr("refX",5)
+                .attr("refY",0)
+                .attr("markerWidth",4)
+                .attr("markerHeight",4)
+                .attr("orient","auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("class","arrowHead")
+
         }
 
         this.svg.attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
@@ -498,7 +521,7 @@ class EventTypeVis {
                 filteredDistances.push(this.originalDistances[simulationIndex]);
             }
         })
-        console.log('Filtered data', filteredData);
+        console.log('Filtered data', filteredData, filteredDistances);
         return [filteredData, filteredPamaData, filteredDistances]
     }
 
