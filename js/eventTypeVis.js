@@ -191,10 +191,14 @@ class EventTypeVis {
 
     correlateEvents(infoA, infoB, timeScale, eventCountScale) {
         const simulationDistance = new SimulationDistance();
-
-        const dataA = this.filterEventByTimeThreshold(this.originalData[infoA.simulationIndex])
-        const dataB = this.filterEventByTimeThreshold(this.originalData[infoB.simulationIndex])
+        const originalA = this.originalData[infoA.simulationIndex]
+        const originalB = this.originalData[infoB.simulationIndex]
+        const dataA = this.filterEventByTimeThreshold(originalA)
+        const dataB = this.filterEventByTimeThreshold(originalB)
         console.log(dataA, dataB)
+
+        const distance = simulationDistance.getMinInArray(simulationDistance.getCorrelatingEventDistances(originalA, originalB)[0]);
+        console.log('distance', distance)
 
         let indices = []
         if (this.state.matchExact) {
