@@ -9,9 +9,7 @@ import talib
 print("Trying out talib")
 
 numDataPoints = 100
-
-close = numpy.random.random(numDataPoints)
-output = talib.SMA(close)
+headings = ['n', 'event_type', 't', 'price']
 
 stockData = {
     'open': numpy.random.random(numDataPoints),
@@ -31,26 +29,44 @@ def myFirstTradingAlgo(inputs):
     return results
 
 
+# helper function to print events
+def addEvent(n, event_type, t, price, file):
+    #print(f"n={n}, event_type={event_type}, t={t}, price={price}")
+    pass
 
-def trader2(inputs, params):
+
+def trader2(inputs, params, outputFile):
     results = []
     mom = talib.MOM(inputs["close"], timeperiod=10)
-    for momentum in mom:
-        if momentum > params["trigger_buy"]:
+    std_devs = talib.STDDEV(inputs['close'], timeperiod=10, nbdev=1)
+
+    # iterate through all time periods, deciding to buy, sell, or stay
+    i = 1
+    for (momentum, std_dev) in zip(mom, std_devs):
+        if momentum > params["mom_trigger_buy"] and std_dev < params['std_dev']:
             results.append("buy")
-        elif momentum < params["trigger_sell"]:
+            addEvent(i, "buy", i, inputs["close"][i], outputFile)
+        elif momentum < params["mom_trigger_sell"] and std_dev < params['std_dev']:
             results.append("sell")
+            addEvent(i, "sell", i, inputs["close"][i], outputFile)
         else:
             results.append("stay")
+            addEvent(i, "stay", i, inputs["close"][i], outputFile)
     return results
 
 for i in range(8):
-    print("*** Running another trading simulation ***")
-    trader2Params = {
-        'trigger_buy': 0.1 * i,
-        'trigger_sell': -0.1 * i 
-    }
-    buySells = trader2(stockData, trader2Params)
-    print(buySells)
+    for j in range(8):
+        outputFile = (f"trading_events{i*j}{j}.csv")
+        trader2Params = {
+            'mom_trigger_buy': 0.1 * i,
+            'mom_trigger_sell': -0.1 * i,
+            'std_dev': 0.1 * j 
+        }
+        print("*** Running another trading simulation with params %s***" % str(trader2Params))
+        buySells = trader2(stockData, trader2Params, outputFile)
+        print(buySells)
 
 print("Experiment success")
+
+
+
