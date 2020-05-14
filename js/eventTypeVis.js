@@ -253,7 +253,7 @@ class EventTypeVis {
             .domain(
                 [0, d3.max(data, (sim) => {
                     return d3.max(sim, (d) => {
-                        return d[' t'];
+                        return d['t'];
                     })
                 })]
             )
