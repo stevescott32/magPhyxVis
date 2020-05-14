@@ -1,5 +1,40 @@
 .event-highlighted {
-    fill: black; 
+    fill: black !important;
     stroke: grey; 
     stroke-width: 1;
+}
+
+.event-type-vis {
+    width: 100%;
+}
+
+.header button {
+    padding: 20px 40px;
+}
+
+.header > * + * {
+    margin-top: 20px;
+}
+
+.header button.match {
+    background: silver;
+    border: 1px solid black;
+}
+
+.sliders {
+    display: flex;
+}
+
+.sliders > * + * {
+    margin-left: 20px;
+}
+
+.sliders .slider {
+    width: min-content;
+    display: flex;
+    flex-direction: column;
+}
+
+.slider > div:first-child {
+    white-space: nowrap;
 }

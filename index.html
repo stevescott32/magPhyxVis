@@ -13,14 +13,46 @@
   <script type="application/javascript" src="js/eventTypeVis.js"></script>
   <script type="application/javascript" src="js/paramsVis.js"></script>
   <script type="application/javascript" src="js/scatter.js"></script>
-  <script type="application/javascript" src="js/script.js"></script>
+  <script type="application/javascript" defer src="js/script.js"></script>
 </head>
 
 <body>
   <div id="debug"></div>
   <div id="param-vis"></div>
   <div id='event-groups'></div>
-  <div id='event-type-vis'></div>
+  <div id='event-type-vis'>
+    <div class="header">
+      <div class="sliders">
+        <div class="slider filter-distances">
+          <div>Filter Param Distances</div>
+          <input type="range" />
+        </div>
+        <div class="slider graph-width">
+          <div>Graph Width</div>
+          <input type="range" />
+        </div>
+        <div class="slider graph-height">
+          <div>Graph Height</div>
+          <input type="range" />
+        </div>
+        <div class="slider circle-radius">
+          <div>Circle Radius</div>
+          <input type="range" />
+        </div>
+        <div class="slider time-range">
+          <div>Time Range</div>
+          <input type="range" />
+        </div>
+      </div>
+      <div>
+        <button class="match-a-to-b">Match Event A to B</button>
+        <label>
+          <input class="match-exact" type="checkbox">
+          Match exact
+        </label>
+      </div>
+    </div>
+  </div>
   <div id="scatter"></div>
 
   <br />

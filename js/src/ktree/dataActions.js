@@ -129,6 +129,7 @@ function calcDistances(data) {
     let derived = data.map((d) => {
         return parseCommand(d);
     })
+    distances.push(0)
     for (let d = 1; d < derived.length; d++) {
         let myDist = Math.sqrt(
             Math.pow((derived[d].theta - derived[d - 1].theta), 2) + 

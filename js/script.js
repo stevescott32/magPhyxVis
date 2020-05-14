@@ -18,6 +18,7 @@ let settings = {
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
+
   
 // let each vis know about the other event vis
 scatter.setParamVis(paramVis);
@@ -37,7 +38,8 @@ for (let i = 0; i < settings.NUM_FILES; i++) {
 // promise the event data
 let dataPromises = [];
 for (let i = 0; i <= settings.NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data/${settings.dataset}/events/events${('0' + i).slice(-2)}.csv`))
+  dataPromises.push(d3.csv(`data/${settings.dataset}/events/events${('0' + i).slice(-2)}.csv`));
+
 }
 
 // load the param data
@@ -80,7 +82,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       for (let i = 0; i < points.length; i++) {
           orderedData.push(points[i].data);
       }
-    }     
+    }
 
     // split the ordered data into params and event data
     let orderedParamData = [];
@@ -89,6 +91,7 @@ Promise.all([...paramDataPromises]).then((paramData) => {
     for(let i = 0; i < orderedData.length; i++) {
       for(let j = 0; j < orderedData[i].events.length; j++) {
         orderedData[i].events[j].simulationIndex = i;
+        orderedData[i].events[j][' t'] = +orderedData[i].events[j][' t']
       }
       orderedParamData.push(orderedData[i].param);
       orderedEventsData.push(orderedData[i].events);
@@ -127,7 +130,11 @@ Promise.all([...paramDataPromises]).then((paramData) => {
             return d[' event_type'] == type;
           })
         })
+        console.log("filtered data: " );
+        console.log(filteredData);
+        eventTypeVis.removeEventsMatch()
         eventTypeVis.update(filteredData, orderedParamData, distances);
+        
       })
       ;
 
