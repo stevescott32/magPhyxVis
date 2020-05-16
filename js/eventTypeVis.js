@@ -23,7 +23,8 @@ class EventTypeVis {
         };
 
         this.state = {
-            match: null
+            match: null,
+            ordering: 'hausdorff'
         }
 
         this.divId = 'event-type-vis';
@@ -119,6 +120,13 @@ class EventTypeVis {
             self.updateHelper(data, paramData, distances);
         })
 
+        root.select('.ordering-methods').selectAll('input').each(function() {
+            d3.select(this).on('change', function() {
+                self.state.ordering = this.value;
+                self.updateHelper(data, paramData, distances);
+            })
+        });
+
         const sliders = root.select('.sliders');
 
         sliders.select('.filter-distances')
@@ -194,13 +202,16 @@ class EventTypeVis {
 
         const dataA = this.filterEventByTimeThreshold(this.originalData[infoA.simulationIndex])
         const dataB = this.filterEventByTimeThreshold(this.originalData[infoB.simulationIndex])
-        console.log(dataA, dataB)
 
-        let indices = []
-        if (this.state.matchExact) {
-            indices = simulationDistance.getCorrelatingEventDistances(dataA, dataB)[1]
-        } else {
-            indices = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t']).map((d, i) => [i, d])
+        let arrowInfo = []
+        if (this.state.ordering === 'dtw') {
+            arrowInfo = simulationDistance.getDTWDistance(dataA, dataB, d => d[' t']).pairs.map(d => [d.a, d.b])
+        } else if (this.state.ordering === 'hausdorff') {
+            if (this.state.matchExact) {
+                arrowInfo = simulationDistance.getCorrelatingEventDistances(dataA, dataB)[1]
+            } else {
+                arrowInfo = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t']).map((d, i) => [i, d])
+            }
         }
 
         const svg = d3.select(`#${this.divId}`).select('svg')
@@ -211,13 +222,12 @@ class EventTypeVis {
         }
 
         const arrowSel = arrows.selectAll('path')
-            .data(indices);
-
+            .data(arrowInfo);
 
         arrowSel.enter()
             .append('path')
             .merge(arrowSel)
-            .attr('marker-mid', this.state.matchExact ? 'none' : 'url(#arrow)')
+            .attr('marker-mid', this.state.ordering === 'dtw' || this.state.matchExact ? 'none' : 'url(#arrow)')
             .attr('d', d => {
                 // Coordinates of mid point on line to add new vertex.
                 const sourceX =  timeScale(dataA[d[0]][' t']);
@@ -278,7 +288,7 @@ class EventTypeVis {
 
         const simulationDistances = new SimulationDistance();
         if (self.state.reorderSimulationIndex != null) {
-            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex);
+            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering);
         } else {
             data = data.map( (d, i) => ({
                 simulationIndex: i,
@@ -652,8 +662,8 @@ class SimulationDistance {
 
     }
 
-    reorder(data, simulationIndex, paramData, distances){
-        console.log('reorder data by sim index ', simulationIndex);
+    reorder(data, simulationIndex, ordering){
+        console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
         console.log('data length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
 
         const data_sum = [];
@@ -661,8 +671,12 @@ class SimulationDistance {
         let main_datum;
         for(let i=0; i<data.length; i++){
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
-            let min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
-            console.log('distance', min, 'sim indx', data[i][0].simulationIndex, i);
+            let min;
+            if (ordering === 'dtw') {
+                min = this.getDTWDistance(data[simulationIndex], data[i], d => d[' t']).distance;
+            } else if (ordering === 'hausdorff') {
+                min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
+            }
             if (i !== simulationIndex) {
                 data_sum.push({
                     "data": data[i],
@@ -790,29 +804,25 @@ class SimulationDistance {
                 const datumA = eventA[i - 1];
                 const datumB = eventB[j - 1];
                 const dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-                dtw[i][j] = Math.min(...[dtw[i - 1][j], dtw[i][j - 1], dtw[i - 1][j - 1]]) + dist
+                dtw[i][j] = Math.min(...[dtw[i - 1][j], dtw[i][j - 1], dtw[i - 1][j - 1]]) + dist;
             }
         }
         const pairs = [];
-        let dist = dtw[NA][NB]
         let i = NA, j = NB;
         while (i >= 1 || j >= 1) {
             const datumA = eventA[i - 1];
             const datumB = eventB[j - 1];
             const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
             pairs.push({ a: i - 1, b: j - 1 });
-            if (dtw[i - 1][j] + cost === dist) {
+            if (dtw[i - 1][j] + cost === dtw[i][j]) {
                 i--;
-            } else if (dtw[i][j - 1] + cost === dist) {
+            } else if (dtw[i][j - 1] + cost === dtw[i][j]) {
                 j--;
             } else {
-                console.log(dtw[i - 1][j - 1] + cost === dist);
                 i--;
                 j--;
             }
-            dist -= cost;
         }
-        console.log(pairs)
         return {
             distance: dtw[NA][NB],
             pairs
