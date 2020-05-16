@@ -772,7 +772,51 @@ class SimulationDistance {
         return minIndex;
     }
 
-
-
+    getDTWDistance(eventA, eventB, datumSelector = d => d) {
+        const NA = eventA.length;
+        const NB = eventB.length;
+        const dtw = new Array(NA + 1)
+            .fill(null)
+            .map(_ => new Array(NB + 1).fill(0))
+        dtw[0][0] = 0;
+        for (let i = 1; i <= NA; ++i) {
+            dtw[i][0] = 1e9;
+        }
+        for (let i = 1; i <= NB; ++i) {
+            dtw[0][i] = 1e9;
+        }
+        for (let i = 1; i <= NA; ++i) {
+            for (let j = 1; j <= NB; ++j) {
+                const datumA = eventA[i - 1];
+                const datumB = eventB[j - 1];
+                const dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
+                dtw[i][j] = Math.min(...[dtw[i - 1][j], dtw[i][j - 1], dtw[i - 1][j - 1]]) + dist
+            }
+        }
+        const pairs = [];
+        let dist = dtw[NA][NB]
+        let i = NA, j = NB;
+        while (i >= 1 || j >= 1) {
+            const datumA = eventA[i - 1];
+            const datumB = eventB[j - 1];
+            const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
+            pairs.push({ a: i - 1, b: j - 1 });
+            if (dtw[i - 1][j] + cost === dist) {
+                i--;
+            } else if (dtw[i][j - 1] + cost === dist) {
+                j--;
+            } else {
+                console.log(dtw[i - 1][j - 1] + cost === dist);
+                i--;
+                j--;
+            }
+            dist -= cost;
+        }
+        console.log(pairs)
+        return {
+            distance: dtw[NA][NB],
+            pairs
+        }
+    }
 
 }
