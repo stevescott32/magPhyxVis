@@ -23,6 +23,7 @@
     <header>
         <button class="match-a-to-b">MATCH A TO B</button>
         <button class="match-b-to-a">MATCH B TO A</button>
+        <button class="match-both">MATCH BOTH</button>
     </header>
     <div class="content">
         <svg width="100%" height="100%">
@@ -131,8 +132,17 @@
     const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
     const sd = new SimulationDistance();
 
-    const drawCorrelation = (data1, data2, index1, index2, color) => {
-        const indices = sd.getEventsDistance(data1, data2, d => d)
+    const drawCorrelation = (data1, data2, index1, index2, color, both) => {
+        let indices = sd
+            .getEventsDistance(data1, data2, d => d)
+            .map((d, i) => ({ a: i, b: d }))
+
+        if (both) {
+            const matchBtoA = sd
+                .getEventsDistance(data2, data1, d => d)
+                .map((d, i) => ({ a: d, b: i }))
+            indices = indices.concat(matchBtoA)
+        }
 
         const distanceScale = d3.scaleLinear()
             .domain([0, bounds.width])
@@ -150,9 +160,9 @@
         arrowSel.enter()
             .append('line')
             .merge(arrowSel)
-            .attr('x1', (_, i) => distanceScale(data1[i]))
+            .attr('x1', (d, i) => distanceScale(data1[d.a]))
             .attr('y1', getYMid(index1))
-            .attr('x2', (d, i) => distanceScale(data2[d]))
+            .attr('x2', (d, i) => distanceScale(data2[d.b]))
             .attr('y2', getYMid(index2))
             .attr('stroke', color)
             .attr('stroke-width', 2);
@@ -168,6 +178,9 @@
         })
         root.select('.match-b-to-a').on('click', function() {
             drawCorrelation(dataB, dataA, 1, 0, 'red')
+        })
+        root.select('.match-both').on('click', function() {
+            drawCorrelation(dataB, dataA, 1, 0, 'red', true)
         })
     }
 
