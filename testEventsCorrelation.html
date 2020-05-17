@@ -25,6 +25,11 @@
         <button class="match-b-to-a">MATCH B TO A</button>
         <button class="match-both">MATCH BOTH</button>
         <button class="match-dtw">MATCH DTW</button>
+        <label>
+            Number of deaths
+            <input min="0" type="range" class="dtw-deaths">
+            <span class="death-count">0</span>
+        </label>
     </header>
     <div class="content">
         <svg width="100%" height="100%">
@@ -134,14 +139,73 @@
     const getGroupOffset = (index = 0) => index * (height + 20);
     const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
     const sd = new SimulationDistance();
+    let dtw;
 
+    const buildMatchingEvents = (deaths, datumSelector = d => d) => {
+        const NA = dataA.length;
+        const NB = dataB.length;
+        // not possible with deaths
+        if (dtw[deaths][NA][NB] === 1e9) {
+            return {
+                distance: 1e9,
+                pairs: []
+            }
+        }
+        const pairs = [];
+        let d = deaths;
+        let i = NA, j = NB;
+        while (i >= 1 && j >= 1) {
+            const datumA = dataA[i - 1];
+            const datumB = dataB[j - 1];
+            const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
+            let matchPair = true;
+            const pair = { a: i - 1, b: j - 1 }
+            if (dtw[d][i - 1][j] + cost === dtw[d][i][j]) {
+                i--;
+            } else if (dtw[d][i][j - 1] + cost === dtw[d][i][j]) {
+                j--;
+            } else if (dtw[d][i - 1][j - 1] + cost === dtw[d][i][j]) {
+                i--;
+                j--;
+            } else if (d > 0 && dtw[d - 1][i - 1][j] === dtw[d][i][j]) {
+                d--;
+                i--;
+                matchPair = false;
+                console.log('kill')
+            } else if (d > 0 && dtw[d - 1][i][j - 1] === dtw[d][i][j]) {
+                d--;
+                j--;
+                console.log('kill')
+                matchPair = false;
+            } else {
+                alert('this is a bug')
+            }
+            if (matchPair) {
+                pairs.push(pair)
+            }
+        }
+        return {
+            distance: dtw[deaths][NA][NB],
+            pairs
+        }
+    }
+
+    const range = root.select('.dtw-deaths');
     const drawCorrelation = (data1, data2, index1, index2, color, method) => {
         let indices = sd
             .getEventsDistance(data1, data2, d => d)
             .map((d, i) => ({ a: i, b: d }))
 
         if (method === 'dtw') {
-            indices = sd.getDTWDistance(dataA, dataB).pairs
+            const deaths = +range.node().value;
+            if (deaths === 0) {
+                indices = sd.getDTWDistance(dataA, dataB).pairs
+            } else {
+                console.log('deaths', deaths)
+                const result = buildMatchingEvents(deaths)
+                indices = result.pairs
+                console.log(result);
+            }
         } else if (method === 'dist_basic') {
             const matchBtoA = sd
                 .getEventsDistance(data2, data1, d => d)
@@ -187,7 +251,15 @@
         root.select('.match-both').on('click', function() {
             drawCorrelation(dataB, dataA, 1, 0, 'red', 'dist_basic')
         })
+        range.attr('value', 0)
         root.select('.match-dtw').on('click', function() {
+            dtw = sd.getDTWDistanceWithDeaths(dataA, dataB)
+            drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
+            range.attr('max', dataA.length + dataB.length)
+        })
+
+        range.on('click', function() {
+            root.select('.death-count').html(this.value)
             drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
         })
     }

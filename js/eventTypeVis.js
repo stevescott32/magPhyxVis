@@ -791,14 +791,8 @@ class SimulationDistance {
         const NB = eventB.length;
         const dtw = new Array(NA + 1)
             .fill(null)
-            .map(_ => new Array(NB + 1).fill(0))
+            .map(_ => new Array(NB + 1).fill(1e9))
         dtw[0][0] = 0;
-        for (let i = 1; i <= NA; ++i) {
-            dtw[i][0] = 1e9;
-        }
-        for (let i = 1; i <= NB; ++i) {
-            dtw[0][i] = 1e9;
-        }
         for (let i = 1; i <= NA; ++i) {
             for (let j = 1; j <= NB; ++j) {
                 const datumA = eventA[i - 1];
@@ -827,6 +821,40 @@ class SimulationDistance {
             distance: dtw[NA][NB],
             pairs
         }
+    }
+
+    getDTWDistanceWithDeaths(eventA, eventB, datumSelector = d => d) {
+        const NA = eventA.length;
+        const NB = eventB.length;
+        const MaxDeaths = NA + NB;
+
+        const dtw =
+            new Array(MaxDeaths + 1)
+                .fill(null)
+                .map(_ => {
+                    return new Array(NA + 1)
+                        .fill(null)
+                        .map(_ => new Array(NB + 1).fill(1e9))
+                })
+
+        dtw[0][0][0] = 0;
+
+        for (let d = 0; d <= MaxDeaths; ++d) {
+            for (let i = 1; i <= NA; ++i) {
+                for (let j = 1; j <= NB; ++j) {
+                    const datumA = eventA[i - 1];
+                    const datumB = eventB[j - 1];
+                    const dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
+                    dtw[d][i][j] = Math.min(...[dtw[d][i - 1][j], dtw[d][i][j - 1], dtw[d][i - 1][j - 1]]) + dist;
+                    // kill top, i - 1, j
+                    if (d > 0) {
+                        dtw[d][i][j] = Math.min(...[dtw[d][i][j], dtw[d - 1][i - 1][j], dtw[d - 1][i][j - 1]]);
+                    }
+                }
+            }
+        }
+
+        return dtw;
     }
 
 }
