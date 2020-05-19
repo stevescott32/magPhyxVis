@@ -834,39 +834,55 @@ class SimulationDistance {
                 .map(_ => {
                     return new Array(NA + 1)
                         .fill(null)
-                        .map(_ => new Array(NB + 1).fill(1e9))
+                        .map(_ => new Array(NB + 1).fill(null).map(_ => {
+                            return new Array(3).fill(1e9);
+                        }))
                 })
 
-        dtw[0][0][0] = 0;
+        dtw[0][0][0][0] = 0;
+        dtw[0][0][0][1] = 0;
+        dtw[0][0][0][2] = 0;
 
         const getValidMins = (coords) => coords
-            .filter(([d, i, j]) => d >= 0 && i >= 0 && j >= 0)
-            .map(([d, i, j]) => dtw[d][i][j]);
+            .filter(([d, i, j, _]) => d >= 0 && i >= 0 && j >= 0)
+            .map(([d, i, j, k]) => dtw[d][i][j][k]);
 
         for (let d = 0; d <= MaxDeaths; ++d) {
             for (let i = 0; i <= NA; ++i) {
                 for (let j = 0; j <= NB; ++j) {
-                    if (d + i + j === 0) {
-                        continue;
-                    }
-                    let dist;
-                    if (i > 0 && j > 0) {
-                        const datumA = eventA[i - 1];
-                        const datumB = eventB[j - 1];
-                        dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-                    } else {
-                        // cant match
-                        dist = 1e9;
-                    }
-                    const candidates = getValidMins([[d, i - 1, j], [d, i, j - 1], [d, i - 1, j - 1]]);
-                    if (candidates.length > 0) {
-                        dtw[d][i][j] = Math.min(...candidates) + dist;
-                    }
-                    // kill top, i - 1, j
-                    if (d > 0) {
-                        const candidates = getValidMins([[d - 1, i - 1, j], [d - 1, i, j - 1]])
+                    // k=0 nothing among i, j was used
+                    // k=1 ith element was used
+                    // k=2 jth element was used
+                    for (let k = 0; k < 3; ++k) {
+                        if (d + i + j === 0) {
+                            continue;
+                        }
+                        let dist;
+                        if (i > 0 && j > 0) {
+                            const datumA = eventA[i - 1];
+                            const datumB = eventB[j - 1];
+                            dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
+                        } else {
+                            // cant match
+                            dist = 1e9;
+                        }
+                        const candidates = getValidMins([[d, i - 1, j, 2], [d, i, j - 1, 1], [d, i - 1, j - 1, 0]]);
                         if (candidates.length > 0) {
-                            dtw[d][i][j] = Math.min(dtw[d][i][j], ...candidates);
+                            dtw[d][i][j][k] = Math.min(...candidates) + dist;
+                        }
+                        // kill top, i - 1, j
+                        if (d > 0) {
+                            const validPoses = [[]]
+                            if (k !== 1) {
+                                validPoses.push([d - 1, i - 1, j, k])
+                            }
+                            if (k !== 2) {
+                                validPoses.push([d - 1, i, j - 1, k])
+                            }
+                            const candidates = getValidMins(validPoses)
+                            if (candidates.length > 0) {
+                                dtw[d][i][j][k] = Math.min(dtw[d][i][j][k], ...candidates);
+                            }
                         }
                     }
                 }

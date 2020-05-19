@@ -145,7 +145,7 @@
         const NA = dataA.length;
         const NB = dataB.length;
         // not possible with deaths
-        if (dtw[deaths][NA][NB] === 1e9) {
+        if (dtw[deaths][NA][NB][0] === 1e9) {
             return {
                 distance: 1e9,
                 pairs: []
@@ -153,26 +153,29 @@
         }
         const pairs = [];
         let d = deaths;
-        let i = NA, j = NB;
+        let i = NA, j = NB, k = 0;
         while (i >= 1 && j >= 1) {
             const datumA = dataA[i - 1];
             const datumB = dataB[j - 1];
             const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
             let matchPair = true;
             const pair = { a: i - 1, b: j - 1 }
-            if (dtw[d][i - 1][j] + cost === dtw[d][i][j]) {
+            if (dtw[d][i - 1][j][2] + cost === dtw[d][i][j][k]) {
                 i--;
-            } else if (dtw[d][i][j - 1] + cost === dtw[d][i][j]) {
+                k = 2;
+            } else if (dtw[d][i][j - 1][1] + cost === dtw[d][i][j][k]) {
                 j--;
-            } else if (dtw[d][i - 1][j - 1] + cost === dtw[d][i][j]) {
+                k = 1;
+            } else if (dtw[d][i - 1][j - 1][0] + cost === dtw[d][i][j][k]) {
                 i--;
                 j--;
-            } else if (d > 0 && dtw[d - 1][i - 1][j] === dtw[d][i][j]) {
+                k = 0;
+            } else if (d > 0 && k !== 1 && dtw[d - 1][i - 1][j][k] === dtw[d][i][j][k]) {
                 d--;
                 i--;
                 matchPair = false;
                 console.log('kill row1', i + 1)
-            } else if (d > 0 && dtw[d - 1][i][j - 1] === dtw[d][i][j]) {
+            } else if (d > 0 && k !== 2 && dtw[d - 1][i][j - 1][k] === dtw[d][i][j][k]) {
                 d--;
                 j--;
                 console.log('kill row1', j + 1)
@@ -186,7 +189,7 @@
             }
         }
         return {
-            distance: dtw[deaths][NA][NB],
+            distance: dtw[deaths][NA][NB][0],
             pairs
         }
     }
