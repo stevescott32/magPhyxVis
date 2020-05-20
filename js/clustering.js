@@ -1,77 +1,74 @@
 class Graph {
-   constructor() {
-      this.edges = {};
-      this.nodes = [];
-   }
-
-   addNode(node) {
-      this.nodes.push(node);
-      this.edges[node] = [];
-   }
-
-   addEdge(node1, node2, weight = 1) {
-      this.edges[node1].push({ node: node2, weight: weight });
-      this.edges[node2].push({ node: node1, weight: weight });
-   }
-
-   addDirectedEdge(node1, node2, weight = 1) {
-      this.edges[node1].push({ node: node2, weight: weight });
-   }
-
-   // return dictionary contained two nodes with the heighest edge weight in the
-   // graph
-   findLargestEdge() {
-     let max = Number.MIN_VALUE;
-     var maxEdge;
-     for (var key in this.edges) {
-       if (this.edges[key].weight > max) {
-         max = this.edges[key].weight;
-         maxEdge = {
-           node1 : key,
-           node2 : this.edges[key].node2,
-           weight : this.edges[key].weight
-         };
-       }
-     }
-
-     return maxEdge;
+  constructor() {
+    this.edges = {};
+    this.nodes = [];
   }
 
-  deleteEdge(edge)
-  {
+  addNode(node) {
+    if (this.nodes.includes(node.coordinates)) {
+      return;
+    }
+    this.nodes.push(node);
+    this.edges[node.coordinates] = [];
+  }
+
+  addEdge(node1, node2, weight = 1) {
+    console.log(node1);
+    this.edges[node1.coordinates].push({node : node2, weight : weight});
+    this.edges[node2.coordinates].push({node : node1, weight : weight});
+  }
+
+  addDirectedEdge(node1, node2, weight = 1) {
+    this.edges[node1].push({node : node2, weight : weight});
+  }
+
+  // return dictionary contained two nodes with the heighest edge weight in the
+  // graph
+  findLargestEdge() {
+    let max = Number.MIN_VALUE;
+    var maxEdge;
+    for (var key in this.edges) {
+      if (this.edges[key].weight > max) {
+        max = this.edges[key].weight;
+        maxEdge = {
+          node1 : key,
+          node2 : this.edges[key].node2,
+          weight : this.edges[key].weight
+        };
+      }
+    }
+
+    return maxEdge;
+  }
+
+  deleteEdge(edge) {
     let index = this.edges[edge.node1].indexOf(
         {node : edge.node2, weight : edge.weight});
-    if (index != undefined)
-    {
+    if (index != undefined) {
       delete this.edges[edge.node1][index];
     }
     index = this.edges[edge.node2].indexOf(
         {node : edge.node1, weight : edge.weight});
-    if (index != undefined)
-    {
+    if (index != undefined) {
       delete this.edges[edge.node2][index];
     }
   }
 
-  cluster(k)
-  {
+  cluster(k) {
     let clusters = [];
-    let indicies = [...Array(this.nodes.length).keys()];
+    let indicies = [...Array(this.nodes.length).keys() ];
     let currentCluster = 0;
     clusters[currentCluster] = [];
     clusters[currentCluster].push(this.nodes[0]);
     let lastNode = this.nodes[0];
     indicies.spice(0, 1);
-    while (currentCluster < k)
-    {
+    while (currentCluster < k) {
       let currentEdge = this.edges[lastNode];
       let nextNode = lastNode;
-      if (currentEdge == undefined)
-      {
+      if (currentEdge == undefined) {
         ++currentCluster;
         nextNode = this.nodes[indicies[0]];
-      }
-      else{
+      } else {
         nextNode = currentEdge.node;
       }
 
@@ -83,137 +80,146 @@ class Graph {
     return clusters;
   }
 
-   display() {
-      let graph = "";
-      this.nodes.forEach(node => {
-         graph += node + "->" + this.edges[node].map(n => n.node).join(", ") + "\n";
-      });
-      console.log(graph);
-   }
+  display() {
+    let graph = "";
+    this.nodes.forEach(node => {
+      graph +=
+          node + "->" + this.edges[node].map(n => n.node).join(", ") + "\n";
+    });
+    console.log(graph);
+  }
 
-   primsMST() {
-      // Initialize graph that'll contain the MST
-      const MST = new Graph();
-      if (this.nodes.length === 0) {
-         return MST;
-      }
-
-      // Select first node as starting node
-      let s = this.nodes[0];
-
-      // Create a Priority Queue and explored set
-      let edgeQueue = new PriorityQueue(this.nodes.length * this.nodes.length);
-      let explored = new Set();
-      explored.add(s);
-      MST.addNode(s);
-
-      // Add all edges from this starting node to the PQ taking weights as priority
-      this.edges[s].forEach(edge => {
-         edgeQueue.enqueue([s, edge.node], edge.weight);
-      });
-
-      // Take the smallest edge and add that to the new graph
-      let currentMinEdge = edgeQueue.dequeue();
-      while (!edgeQueue.isEmpty()) {
-         // COntinue removing edges till we get an edge with an unexplored node
-         while (!edgeQueue.isEmpty() && explored.has(currentMinEdge.data[1])) {
-            currentMinEdge = edgeQueue.dequeue();
-         }
-         let nextNode = currentMinEdge.data[1];
-         // Check again as queue might get empty without giving back unexplored element
-         if (!explored.has(nextNode)) {
-            MST.addNode(nextNode);
-            MST.addDirectedEdge(currentMinEdge.data[0], nextNode, currentMinEdge.priority);
-
-            // Again add all edges to the PQ
-            this.edges[nextNode].forEach(edge => {
-               edgeQueue.enqueue([nextNode, edge.node], edge.weight);
-            });
-
-            // Mark this node as explored
-            explored.add(nextNode);
-            s = nextNode;
-         }
-      }
+  primsMST() {
+    // Initialize graph that'll contain the MST
+    const MST = new Graph();
+    if (this.nodes.length === 0) {
       return MST;
-   }
+    }
 
-   kruskalsMST() {
-      // Initialize graph that'll contain the MST
-      const MST = new Graph();
+    // Select first node as starting node
+    let s = this.nodes[0];
 
-      this.nodes.forEach(node => MST.addNode(node));
-      if (this.nodes.length === 0) {
-         return MST;
+    // Create a Priority Queue and explored set
+    let edgeQueue = new PriorityQueue(this.nodes.length * this.nodes.length);
+    let explored = new Set();
+    explored.add(s);
+    MST.addNode(s);
+
+    // Add all edges from this starting node to the PQ taking weights as
+    // priority
+    this.edges[s].forEach(edge => {
+      edgeQueue.enqueue([ s, edge.node ], edge.weight);
+    });
+
+    // Take the smallest edge and add that to the new graph
+    let currentMinEdge = edgeQueue.dequeue();
+    while (!edgeQueue.isEmpty()) {
+      // COntinue removing edges till we get an edge with an unexplored node
+      while (!edgeQueue.isEmpty() && explored.has(currentMinEdge.data[1])) {
+        currentMinEdge = edgeQueue.dequeue();
       }
+      let nextNode = currentMinEdge.data[1];
+      // Check again as queue might get empty without giving back unexplored
+      // element
+      if (!explored.has(nextNode)) {
+        MST.addNode(nextNode);
+        MST.addDirectedEdge(currentMinEdge.data[0], nextNode,
+                            currentMinEdge.priority);
 
-      // Create a Priority Queue
-      let edgeQueue = new PriorityQueue(this.nodes.length * this.nodes.length);
+        // Again add all edges to the PQ
+        this.edges[nextNode].forEach(edge => {
+          edgeQueue.enqueue([ nextNode, edge.node ], edge.weight);
+        });
 
-      // Add all edges to the Queue:
-      for (let node in this.edges) {
-         this.edges[node].forEach(edge => {
-            edgeQueue.enqueue([node, edge.node], edge.weight);
-         });
+        // Mark this node as explored
+        explored.add(nextNode);
+        s = nextNode;
       }
-      let uf = new UnionFind(this.nodes);
+    }
+    return MST;
+  }
 
-      // Loop until either we explore all nodes or queue is empty
-      while (!edgeQueue.isEmpty()) {
-         // Get the edge data using destructuring
-         let nextEdge = edgeQueue.dequeue();
-         let nodes = nextEdge.data;
-         let weight = nextEdge.priority;
+  kruskalsMST() {
+    // Initialize graph that'll contain the MST
+    const MST = new Graph();
 
-         if (!uf.connected(nodes[0], nodes[1])) {
-            MST.addDirectedEdge(nodes[0], nodes[1], weight);
-            uf.union(nodes[0], nodes[1]);
-         }
-      }
+    this.nodes.forEach(node => MST.addNode(node));
+    if (this.nodes.length === 0) {
       return MST;
-   }
+    }
+
+    // Create a Priority Queue
+    let edgeQueue = new PriorityQueue(this.nodes.length * this.nodes.length);
+
+    // Add all edges to the Queue:
+    for (let node in this.edges) {
+      this.edges[node].forEach(edge => {
+        console.log(edge);
+        edgeQueue.enqueue([ node, edge.node.coordinates.toString() ], edge.weight);
+      });
+    }
+    let uf = new UnionFind(this.nodes);
+
+    // Loop until either we explore all nodes or queue is empty
+    while (!edgeQueue.isEmpty()) {
+      // Get the edge data using destructuring
+      let nextEdge = edgeQueue.dequeue();
+      console.log(edgeQueue);
+      console.log(nextEdge);
+      let nodes = nextEdge.element;
+      let weight = nextEdge.priority;
+
+      if (!uf.connected(nodes[0], nodes[1])) {
+        MST.addDirectedEdge(nodes[0], nodes[1], weight);
+        uf.union(nodes[0], nodes[1]);
+      }
+    }
+    return MST;
+  }
 }
 
 class UnionFind {
-   constructor(elements) {
-      // Number of disconnected components
-      this.count = elements.length;
+  constructor(elements) {
+    // Number of disconnected components
+    this.count = elements.length;
 
-      // Keep Track of connected components
-      this.parent = {};
-      // Initialize the data structure such that all elements have themselves as parents
-      elements.forEach(e => (this.parent[e] = e));
-   }
+    // Keep Track of connected components
+    this.parent = {};
+    // Initialize the data structure such that all elements have themselves as
+    // parents
+    elements.forEach(e => (this.parent[e] = e));
+  }
 
-   union(a, b) {
-      let rootA = this.find(a);
-      let rootB = this.find(b);
+  union(a, b) {
+    let rootA = this.find(a);
+    let rootB = this.find(b);
 
-      // Roots are same so these are already connected.
-      if (rootA === rootB) return;
+    // Roots are same so these are already connected.
+    if (rootA === rootB)
+      return;
 
-      // Always make the element with smaller root the parent.
-      if (rootA < rootB) {
-         if (this.parent[b] != b) this.union(this.parent[b], a);
-         this.parent[b] = this.parent[a];
-      } else {
-         if (this.parent[a] != a) this.union(this.parent[a], b);
-         this.parent[a] = this.parent[b];
-      }
-   }
+    // Always make the element with smaller root the parent.
+    if (rootA < rootB) {
+      if (this.parent[b] != b)
+        this.union(this.parent[b], a);
+      this.parent[b] = this.parent[a];
+    } else {
+      if (this.parent[a] != a)
+        this.union(this.parent[a], b);
+      this.parent[a] = this.parent[b];
+    }
+  }
 
-   // Returns final parent of a node
-   find(a) {
-      while (this.parent[a] !== a) {
-         a = this.parent[a];
-      }
-      return a;
-   }
+  // Returns final parent of a node
+  find(a) {
+    while (this.parent[a] !== a) {
+      a = this.parent[a];
+    }
+    return a;
+  }
 
-   // Checks connectivity of the 2 nodes
-   connected(a, b) {
-      return this.find(a) === this.find(b);
-   }
+  // Checks connectivity of the 2 nodes
+  connected(a, b) { return this.find(a) === this.find(b); }
 }
 
 // Class to represent cluster of points
@@ -232,19 +238,21 @@ class Cluster {
 function mstClustering(points, k, distFunc) {
   // init graph
   MST = new Graph();
-  for (let p1 in points) {
+  for (p1 of points) {
     MST.addNode(p1);
-    for (let p2 in points) {
+    for (let p2 of points) {
       if (p1.equals(p2)) {
         continue;
       }
+      MST.addNode(p2);
       MST.addEdge(p1, p2, distFunc(p1, p2))
     }
   }
 
-  MST = MST.kruskalsMST;
+  MST = MST.kruskalsMST();
+  console.log(MST);
 
-  for (let i = 0; i < k;++i){
+  for (let i = 0; i < k; ++i) {
     let maxEdge = MST.findLargestEdge();
     MST.deleteEdge(maxEdge);
   }
@@ -255,15 +263,16 @@ function mstClustering(points, k, distFunc) {
 }
 
 let vertexes = [
-    [0,1],
-    [0,4],
-    [0,3],
-    [10,10],
-    [1,1]
+  new Point([ 0, 1 ]), new Point([ 0, 4 ]), new Point([ 0, 3 ]),
+  new Point([ 10, 10 ]), new Point([ 1, 1 ])
 ];
 
 function distance(pointA, pointB) {
-  diffsSquared += Math.pow((pointA[dims[d]] - pointB[dims[d]]), 2);
+  let result = Math.sqrt(Math.pow(Math.abs(pointA.coordinates[0] - pointB.coordinates[0]), 2) +
+                         Math.pow(Math.abs(pointA.coordinates[1] - pointB.coordinates[1]), 2));
+  return result;
 }
+
 let clusters = mstClustering(vertexes, 3, distance);
+console.log(clusters);
 document.writeln(clusters);
