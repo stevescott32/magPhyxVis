@@ -5,7 +5,7 @@ class Graph {
   }
 
   addNode(node) {
-    if (this.nodes.includes(node.coordinates)) {
+    if (this.nodes.includes(node)) {
       return;
     }
     this.nodes.push(node);
@@ -13,9 +13,8 @@ class Graph {
   }
 
   addEdge(node1, node2, weight = 1) {
-    console.log(node1);
     this.edges[node1.coordinates].push({node : node2, weight : weight});
-    this.edges[node2.coordinates].push({node : node1, weight : weight});
+    // this.edges[node2.coordinates].push({node : node1, weight : weight});
   }
 
   addDirectedEdge(node1, node2, weight = 1) {
@@ -28,12 +27,15 @@ class Graph {
     let max = Number.MIN_VALUE;
     var maxEdge;
     for (var key in this.edges) {
-      if (this.edges[key].weight > max) {
-        max = this.edges[key].weight;
+      console.log(key);
+      console.log(this.edges[key]);
+      for (var edge of this.edges[key]) {
+        if (edge.weight > max)
+        max = edge.weight;
         maxEdge = {
-          node1 : key,
-          node2 : this.edges[key].node2,
-          weight : this.edges[key].weight
+          node1 : key.split(',').map(x=>+x),
+          node2 : edge.node,
+          weight : edge.weight
         };
       }
     }
@@ -42,15 +44,14 @@ class Graph {
   }
 
   deleteEdge(edge) {
-    let index = this.edges[edge.node1].indexOf(
-        {node : edge.node2, weight : edge.weight});
-    if (index != undefined) {
-      delete this.edges[edge.node1][index];
+    console.log(edge);
+    let index = this.edges[edge.node1].map(x => x.weight).indexOf(edge.weight);
+    if (index != -1) {
+      this.edges[edge.node1].splice(index,1);
     }
-    index = this.edges[edge.node2].indexOf(
-        {node : edge.node1, weight : edge.weight});
-    if (index != undefined) {
-      delete this.edges[edge.node2][index];
+    index = this.edges[edge.node2].map(x => x.weight).indexOf(edge.weight);
+    if (index != -1) {
+      this.edges[edge.node2].splice(index,1);
     }
   }
 
@@ -155,7 +156,7 @@ class Graph {
     for (let node in this.edges) {
       this.edges[node].forEach(edge => {
         console.log(edge);
-        edgeQueue.enqueue([ node, edge.node.coordinates.toString() ], edge.weight);
+        edgeQueue.enqueue([ node.split(',').map(x=>+x), edge.node.coordinates ], edge.weight);
       });
     }
     let uf = new UnionFind(this.nodes);
@@ -164,8 +165,6 @@ class Graph {
     while (!edgeQueue.isEmpty()) {
       // Get the edge data using destructuring
       let nextEdge = edgeQueue.dequeue();
-      console.log(edgeQueue);
-      console.log(nextEdge);
       let nodes = nextEdge.element;
       let weight = nextEdge.priority;
 
@@ -187,7 +186,7 @@ class UnionFind {
     this.parent = {};
     // Initialize the data structure such that all elements have themselves as
     // parents
-    elements.forEach(e => (this.parent[e] = e));
+    elements.forEach(e => (this.parent[e.coordinates] = e.coordinates));
   }
 
   union(a, b) {
@@ -249,11 +248,13 @@ function mstClustering(points, k, distFunc) {
     }
   }
 
+  console.log(MST);
   MST = MST.kruskalsMST();
   console.log(MST);
 
   for (let i = 0; i < k; ++i) {
     let maxEdge = MST.findLargestEdge();
+    console.log(maxEdge);
     MST.deleteEdge(maxEdge);
   }
 
