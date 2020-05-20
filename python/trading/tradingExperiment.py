@@ -1,6 +1,6 @@
 import numpy
-
 import talib
+
 # followed roughly https://blog.quantinsti.com/install-ta-lib-python/
 # installed ta-lib by downloading the cp38 win_amd64.whl file from
 # https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib 
@@ -10,6 +10,19 @@ print("Trying out talib")
 
 numDataPoints = 100
 headings = ['n', 'event_type', 't', 'close-price']
+
+global trace 
+trace = False
+global debug
+debug = True
+
+def log(msg):
+    if trace:
+        print(msg)
+
+def logDebug(msg):
+    if debug:
+        print(msg)
 
 stockData = {
     'open': numpy.random.random(numDataPoints),
@@ -30,7 +43,6 @@ def myFirstTradingAlgo(inputs):
 
 
 def trader2(inputs, params, outputFile):
-    results = []
     mom = talib.MOM(inputs["close"], timeperiod=10)
     std_devs = talib.STDDEV(inputs['close'], timeperiod=10, nbdev=1)
 
@@ -38,19 +50,17 @@ def trader2(inputs, params, outputFile):
     i = 1
     for (momentum, std_dev) in zip(mom, std_devs):
         if momentum > params["mom_trigger_buy"] and std_dev < params['std_dev']:
-            results.append("buy")
             addEvent(i, "buy", i, inputs["close"][i], outputFile)
+            log("buy")
         elif momentum < params["mom_trigger_sell"] and std_dev < params['std_dev']:
-            results.append("sell")
             addEvent(i, "sell", i, inputs["close"][i], outputFile)
+            log("sell")
         else:
-            results.append("stay")
             addEvent(i, "stay", i, inputs["close"][i], outputFile)
-    return results
+            log("stay")
 
 # coefficients - an array of 23 coefficients corresponding to the 23 included momentum indicators
-def momentumTrader(marketData, coefficients, file):
-    results = []
+def momentumTrader(marketData, coefficients, stdDevParam, file):
     indicators = []
     period = 10
     fp = 12
@@ -84,20 +94,37 @@ def momentumTrader(marketData, coefficients, file):
     indicators.append(talib.ULTOSC(marketData["high"], marketData["low"], marketData["close"], timeperiod1=7, timeperiod2=14, timeperiod3=28))
     indicators.append(talib.WILLR(marketData["high"], marketData["low"], marketData["close"], timeperiod=period))
 
+
+    lower_thresholds = []
+    upper_thresholds = []
+    for indicator in indicators:
+        not_nan_array = ~ numpy.isnan(indicator)
+        filtered = indicator[not_nan_array]
+        stdDev = numpy.std(filtered)
+        mean = numpy.mean(filtered)
+        lower_thresholds.append(mean - (stdDevParam * stdDev))
+        upper_thresholds.append(mean + (stdDevParam * stdDev))
+
     # iterate through all time periods, deciding to buy, sell, or stay
     #i = 1
+    log("#########################")
     for i in range(len(indicators[0])):
         score = calculateMomentumScore(indicators, coefficients, i)
-        if score > 0.5:
-            results.append("buy")
+        if score > calculateThreshold(upper_thresholds, coefficients):
             addEvent(i, "buy", i, marketData["close"][i], file)
-        elif score < -0.5:
-            results.append("sell")
+            log("buy")
+        elif score < calculateThreshold(lower_thresholds, coefficients):
             addEvent(i, "sell", i, marketData["close"][i], file)
+            log("sell")
         else:
-            results.append("stay")
             addEvent(i, "stay", i, marketData["close"][i], file)
-    return results
+            log("stay")
+
+def calculateThreshold(thresholds, coefficients):
+    result = 0
+    for (threshold, coefficient) in zip(thresholds, coefficients):
+        result += threshold * coefficient
+    return result
 
 def calculateMomentumScore(indicators, coefficients, timeindex):
     score = 0
@@ -130,17 +157,17 @@ def addEvent(n, event_type, t, price, file):
 #        print(buySells)
 
 numIndicators = 23
-for i in range(numIndicators):
-    #coeffs = [0] * 23
-    filename = './../../data/momentumTradingData/events/events' + f'{i:02}' + '.csv'
-    f = open(filename, 'w')
-    printHeadings(headings, f)
+for j in range(1):
+    for i in range(numIndicators):
+        filenum = j * numIndicators + i
+        logDebug(filenum)
+        filename = './../../data/momentumTradingData/events/events' + f'{filenum:02}' + '.csv'
+        f = open(filename, 'w')
+        printHeadings(headings, f)
 
-    coeffs = numpy.zeros(numIndicators)
-    coeffs[i] = 1
-    results = momentumTrader(stockData, coeffs, f)
-    print("######################################")
-    print(results)
-    f.close()
+        coeffs = numpy.zeros(numIndicators)
+        coeffs[i] = 1
+        momentumTrader(stockData, coeffs, 0.01 * (j + 1), f)
+        f.close()
 
 print("Experiment success")
