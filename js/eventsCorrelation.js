@@ -6,7 +6,10 @@ const bounds = svg.node().getBoundingClientRect();
 
 const height = 100;
 
-const generateEventsChart = (data, timeSelector) => {
+let chartsData = [];
+
+const generateEventsChart = (timeSelector) => {
+    data = chartsData
     const top = 300, height = 400;
     const circleSize = 5;
     const left = circleSize * 2, width = bounds.width - circleSize * 2 * 2;
@@ -65,8 +68,20 @@ const generateEventsChart = (data, timeSelector) => {
         .style('fill', d => {
             return 'green'
         })
-        .on('click', function (d, i) {
-            alert(d + " " + i)
+        .on('click', function (datum) {
+            const mainEvent = chartsData[datum.parentIndex]
+            const newData = chartsData.map((d, i) => {
+                const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector);
+                return {
+                    distance: dtw[0][mainEvent.length][d.length][0],
+                    datum: d
+                }
+            })
+            console.log(newData)
+            chartsData = newData.sort((da, db) => {
+                return da.distance - db.distance
+            }).map(d => d.datum)
+            generateEventsChart(timeSelector)
         })
 }
 
@@ -262,8 +277,6 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
 }
 
-const chartsData = [];
-
 const register_button_handlers = () => {
     root.select('.match-a-to-b').on('click', function() {
         drawCorrelation(dataA, dataB, 0, 1, 'green')
@@ -288,7 +301,7 @@ const register_button_handlers = () => {
 
     root.select('.add-event').on('click', function() {
         chartsData.push(dataA.map(d => ({ time: d})))
-        generateEventsChart(chartsData, d => d.time)
+        generateEventsChart(d => d.time)
     })
 
     root.select('.clear-event-a').on('click', function() {
