@@ -9,7 +9,7 @@ import talib
 print("Trying out talib")
 
 numDataPoints = 100
-headings = ['n', 'event_type', 't', 'close-price']
+headings = ['n', 'event_type', ' t', 'close-price']
 
 global trace 
 trace = False

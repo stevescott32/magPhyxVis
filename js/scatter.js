@@ -59,12 +59,12 @@ class Scatter {
       .domain([
         d3.min(data, (file) => {
           return d3.min(file, (row => {
-            return +row['t'];
+            return +row[' t'];
           }))
         }),
         d3.max(data, (file) => {
           return d3.max(file, (row => {
-            return +row['t'];
+            return +row[' t'];
           }))
         })
       ])
@@ -152,7 +152,7 @@ class Scatter {
       })
       .enter()
       .append('circle')
-      .attr('cx', (d) => { return xscale(+d['t']); })
+      .attr('cx', (d) => { return xscale(+d[' t']); })
       .attr('cy', (d) => { return yscale(+d['close-price']); })
       .attr('r', this.circleSize)
       .style('fill', (d) => { return Utils.getFill(d[' event_type']); })
