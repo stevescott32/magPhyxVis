@@ -44,12 +44,23 @@
           <input type="range" />
         </div>
       </div>
-      <div>
+      <div class="match-actions">
         <button class="match-a-to-b">Match Event A to B</button>
         <label>
           <input class="match-exact" type="checkbox">
           Match exact
         </label>
+        <div class="ordering-methods">
+          Ordering / Matching Method
+          <label>
+            <input checked value="hausdorff" name="ordering-method" type="radio" />
+            Haursdorff distance
+          </label>
+          <label>
+            <input value="dtw" name="ordering-method" type="radio" />
+            DTW distance
+          </label>
+        </div>
       </div>
     </div>
   </div>
