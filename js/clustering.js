@@ -27,8 +27,6 @@ class Graph {
     let max = Number.MIN_VALUE;
     var maxEdge;
     for (var key in this.edges) {
-      console.log(key);
-      console.log(this.edges[key]);
       for (var edge of this.edges[key]) {
         if (edge.weight > max)
         max = edge.weight;
@@ -44,7 +42,6 @@ class Graph {
   }
 
   deleteEdge(edge) {
-    console.log(edge);
     let index = this.edges[edge.node1].map(x => x.weight).indexOf(edge.weight);
     if (index != -1) {
       this.edges[edge.node1].splice(index,1);
@@ -60,21 +57,21 @@ class Graph {
     let indicies = [...Array(this.nodes.length).keys() ];
     let currentCluster = 0;
     clusters[currentCluster] = [];
-    clusters[currentCluster].push(this.nodes[0]);
+    clusters[currentCluster].push(this.nodes[0].coordinates);
     let lastNode = this.nodes[0];
-    indicies.spice(0, 1);
+    indicies.splice(0, 1);
     while (currentCluster < k) {
-      let currentEdge = this.edges[lastNode];
+      let currentEdge = this.edges[lastNode.coordinates];
       let nextNode = lastNode;
       if (currentEdge == undefined) {
         ++currentCluster;
         nextNode = this.nodes[indicies[0]];
       } else {
-        nextNode = currentEdge.node;
+        nextNode = currentEdge[0].node;
       }
 
       clusters[currentCluster].push(nextNode);
-      indicies.spice(this.nodes.indexOf(nextNode));
+      indicies.splice(this.nodes.indexOf(nextNode));
       lastNode = nextNode;
     }
 
@@ -155,7 +152,6 @@ class Graph {
     // Add all edges to the Queue:
     for (let node in this.edges) {
       this.edges[node].forEach(edge => {
-        console.log(edge);
         edgeQueue.enqueue([ node.split(',').map(x=>+x), edge.node.coordinates ], edge.weight);
       });
     }
@@ -248,17 +244,14 @@ function mstClustering(points, k, distFunc) {
     }
   }
 
-  console.log(MST);
   MST = MST.kruskalsMST();
-  console.log(MST);
 
-  for (let i = 0; i < k; ++i) {
+  for (let i = 0; i < k-1; ++i) {
     let maxEdge = MST.findLargestEdge();
-    console.log(maxEdge);
     MST.deleteEdge(maxEdge);
   }
 
-  let clusters = MST.cluster();
+  let clusters = MST.cluster(k);
 
   return clusters;
 }
@@ -274,6 +267,6 @@ function distance(pointA, pointB) {
   return result;
 }
 
-let clusters = mstClustering(vertexes, 3, distance);
+let clusters = mstClustering(vertexes, 1, distance);
 console.log(clusters);
 document.writeln(clusters);
