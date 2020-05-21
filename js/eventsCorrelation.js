@@ -70,10 +70,16 @@ const generateEventsChart = (timeSelector) => {
         })
         .on('click', function (datum) {
             const mainEvent = chartsData[datum.parentIndex]
+            const deaths = +range.node().value;
             const newData = chartsData.map((d, i) => {
                 const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector);
+                const candidates = []
+                for (let j = 0; j <= deaths; ++j) {
+                    candidates.push(dtw[j][mainEvent.length][d.length][0])
+                }
+                console.log(i, candidates)
                 return {
-                    distance: dtw[0][mainEvent.length][d.length][0],
+                    distance: i === datum.parentIndex ? 0 : Math.min(...candidates),
                     datum: d
                 }
             })
@@ -299,11 +305,15 @@ const register_button_handlers = () => {
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
     })
 
-    root.select('.add-event').on('click', function() {
+    root.select('.add-event-a').on('click', function() {
         chartsData.push(dataA.map(d => ({ time: d})))
         generateEventsChart(d => d.time)
     })
 
+    root.select('.add-event-b').on('click', function() {
+        chartsData.push(dataB.map(d => ({ time: d})))
+        generateEventsChart(d => d.time)
+    })
     root.select('.clear-event-a').on('click', function() {
         dataA = []
         generateChart('event1', dataA, { color: 'green' });

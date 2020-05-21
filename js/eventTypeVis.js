@@ -823,10 +823,10 @@ class SimulationDistance {
         }
     }
 
-    getDTWDistanceWithDeaths(eventA, eventB, datumSelector = d => d) {
+    getDTWDistanceWithDeaths(eventA, eventB, datumSelector = d => d, maxDeaths) {
         const NA = eventA.length;
         const NB = eventB.length;
-        const MaxDeaths = NA + NB;
+        let MaxDeaths = maxDeaths != null ? maxDeaths : NA + NB;
 
         const dtw =
             new Array(MaxDeaths + 1)
