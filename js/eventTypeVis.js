@@ -24,7 +24,8 @@ class EventTypeVis {
 
         this.state = {
             match: null,
-            ordering: 'hausdorff'
+            ordering: 'hausdorff',
+            maxDeaths: 0
         }
 
         this.divId = 'event-type-vis';
@@ -120,9 +121,31 @@ class EventTypeVis {
             self.updateHelper(data, paramData, distances);
         })
 
-        root.select('.ordering-methods').selectAll('input').each(function() {
-            d3.select(this).on('change', function() {
+        const slider = root.select('.ordering-methods')
+            .select('.max-deaths')
+
+        const deathCount = root.select('.ordering-methods')
+            .select('.death-count')
+
+        slider.on('click', function () {
+            self.state.maxDeaths = +this.value;
+            deathCount.html(+this.value)
+            self.updateHelper(data, paramData, distances);
+        })
+
+        root.select('.ordering-methods').selectAll('input[type="radio"]').each(function() {
+            const node = d3.select(this);
+            node.on('change', function() {
                 self.state.ordering = this.value;
+                let disable = false;
+                if (this.value === 'dtw') {
+                    disable = false;
+                } else {
+                    disable = true;
+                }
+
+                slider.attr('disabled', disable ? 'disabled' : null);
+
                 self.updateHelper(data, paramData, distances);
             })
         });
@@ -288,7 +311,7 @@ class EventTypeVis {
 
         const simulationDistances = new SimulationDistance();
         if (self.state.reorderSimulationIndex != null) {
-            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering);
+            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
         } else {
             data = data.map( (d, i) => ({
                 simulationIndex: i,
@@ -662,7 +685,18 @@ class SimulationDistance {
 
     }
 
-    reorder(data, simulationIndex, ordering){
+    getDTWWithDeaths(eventA, eventB, valueSelector, maxDeaths) {
+        console.log('a', eventA.length, eventB.length, maxDeaths)
+        const dtw = this.getDTWDistanceWithDeaths(eventA, eventB, valueSelector, maxDeaths)
+        let dist = dtw[0][eventA.length][eventB.length][0];
+        for (let i = 1; i <= maxDeaths; ++i) {
+            const cst = dtw[i][eventA.length][eventB.length][0]
+            dist = Math.min(dist, cst);
+        }
+        return dist;
+    }
+
+    reorder(data, simulationIndex, ordering, maxDeaths){
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
         console.log('data length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
 
@@ -673,7 +707,7 @@ class SimulationDistance {
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min;
             if (ordering === 'dtw') {
-                min = this.getDTWDistance(data[simulationIndex], data[i], d => d[' t']).distance;
+                min = this.getDTWWithDeaths(data[simulationIndex], data[i], d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
                 min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
             }
