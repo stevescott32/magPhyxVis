@@ -54,7 +54,6 @@ const generateEventsChart = (timeSelector) => {
 
     circleSel.exit().remove();
 
-
     circleSel
         .enter()
         .append('circle')
@@ -72,12 +71,11 @@ const generateEventsChart = (timeSelector) => {
             const mainEvent = chartsData[datum.parentIndex]
             const deaths = +range.node().value;
             const newData = chartsData.map((d, i) => {
-                const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector);
+                const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector, deaths);
                 const candidates = []
                 for (let j = 0; j <= deaths; ++j) {
-                    candidates.push(dtw[j][mainEvent.length][d.length][0])
+                    candidates.push(getEffectiveDistance(dtw, mainEvent, d, j, timeSelector));
                 }
-                console.log(i, candidates)
                 return {
                     distance: i === datum.parentIndex ? 0 : Math.min(...candidates),
                     datum: d
@@ -184,7 +182,7 @@ const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
 const sd = new SimulationDistance();
 let dtw;
 
-const buildMatchingEvents = (deaths, datumSelector = d => d) => {
+const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) => {
     const NA = dataA.length;
     const NB = dataB.length;
     // not possible with deaths
@@ -231,11 +229,35 @@ const buildMatchingEvents = (deaths, datumSelector = d => d) => {
             pairs.push(pair)
         }
     }
+
+    const edge_list = pairs.map(d => ({ a: d.a, b: d.b + NA }))
+    let variance = 0;
+    let earthMoverDistance = 0;
+
+    const components = union_find(edge_list)
+    components.forEach(component => {
+        const values = component.map(vertex => {
+            if (vertex < NA) {
+                return datumSelector(dataA[vertex]);
+            } else {
+                return datumSelector(dataB[vertex - NA]);
+            }
+        })
+        const center = Utils.arrayAverage(values);
+        earthMoverDistance += values.reduce((acc, val) => Math.abs(val - center))
+    })
+
+    console.log({ earthMoverDistance })
+
     return {
-        distance: dtw[deaths][NA][NB][0],
+        distance: dtw[deaths][NA][NB][0] + earthMoverDistance,
         pairs
     }
 }
+
+const getEffectiveDistance = (dtw, dataA, dataB, deaths, timeSelector) => {
+    return dtw[deaths][dataA.length][dataB.length][0];
+};
 
 const range = root.select('.dtw-deaths');
 const drawCorrelation = (data1, data2, index1, index2, color, method) => {
@@ -245,7 +267,7 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
     if (method === 'dtw') {
         const deaths = +range.node().value;
-        const result = buildMatchingEvents(deaths)
+        const result = buildMatchingEvents(dtw, dataA, dataB, deaths)
         indices = result.pairs
         console.log(result);
     } else if (method === 'dist_basic') {
