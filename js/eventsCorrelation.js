@@ -74,7 +74,8 @@ const generateEventsChart = (timeSelector) => {
                 const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector, deaths);
                 const candidates = []
                 for (let j = 0; j <= deaths; ++j) {
-                    candidates.push(getEffectiveDistance(dtw, mainEvent, d, j, timeSelector));
+                    const result = buildMatchingEvents(dtw, mainEvent, d, j, timeSelector);
+                    candidates.push(result.distance);
                 }
                 return {
                     distance: i === datum.parentIndex ? 0 : Math.min(...candidates),
@@ -231,7 +232,6 @@ const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) 
     }
 
     const edge_list = pairs.map(d => ({ a: d.a, b: d.b + NA }))
-    let variance = 0;
     let earthMoverDistance = 0;
 
     const components = union_find(edge_list)
@@ -254,10 +254,6 @@ const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) 
         pairs
     }
 }
-
-const getEffectiveDistance = (dtw, dataA, dataB, deaths, timeSelector) => {
-    return dtw[deaths][dataA.length][dataB.length][0];
-};
 
 const range = root.select('.dtw-deaths');
 const drawCorrelation = (data1, data2, index1, index2, color, method) => {
