@@ -71,7 +71,7 @@ const generateEventsChart = (timeSelector) => {
             const mainEvent = chartsData[datum.parentIndex]
             const deaths = +range.node().value;
             const newData = chartsData.map((d, i) => {
-                const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector, deaths);
+                const dtw = getDTWDistanceWithDeaths(mainEvent, d, timeSelector, deaths);
                 const candidates = []
                 for (let j = 0; j <= deaths; ++j) {
                     const result = buildMatchingEvents(dtw, mainEvent, d, j, timeSelector);
@@ -241,7 +241,7 @@ const register_button_handlers = () => {
     })
     range.attr('value', 0)
     root.select('.match-dtw').on('click', function() {
-        dtw = sd.getDTWDistanceWithDeaths(dataA, dataB)
+        dtw = getDTWDistanceWithDeaths(dataA, dataB)
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
         range.attr('max', dataA.length + dataB.length)
     })
