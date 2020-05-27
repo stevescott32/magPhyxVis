@@ -9,16 +9,16 @@ class Graph {
       return;
     }
     this.nodes.push(node);
-    this.edges[node.coordinates] = [];
+    this.edges[toKey(node)] = [];
   }
 
   addEdge(node1, node2, weight = 1) {
-    this.edges[node1.coordinates].push({node : node2, weight : weight});
-    // this.edges[node2.coordinates].push({node : node1, weight : weight});
+    this.edges[toKey(node1)].push({node : node2, weight : weight});
+    // this.edges[toKey(node2)].push({node : node1, weight : weight});
   }
 
   addDirectedEdge(node1, node2, weight = 1) {
-    this.edges[node1].push({node : node2, weight : weight});
+    this.edges[toKey(node1)].push({node : node2, weight : weight});
   }
 
   // return dictionary contained two nodes with the heighest edge weight in the
@@ -31,7 +31,7 @@ class Graph {
         if (edge.weight > max)
         max = edge.weight;
         maxEdge = {
-          node1 : key.split(',').map(x=>+x),
+          node1 : fromKey(key),
           node2 : edge.node,
           weight : edge.weight
         };
@@ -42,37 +42,94 @@ class Graph {
   }
 
   deleteEdge(edge) {
-    let index = this.edges[edge.node1].map(x => x.weight).indexOf(edge.weight);
-    if (index != -1) {
-      this.edges[edge.node1].splice(index,1);
+    let index = this.edges[toKey(edge.node1)].forEach(function(e, index,
+                                                        edgeArray) {
+      if (this.isEdgeEqual(e, {node : edge.node2, weight : edge.weight})) {
+        edgeArray.splice(index, 1);
+      }
+    }.bind(this));
+
+     index = this.edges[toKey(edge.node2)].forEach(function(e, index,
+                                                        edgeArray) {
+      if (this.isEdgeEqual(e, {node : edge.node1, weight : edge.weight})) {
+        edgeArray.splice(index, 1);
+      }
+    }.bind(this));
+  }
+
+  isEdgeEqual(edgeA, edgeB)
+  {
+    if (edgeA.node != edgeB.node)
+    {
+      return false;
     }
-    index = this.edges[edge.node2].map(x => x.weight).indexOf(edge.weight);
-    if (index != -1) {
-      this.edges[edge.node2].splice(index,1);
+    else if (edgeA.weight != edgeB.weight)
+    {
+      return false;
     }
+
+    return true;
+  }
+
+  exploreEdges(edges)
+  {
+    let retArray = [];
+
+    for (let e of edges) {
+      let nextNode = e.node;
+      retArray.push(nextNode);
+      let nextEdges = this.edges[toKey(nextNode)];
+      if (nextEdges.length != 0)
+      {
+        retArray.push(this.exploreEdges(nextEdges));
+      }
+    }
+
+    return retArray;
   }
 
   cluster(k) {
     let clusters = [];
     let indicies = [...Array(this.nodes.length).keys() ];
     let currentCluster = 0;
-    clusters[currentCluster] = [];
-    clusters[currentCluster].push(this.nodes[0].coordinates);
-    let lastNode = this.nodes[0];
-    indicies.splice(0, 1);
-    while (currentCluster < k) {
-      let currentEdge = this.edges[lastNode.coordinates];
-      let nextNode = lastNode;
-      if (currentEdge == undefined) {
-        ++currentCluster;
-        nextNode = this.nodes[indicies[0]];
-      } else {
-        nextNode = currentEdge[0].node;
+    while (indicies.length != 0) {
+      clusters[currentCluster] = [];
+      let currNode = this.nodes[indicies[0]];
+      let currentEdge = this.edges[toKey(currNode)];
+      let foundNodes = this.exploreEdges(currentEdge);
+      foundNodes.push(currNode);
+
+      for (let fNode of foundNodes)
+      {
+        clusters[currentCluster].push(fNode);
+        let indexToDel = indicies.indexOf(this.nodes.indexOf(fNode));
+        if (indexToDel != -1)
+        {
+          indicies.splice(indexToDel, 1);
+        }
       }
 
-      clusters[currentCluster].push(nextNode);
-      indicies.splice(this.nodes.indexOf(nextNode));
-      lastNode = nextNode;
+      ++currentCluster;
+    }
+
+    //combine clusters if possible
+    for (let i = 0; i < clusters.length; ++i)
+    {
+      for (let j = i + 1; j < clusters.length; ++j) {
+        if(clusters[i].some(item => clusters[j].includes(item)))
+        {
+          clusters[j].forEach(item => {
+            if (clusters[i].includes(item)) {
+            }
+            else
+            {
+              clusters[i].push(item);
+            }
+          });
+          clusters.splice(j, 1);
+          --j;
+        }
+      }
     }
 
     return clusters;
@@ -152,7 +209,7 @@ class Graph {
     // Add all edges to the Queue:
     for (let node in this.edges) {
       this.edges[node].forEach(edge => {
-        edgeQueue.enqueue([ node.split(',').map(x=>+x), edge.node.coordinates ], edge.weight);
+        edgeQueue.enqueue([ fromKey(node), edge.node ], edge.weight);
       });
     }
     let uf = new UnionFind(this.nodes);
@@ -182,7 +239,7 @@ class UnionFind {
     this.parent = {};
     // Initialize the data structure such that all elements have themselves as
     // parents
-    elements.forEach(e => (this.parent[e.coordinates] = e.coordinates));
+    elements.forEach(e => (this.parent[e] = e));
   }
 
   union(a, b) {
@@ -256,6 +313,9 @@ function mstClustering(points, k, distFunc) {
   return clusters;
 }
 
+function fromKey(key) { return new Point(key.split(',').map(x => +x)); }
+function toKey(key) {return key.coordinates.toString();}
+
 let vertexes = [
   new Point([ 0, 1 ]), new Point([ 0, 4 ]), new Point([ 0, 3 ]),
   new Point([ 10, 10 ]), new Point([ 1, 1 ])
@@ -267,6 +327,6 @@ function distance(pointA, pointB) {
   return result;
 }
 
-let clusters = mstClustering(vertexes, 1, distance);
+let clusters = mstClustering(vertexes, 2, distance);
 console.log(clusters);
 document.writeln(clusters);
