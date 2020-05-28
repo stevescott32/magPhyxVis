@@ -422,7 +422,7 @@ class EventTypeVis {
             .append('g')
             .merge(simsSel)
             .attr('class', (d, i) => {
-                console.log('Problematic data:', d);
+                // console.log('Problematic data:', d);
                 return `oneSimulation group${d.simulationIndex}`;
             })
 
@@ -442,6 +442,14 @@ class EventTypeVis {
 
         circleSel.exit().remove();
 
+        var customColorScale = d3.scaleOrdinal()
+            .domain(['Volume Indicators', 'Volatility Indicators', 
+                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
+                'Overlap Studies', 'Momentum Indicators', 'Math Transform', 
+                'Math Operators', 'Cycle Indicators'])
+            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 
+                'green', 'black', 'red', 'pink']);
+
         circleSel
             .enter()
             .append('circle')
@@ -453,8 +461,8 @@ class EventTypeVis {
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                // if (+d[' t'] > 50) { return 'white'; }
-                return Utils.getFill(d[' event_type']);
+                let color = customColorScale(d['indicator-category']);
+                return color;
             })
             .on('mouseover', function (d) {
                 if (self.state.match) {
