@@ -10,6 +10,8 @@
   <script type="application/javascript" src="js/src/quadTree/quadtree.js"></script>
   <script type="application/javascript" src="js/dataStructure.js"></script>
   <script type="application/javascript" src="js/src/ktree/dataActions.js"></script>
+  <script src="js/union_find.js"></script>
+  <script type="application/javascript" src="js/dtw.js"></script>
   <script type="application/javascript" src="js/eventTypeVis.js"></script>
   <script type="application/javascript" src="js/paramsVis.js"></script>
   <script type="application/javascript" src="js/scatter.js"></script>
@@ -59,6 +61,12 @@
           <label>
             <input value="dtw" name="ordering-method" type="radio" />
             DTW distance
+            <br />
+            <label style="margin-left: 40px;">
+                Max deaths
+              <input class='max-deaths' disabled value=0 min=0 max=20 type="range" />
+              <span class="death-count">0</span>
+            </label>
           </label>
         </div>
       </div>

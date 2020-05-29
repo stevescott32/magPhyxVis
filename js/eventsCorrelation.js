@@ -54,7 +54,6 @@ const generateEventsChart = (timeSelector) => {
 
     circleSel.exit().remove();
 
-
     circleSel
         .enter()
         .append('circle')
@@ -70,10 +69,16 @@ const generateEventsChart = (timeSelector) => {
         })
         .on('click', function (datum) {
             const mainEvent = chartsData[datum.parentIndex]
+            const deaths = +range.node().value;
             const newData = chartsData.map((d, i) => {
-                const dtw = sd.getDTWDistanceWithDeaths(mainEvent, d, timeSelector);
+                const dtw = getDTWDistanceWithDeaths(mainEvent, d, timeSelector, deaths);
+                const candidates = []
+                for (let j = 0; j <= deaths; ++j) {
+                    const result = buildMatchingEvents(dtw, mainEvent, d, j, timeSelector);
+                    candidates.push(result.distance);
+                }
                 return {
-                    distance: dtw[0][mainEvent.length][d.length][0],
+                    distance: i === datum.parentIndex ? 0 : Math.min(...candidates),
                     datum: d
                 }
             })
@@ -178,59 +183,6 @@ const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
 const sd = new SimulationDistance();
 let dtw;
 
-const buildMatchingEvents = (deaths, datumSelector = d => d) => {
-    const NA = dataA.length;
-    const NB = dataB.length;
-    // not possible with deaths
-    if (dtw[deaths][NA][NB][0] === 1e9) {
-        return {
-            distance: 1e9,
-            pairs: []
-        }
-    }
-    const pairs = [];
-    let d = deaths;
-    let i = NA, j = NB, k = 0;
-    while (i >= 1 && j >= 1) {
-        const datumA = dataA[i - 1];
-        const datumB = dataB[j - 1];
-        const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-        let matchPair = true;
-        const pair = { a: i - 1, b: j - 1 }
-        if (dtw[d][i - 1][j][2] + cost === dtw[d][i][j][k]) {
-            i--;
-            k = 2;
-        } else if (dtw[d][i][j - 1][1] + cost === dtw[d][i][j][k]) {
-            j--;
-            k = 1;
-        } else if (dtw[d][i - 1][j - 1][0] + cost === dtw[d][i][j][k]) {
-            i--;
-            j--;
-            k = 0;
-        } else if (d > 0 && k !== 1 && dtw[d - 1][i - 1][j][k] === dtw[d][i][j][k]) {
-            d--;
-            i--;
-            matchPair = false;
-            console.log('kill row1', i + 1)
-        } else if (d > 0 && k !== 2 && dtw[d - 1][i][j - 1][k] === dtw[d][i][j][k]) {
-            d--;
-            j--;
-            console.log('kill row1', j + 1)
-            matchPair = false;
-        } else {
-            console.log('this is a bug')
-            break;
-        }
-        if (matchPair) {
-            pairs.push(pair)
-        }
-    }
-    return {
-        distance: dtw[deaths][NA][NB][0],
-        pairs
-    }
-}
-
 const range = root.select('.dtw-deaths');
 const drawCorrelation = (data1, data2, index1, index2, color, method) => {
     let indices = sd
@@ -239,7 +191,7 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
     if (method === 'dtw') {
         const deaths = +range.node().value;
-        const result = buildMatchingEvents(deaths)
+        const result = buildMatchingEvents(dtw, dataA, dataB, deaths)
         indices = result.pairs
         console.log(result);
     } else if (method === 'dist_basic') {
@@ -289,7 +241,7 @@ const register_button_handlers = () => {
     })
     range.attr('value', 0)
     root.select('.match-dtw').on('click', function() {
-        dtw = sd.getDTWDistanceWithDeaths(dataA, dataB)
+        dtw = getDTWDistanceWithDeaths(dataA, dataB)
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
         range.attr('max', dataA.length + dataB.length)
     })
@@ -299,11 +251,15 @@ const register_button_handlers = () => {
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
     })
 
-    root.select('.add-event').on('click', function() {
+    root.select('.add-event-a').on('click', function() {
         chartsData.push(dataA.map(d => ({ time: d})))
         generateEventsChart(d => d.time)
     })
 
+    root.select('.add-event-b').on('click', function() {
+        chartsData.push(dataB.map(d => ({ time: d})))
+        generateEventsChart(d => d.time)
+    })
     root.select('.clear-event-a').on('click', function() {
         dataA = []
         generateChart('event1', dataA, { color: 'green' });

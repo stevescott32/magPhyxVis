@@ -24,7 +24,8 @@ class EventTypeVis {
 
         this.state = {
             match: null,
-            ordering: 'hausdorff'
+            ordering: 'hausdorff',
+            maxDeaths: 0
         }
 
         this.divId = 'event-type-vis';
@@ -120,9 +121,31 @@ class EventTypeVis {
             self.updateHelper(data, paramData, distances);
         })
 
-        root.select('.ordering-methods').selectAll('input').each(function() {
-            d3.select(this).on('change', function() {
+        const slider = root.select('.ordering-methods')
+            .select('.max-deaths')
+
+        const deathCount = root.select('.ordering-methods')
+            .select('.death-count')
+
+        slider.on('click', function () {
+            self.state.maxDeaths = +this.value;
+            deathCount.html(+this.value)
+            self.updateHelper(data, paramData, distances);
+        })
+
+        root.select('.ordering-methods').selectAll('input[type="radio"]').each(function() {
+            const node = d3.select(this);
+            node.on('change', function() {
                 self.state.ordering = this.value;
+                let disable = false;
+                if (this.value === 'dtw') {
+                    disable = false;
+                } else {
+                    disable = true;
+                }
+
+                slider.attr('disabled', disable ? 'disabled' : null);
+
                 self.updateHelper(data, paramData, distances);
             })
         });
@@ -205,7 +228,7 @@ class EventTypeVis {
 
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
-            arrowInfo = simulationDistance.getDTWDistance(dataA, dataB, d => d[' t']).pairs.map(d => [d.a, d.b])
+            arrowInfo = getDTWDistance(dataA, dataB, d => d[' t']).pairs.map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
                 arrowInfo = simulationDistance.getCorrelatingEventDistances(dataA, dataB)[1]
@@ -288,7 +311,7 @@ class EventTypeVis {
 
         const simulationDistances = new SimulationDistance();
         if (self.state.reorderSimulationIndex != null) {
-            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering);
+            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
         } else {
             data = data.map((d, i) => ({
                 simulationIndex: i,
@@ -673,7 +696,18 @@ class SimulationDistance {
 
     }
 
-    reorder(data, simulationIndex, ordering){
+    getDTWWithDeaths(eventA, eventB, valueSelector, maxDeaths) {
+        console.log('a', eventA.length, eventB.length, maxDeaths)
+        const dtw = getDTWDistanceWithDeaths(eventA, eventB, valueSelector, maxDeaths)
+        let dist = Infinity
+        for (let i = 0; i <= maxDeaths; ++i) {
+            const match = buildMatchingEvents(dtw, eventA, eventB, i, valueSelector)
+            dist = Math.min(dist, match.distance);
+        }
+        return dist;
+    }
+
+    reorder(data, simulationIndex, ordering, maxDeaths){
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
         console.log('data length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
 
@@ -684,7 +718,7 @@ class SimulationDistance {
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min;
             if (ordering === 'dtw') {
-                min = this.getDTWDistance(data[simulationIndex], data[i], d => d[' t']).distance;
+                min = this.getDTWWithDeaths(data[simulationIndex], data[i], d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
                 min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
             }
@@ -795,112 +829,6 @@ class SimulationDistance {
         }
 
         return minIndex;
-    }
-
-    getDTWDistance(eventA, eventB, datumSelector = d => d) {
-        const NA = eventA.length;
-        const NB = eventB.length;
-        const dtw = new Array(NA + 1)
-            .fill(null)
-            .map(_ => new Array(NB + 1).fill(1e9))
-        dtw[0][0] = 0;
-        for (let i = 1; i <= NA; ++i) {
-            for (let j = 1; j <= NB; ++j) {
-                const datumA = eventA[i - 1];
-                const datumB = eventB[j - 1];
-                const dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-                dtw[i][j] = Math.min(...[dtw[i - 1][j], dtw[i][j - 1], dtw[i - 1][j - 1]]) + dist;
-            }
-        }
-        const pairs = [];
-        let i = NA, j = NB;
-        while (i >= 1 || j >= 1) {
-            const datumA = eventA[i - 1];
-            const datumB = eventB[j - 1];
-            const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-            pairs.push({ a: i - 1, b: j - 1 });
-            if (dtw[i - 1][j] + cost === dtw[i][j]) {
-                i--;
-            } else if (dtw[i][j - 1] + cost === dtw[i][j]) {
-                j--;
-            } else {
-                i--;
-                j--;
-            }
-        }
-        return {
-            distance: dtw[NA][NB],
-            pairs
-        }
-    }
-
-    getDTWDistanceWithDeaths(eventA, eventB, datumSelector = d => d) {
-        const NA = eventA.length;
-        const NB = eventB.length;
-        const MaxDeaths = NA + NB;
-
-        const dtw =
-            new Array(MaxDeaths + 1)
-                .fill(null)
-                .map(_ => {
-                    return new Array(NA + 1)
-                        .fill(null)
-                        .map(_ => new Array(NB + 1).fill(null).map(_ => {
-                            return new Array(3).fill(1e9);
-                        }))
-                })
-
-        dtw[0][0][0][0] = 0;
-        dtw[0][0][0][1] = 0;
-        dtw[0][0][0][2] = 0;
-
-        const getValidMins = (coords) => coords
-            .filter(([d, i, j, _]) => d >= 0 && i >= 0 && j >= 0)
-            .map(([d, i, j, k]) => dtw[d][i][j][k]);
-
-        for (let d = 0; d <= MaxDeaths; ++d) {
-            for (let i = 0; i <= NA; ++i) {
-                for (let j = 0; j <= NB; ++j) {
-                    // k=0 nothing among i, j was used
-                    // k=1 ith element was used
-                    // k=2 jth element was used
-                    for (let k = 0; k < 3; ++k) {
-                        if (d + i + j === 0) {
-                            continue;
-                        }
-                        let dist;
-                        if (i > 0 && j > 0) {
-                            const datumA = eventA[i - 1];
-                            const datumB = eventB[j - 1];
-                            dist = Math.abs(datumSelector(datumA) - datumSelector(datumB));
-                        } else {
-                            // cant match
-                            dist = 1e9;
-                        }
-                        const candidates = getValidMins([[d, i - 1, j, 2], [d, i, j - 1, 1], [d, i - 1, j - 1, 0]]);
-                        if (candidates.length > 0) {
-                            dtw[d][i][j][k] = Math.min(...candidates) + dist;
-                        }
-                        // kill top, i - 1, j
-                        if (d > 0) {
-                            const validPoses = [[]]
-                            if (k !== 1) {
-                                validPoses.push([d - 1, i - 1, j, k])
-                            }
-                            if (k !== 2) {
-                                validPoses.push([d - 1, i, j - 1, k])
-                            }
-                            const candidates = getValidMins(validPoses)
-                            if (candidates.length > 0) {
-                                dtw[d][i][j][k] = Math.min(dtw[d][i][j][k], ...candidates);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return dtw;
     }
 
 }
