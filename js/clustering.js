@@ -228,6 +228,73 @@ class Graph {
     }
     return MST;
   }
+
+  findClusterOrigins(clusters, distFunc)
+  {
+    let clusterOrigins = [];
+    for (let cluster of clusters)
+    {
+      let minDist = Number.MAX_VALUE;
+      var clusterOrigin;
+      for (let centerNode of cluster)
+      {
+        let totalDist = 0;
+        for (let node of cluster)
+        {
+          totalDist += distFunc(node, centerNode);
+        }
+
+        if (totalDist < minDist)
+        {
+          minDist = totalDist;
+          clusterOrigin = centerNode;
+        }
+      }
+
+      clusterOrigins.push(clusterOrigin);
+    }
+
+    return clusterOrigins;
+  }
+
+  kMeansCluster(k, numIters, distFunc)
+  {
+    // Init cluster origins
+    let clusterOrigins = [];
+    let clusters = [];
+    for (let j = 0; j < k; ++j) {
+      clusterOrigins.push(this.nodes[j]);
+    }
+
+    for (let i = 0; i < numIters; ++i)
+    {
+      clusters = [];
+      for (let origin of clusterOrigins)
+      {
+        clusters.push([]);
+      }
+      // add nodes to appropriate cluster
+      for (let node of this.nodes)
+      {
+        let minDist = Number.MAX_VALUE;
+        let destIndex = -1;
+        clusterOrigins.forEach(function(origin, index, clusterOrigins){
+          let distToOrigin = distFunc(node, origin);
+          if (distToOrigin < minDist)
+          {
+            minDist = distToOrigin;
+            destIndex = index;
+          }
+        });
+        clusters[destIndex].push(node);
+      }
+
+      // Find new clusterOrigins
+      clusterOrigins = this.findClusterOrigins(clusters, distFunc);
+    }
+
+    return {"clusters" : clusters, "clusterOrigins" : clusterOrigins};
+  }
 }
 
 class UnionFind {
@@ -313,6 +380,26 @@ function mstClustering(points, k, distFunc) {
   return clusters;
 }
 
+function kMeansClustering(points, k, numIters, distFunc)
+{
+  // init graph
+  MST = new Graph();
+  for (p1 of points) {
+    MST.addNode(p1);
+    for (let p2 of points) {
+      if (p1.equals(p2)) {
+        continue;
+      }
+      MST.addNode(p2);
+      MST.addEdge(p1, p2, distFunc(p1, p2))
+    }
+  }
+
+  clusters = MST.kMeansCluster(k, numIters, distFunc);
+
+  return clusters;
+}
+
 function fromKey(key) { return new Point(key.split(',').map(x => +x)); }
 function toKey(key) {return key.coordinates.toString();}
 
@@ -327,6 +414,7 @@ function distance(pointA, pointB) {
   return result;
 }
 
-let clusters = mstClustering(vertexes, 2, distance);
+// let clusters = mstClustering(vertexes, 3, distance);
+let kMeansClusters = kMeansClustering(vertexes, 2, 100, distance);
 console.log(clusters);
 document.writeln(clusters);
