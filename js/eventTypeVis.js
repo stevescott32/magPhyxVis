@@ -18,7 +18,7 @@ class EventTypeVis {
             },
             tolerance: 0.1, // amount to add to the slider max for floating comparison
             stepCount: 30, // how many steps the slider should have
-            filterTimeThreshold: 180,
+            timeRange: [0, Infinity],
             distanceThreshold: null
         };
 
@@ -204,18 +204,21 @@ class EventTypeVis {
                 self.updateHelper(data, paramData, distances);
             })
 
-        const mint = 0, maxt = 1200;
-        sliders.select('.time-range')
-            .select('input')
-            .attr('min', mint)
-            .attr('value', self.config.filterTimeThreshold)
-            .attr('max', maxt)
-            .attr('step', 0.1)
-            .on('click', function() {
-                self.config.filterTimeThreshold = +this.value;
+        const range = this.getTimeRange(this.originalData)
+        console.log('set range', range)
+        $(".time-range-2").slider({
+            min: range[0],
+            max: range[1],
+            values: range,
+            slide: function( event, ui ) {
+                $(".amount" ).html("From " + ui.values[0] + " to " + ui.values[1] );
+                self.config.timeRange = ui.values;
                 self.updateHelper(data, paramData, distances);
-            })
+            }
+        });
 
+        $( ".amount" ).html( "From " + $( ".time-range-2" ).slider( "values", 0 ) +
+            " to " + $( ".time-range-2" ).slider( "values", 1 ) );
         this.updateHelper(data, paramData, distances);
 
     }
@@ -277,21 +280,30 @@ class EventTypeVis {
         ;
     }
 
+    getTimeRange(data) {
+        const min = d3.min(data, (sim) => {
+            return d3.min(sim, (d) => {
+                return d[' t'];
+            })
+        })
+        console.log('min', min)
+        const max = d3.max(data, (sim) => {
+            return d3.max(sim, (d) => {
+                return d[' t'];
+            })
+        })
+        return [min, max]
+    }
+
     getTimeScale(data) {
         return d3.scaleLinear()
-            .domain(
-                [0, d3.max(data, (sim) => {
-                    return d3.max(sim, (d) => {
-                        return d[' t'];
-                    })
-                })]
-            )
+            .domain(this.getTimeRange(data))
             .range([this.config.padding.left, this.config.width + this.config.padding.left])
     }
 
     filterEventByTimeThreshold(event) {
         return event.filter(d => {
-            return d[' t'] < this.config.filterTimeThreshold;
+            return d[' t'] > this.config.timeRange[0] && d[' t'] < this.config.timeRange[1];
         })
     }
 
@@ -310,6 +322,8 @@ class EventTypeVis {
         if (null == data) { return; }
 
         const simulationDistances = new SimulationDistance();
+        data = this.getTimeFilteredData(data)
+
         if (self.state.reorderSimulationIndex != null) {
             data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
         } else {
@@ -320,8 +334,6 @@ class EventTypeVis {
         }
 
         [data, paramData, distances] = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
-
-        data = this.getTimeFilteredData(data)
 
         const timeScale = this.getTimeScale(data)
 
@@ -438,13 +450,16 @@ class EventTypeVis {
                 .attr('class', 'simulations')
         }
         const simsSel = simulationGroup.selectAll('.oneSimulation')
-            .data(data)
+            .data(data.filter(d => d.length > 0))
 
         const sims = simsSel
             .enter()
             .append('g')
             .merge(simsSel)
-            .attr('class', (d, i) => { return `oneSimulation group${d[0].simulationIndex}`; })
+            .attr('class', (d, i) => {
+                console.log('datum', d)
+                return `oneSimulation group${d[0].simulationIndex}`;
+            })
 
         simsSel.exit().remove();
 
@@ -549,7 +564,7 @@ class EventTypeVis {
         data.forEach(({ simulationIndex, data }) => {
             // console.log(`Comparing ${this.originalDistances[i]}`);
             if (value == null || this.originalDistances[simulationIndex] <= value) {
-                filteredData.push(this.originalData[simulationIndex]);
+                filteredData.push(data);
                 filteredPamaData.push(this.originalParamData[simulationIndex]);
                 filteredDistances.push(this.originalDistances[simulationIndex]);
             }
