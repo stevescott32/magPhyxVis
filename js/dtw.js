@@ -31,11 +31,9 @@ const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) 
             d--;
             i--;
             matchPair = false;
-            console.log('kill row1', i + 1)
         } else if (d > 0 && k !== 2 && dtw[d - 1][i][j - 1][k] === dtw[d][i][j][k]) {
             d--;
             j--;
-            console.log('kill row1', j + 1)
             matchPair = false;
         } else {
             console.log('this is a bug')
