@@ -18,7 +18,7 @@ class EventTypeVis {
             },
             tolerance: 0.1, // amount to add to the slider max for floating comparison
             stepCount: 30, // how many steps the slider should have
-            filterTimeThreshold: 180,
+            timeRange: [0, Infinity],
             distanceThreshold: null
         };
 
@@ -78,7 +78,6 @@ class EventTypeVis {
     }
 
     highlightSimulation(simulation) {
-        // console.log(`Highlighting group${simulation} in eventTypeVis`);
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simulation}`)
             .selectAll('circle')
@@ -204,36 +203,45 @@ class EventTypeVis {
                 self.updateHelper(data, paramData, distances);
             })
 
-        const mint = 0, maxt = 1200;
-        sliders.select('.time-range')
-            .select('input')
-            .attr('min', mint)
-            .attr('value', self.config.filterTimeThreshold)
-            .attr('max', maxt)
-            .attr('step', 0.1)
-            .on('click', function () {
-                self.config.filterTimeThreshold = +this.value;
-                self.updateHelper(data, paramData, distances);
-            })
+        const range = this.getTimeRange(this.originalData)
+        self.config.timeRange = range
 
+        $(".time-range-2").slider({
+            min: range[0],
+            max: range[1],
+            values: range,
+            slide: function( event, ui ) {
+                $(".amount" ).html("From " + ui.values[0] + " to " + ui.values[1] );
+                self.config.timeRange = ui.values;
+                self.updateHelper(data, paramData, distances);
+            }
+        });
+
+        $( ".amount" ).html( "From " + $( ".time-range-2" ).slider( "values", 0 ) +
+            " to " + $( ".time-range-2" ).slider( "values", 1 ) );
         this.updateHelper(data, paramData, distances);
 
     }
 
-    correlateEvents(infoA, infoB, timeScale, eventCountScale) {
+    correlateEvents(data, infoA, infoB, timeScale, eventCountScale) {
         const simulationDistance = new SimulationDistance();
 
-        const dataA = this.filterEventByTimeThreshold(this.originalData[infoA.simulationIndex])
-        const dataB = this.filterEventByTimeThreshold(this.originalData[infoB.simulationIndex])
+        const eventAIdx = data.findIndex(d => d.simulationIndex === infoA.simulationIndex)
+        const eventBIdx = data.findIndex(d => d.simulationIndex === infoB.simulationIndex)
 
+        const eventA = eventAIdx !== -1 ? data[eventAIdx].event : []
+        const eventB = eventBIdx !== -1 ? data[eventBIdx].event : []
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
-            arrowInfo = getDTWDistance(dataA, dataB, d => d[' t']).pairs.map(d => [d.a, d.b])
+            const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d[' t'], this.state.maxDeaths)
+            arrowInfo = buildMatchingEvents(dtw, eventA, eventB, this.state.maxDeaths, d => d[' t'])
+                .pairs
+                .map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
-                arrowInfo = simulationDistance.getCorrelatingEventDistances(dataA, dataB)[1]
+                arrowInfo = simulationDistance.getCorrelatingEventDistances(eventA, eventB)[1]
             } else {
-                arrowInfo = simulationDistance.getEventsDistance(dataA, dataB, d => d[' t']).map((d, i) => [i, d])
+                arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d[' t']).map((d, i) => [i, d])
             }
         }
 
@@ -253,10 +261,10 @@ class EventTypeVis {
             .attr('marker-mid', this.state.ordering === 'dtw' || this.state.matchExact ? 'none' : 'url(#arrow)')
             .attr('d', d => {
                 // Coordinates of mid point on line to add new vertex.
-                const sourceX = timeScale(dataA[d[0]][' t']);
-                const sourceY = eventCountScale(infoA.renderIndex)
-                const targetX = timeScale(dataB[d[1]][' t'])
-                const targetY = eventCountScale(infoB.renderIndex)
+                const sourceX =  timeScale(eventA[d[0]][' t']);
+                const sourceY = eventCountScale(eventAIdx)
+                const targetX = timeScale(eventB[d[1]][' t'])
+                const targetY = eventCountScale(eventBIdx)
                 const midX = (targetX - sourceX) / 2 + sourceX;
                 const midY = (targetY - sourceY) / 2 + sourceY;
 
@@ -277,28 +285,39 @@ class EventTypeVis {
             ;
     }
 
+    getTimeRange(data) {
+        const min = d3.min(data, (sim) => {
+            return d3.min(sim, (d) => {
+                return d[' t'];
+            })
+        })
+        const max = d3.max(data, (sim) => {
+            return d3.max(sim, (d) => {
+                return d[' t'];
+            })
+        })
+        return [min, max]
+    }
+
     getTimeScale(data) {
         return d3.scaleLinear()
-            .domain(
-                [0, d3.max(data, (sim) => {
-                    return d3.max(sim, (d) => {
-                        return d[' t'];
-                    })
-                })]
-            )
+            .domain(this.getTimeRange(data))
             .range([this.config.padding.left, this.config.width + this.config.padding.left])
     }
 
     filterEventByTimeThreshold(event) {
         return event.filter(d => {
-            return d[' t'] < this.config.filterTimeThreshold;
+            return d[' t'] > this.config.timeRange[0] && d[' t'] < this.config.timeRange[1];
         })
     }
 
     getTimeFilteredData(data) {
         data = [...data]
         for (let i = 0; i < data.length; i++) {
-            data[i] = this.filterEventByTimeThreshold(data[i])
+            data[i] = {
+                event: this.filterEventByTimeThreshold(data[i].event),
+                simulationIndex: data[i].simulationIndex
+            }
         }
         return data;
     }
@@ -309,26 +328,27 @@ class EventTypeVis {
 
         if (null == data) { return; }
 
+        // assign id to each event to make everything easier
+        data = data.map((d, i) => ({ event: d, simulationIndex: i }))
+
         const simulationDistances = new SimulationDistance();
+        data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
+
+        const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
+        data = result[0];
+        paramData = result[1];
+        distances = result[2];
+
         if (self.state.reorderSimulationIndex != null) {
             data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
-        } else {
-            data = data.map((d, i) => ({
-                simulationIndex: i,
-                data: d
-            }))
         }
 
-        [data, paramData, distances] = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
-
-        data = this.getTimeFilteredData(data)
-
-        const timeScale = this.getTimeScale(data)
+        const timeScale = this.getTimeScale(data.map(d => d.event))
 
         const eventCountScale = this.getEventCountScale(data);
 
         if (self.state.match && self.state.match.eventA != null && self.state.match.eventB != null) {
-            self.correlateEvents(self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
+            self.correlateEvents(data, self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
         }
 
         const root = d3.select(`#${this.divId}`);
@@ -438,15 +458,14 @@ class EventTypeVis {
         }
         console.log('Pre-problematic data: ', data);
         const simsSel = simulationGroup.selectAll('.oneSimulation')
-            .data(data)
+            .data(data.map(d => d.event))
 
         const sims = simsSel
             .enter()
             .append('g')
             .merge(simsSel)
             .attr('class', (d, i) => {
-                // console.log('Problematic data:', d);
-                return `oneSimulation group${d.simulationIndex}`;
+                return `oneSimulation group${d[0].simulationIndex}`;
             })
 
         simsSel.exit().remove();
@@ -523,16 +542,14 @@ class EventTypeVis {
                     }
                     if (!self.state.match.eventA) {
                         const simulationGroup = this.parentNode;
-                        const renderIndex = [...simulationGroup.parentNode.children].indexOf(simulationGroup)
-                        self.state.match.eventA = { simulationIndex: d.simulationIndex, renderIndex }
+                        self.state.match.eventA = { simulationIndex: d.simulationIndex }
                         self.highlightSimulation(d.simulationIndex);
                     } else if (!self.state.match.eventB) {
                         if (d.simulationIndex !== self.state.match.eventA) {
                             const simulationGroup = this.parentNode;
-                            const renderIndex = [...simulationGroup.parentNode.children].indexOf(simulationGroup)
-                            self.state.match.eventB = { simulationIndex: d.simulationIndex, renderIndex }
+                            self.state.match.eventB = { simulationIndex: d.simulationIndex }
                             self.highlightSimulation(d.simulationIndex);
-                            self.correlateEvents(self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
+                            self.correlateEvents(data, self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
                         } else {
                             self.removeEventsMatch()
                             self.state.match = {}
@@ -556,21 +573,18 @@ class EventTypeVis {
         let filteredData = [];
         let filteredPamaData = [];
         let filteredDistances = [];
-        console.log(this.originalDistances)
-        data.forEach(({ simulationIndex, data }) => {
-            // console.log(`Comparing ${this.originalDistances[i]}`);
+        data.forEach(datum => {
+            const { simulationIndex } = datum;
             if (value == null || this.originalDistances[simulationIndex] <= value) {
-                filteredData.push(this.originalData[simulationIndex]);
+                filteredData.push(datum);
                 filteredPamaData.push(this.originalParamData[simulationIndex]);
                 filteredDistances.push(this.originalDistances[simulationIndex]);
             }
         })
-        console.log('Filtered data', filteredData, filteredDistances);
         return [filteredData, filteredPamaData, filteredDistances]
     }
 
     colorDimsByDistance(pointIndex, paramData) {
-        console.log('point index: ', pointIndex);
         let targetPoint = paramData[pointIndex];
         let distances = [];
         for (let i = 0; i < paramData.length; i++) {
@@ -697,7 +711,6 @@ class SimulationDistance {
     }
 
     getDTWWithDeaths(eventA, eventB, valueSelector, maxDeaths) {
-        console.log('a', eventA.length, eventB.length, maxDeaths)
         const dtw = getDTWDistanceWithDeaths(eventA, eventB, valueSelector, maxDeaths)
         let dist = Infinity
         for (let i = 0; i <= maxDeaths; ++i) {
@@ -707,9 +720,15 @@ class SimulationDistance {
         return dist;
     }
 
+    // data is an array of { data: [event time series data], simulationIndex }
     reorder(data, simulationIndex, ordering, maxDeaths){
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
-        console.log('data length', data.length, 'sim click', data[simulationIndex][0].simulationIndex)
+
+        const orderingParent = data.find(d => d.simulationIndex === simulationIndex)
+        if (!orderingParent) {
+            console.log('Ordering parent filtered out due to time range / distance filters')
+            return data
+        }
 
         const data_sum = [];
 
@@ -718,20 +737,18 @@ class SimulationDistance {
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min;
             if (ordering === 'dtw') {
-                min = this.getDTWWithDeaths(data[simulationIndex], data[i], d => d[' t'], maxDeaths)
+                min = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
-                min = this.getMinInArray(this.getCorrelatingEventDistances(data[simulationIndex], data[i])[0]);
+                min = this.getMinInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
             }
-            if (i !== simulationIndex) {
+            if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
-                    "data": data[i],
+                    ...data[i],
                     "min": min,
-                    simulationIndex: i,
                 });
             } else {
                 main_datum = {
-                    simulationIndex: i,
-                    data: data[i],
+                    ...data[i],
                     min: 0
                 };
             }
@@ -743,8 +760,6 @@ class SimulationDistance {
         data_sum.forEach(element => {
             reOrderedData.push(element)
         });
-
-        console.log('reordered data', reOrderedData)
 
         return reOrderedData;
     }
@@ -759,23 +774,7 @@ class SimulationDistance {
         return min;
     }
 
-
-
-
-    // update(data, paramData, paramDistances){
-    //     this.data = data;
-    //     this.paramData = paramData;
-    //     this.paramDistances = paramDistances;
-
-
-
-
-    //     let correlatingEventDistances = this.getCorrelatingEventDistances(data[0], data[1]);
-    //     console.log(correlatingEventDistances);
-    //     console.log(this.getSimulationDistanceBySum(correlatingEventDistances));
-
-    // }
-    getSimulationDistanceBySum(correlatingEventDistances) {
+    getSimulationDistanceBySum(correlatingEventDistances){
         let sum = 0;
         correlatingEventDistances.forEach(distance => {
             sum += distance;
