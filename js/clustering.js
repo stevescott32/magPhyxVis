@@ -81,7 +81,7 @@ class Graph {
       let nextEdges = this.edges[toKey(nextNode)];
       if (nextEdges.length != 0)
       {
-        retArray.push(this.exploreEdges(nextEdges));
+        this.exploreEdges(nextEdges).forEach(p => { retArray.push(p); });
       }
     }
 
@@ -118,16 +118,16 @@ class Graph {
       for (let j = i + 1; j < clusters.length; ++j) {
         if(clusters[i].some(item => clusters[j].includes(item)))
         {
-          clusters[j].forEach(item => {
-            if (clusters[i].includes(item)) {
+          clusters[i].forEach(item => {
+            if (clusters[j].includes(item)) {
             }
             else
             {
-              clusters[i].push(item);
+              clusters[j].push(item);
             }
           });
-          clusters.splice(j, 1);
-          --j;
+          clusters.splice(i, 1);
+          j = i;
         }
       }
     }
@@ -346,6 +346,13 @@ class Cluster {
   points = [];
 }
 
+function genRandPoint(lowerBound = 0, upperBound = 100){
+  return new Point([
+    Math.floor(Math.random() * (upperBound + 1 - lowerBound)) + lowerBound,
+    Math.floor(Math.random() * (upperBound + 1 - lowerBound)) + lowerBound
+  ]);
+}
+
 /* Function utilizes minimum spanning tree algorithm to find clusters
  *
  * @param[in] point -- array of points to form clusters from
@@ -395,7 +402,7 @@ function kMeansClustering(points, k, numIters, distFunc)
     }
   }
 
-  clusters = MST.kMeansCluster(k, numIters, distFunc);
+  let clusters = MST.kMeansCluster(k, numIters, distFunc);
 
   return clusters;
 }
@@ -403,9 +410,11 @@ function kMeansClustering(points, k, numIters, distFunc)
 function fromKey(key) { return new Point(key.split(',').map(x => +x)); }
 function toKey(key) {return key.coordinates.toString();}
 
-let vertexes = [
-  new Point([ 0, 1 ]), new Point([ 0, 4 ]), new Point([ 0, 3 ]),
-  new Point([ 10, 10 ]), new Point([ 1, 1 ])
+let failCase = [
+  new Point([ 2, 16 ]), new Point([ 76, 17 ]), new Point([ 61, 25 ]),
+  new Point([ 75, 17 ]), new Point([ 18, 9 ]), new Point([ 54, 70 ]),
+  new Point([ 3, 52 ]), new Point([ 55, 43 ]), new Point([ 81, 46 ]),
+  new Point([ 84, 33 ])
 ];
 
 function distance(pointA, pointB) {
@@ -414,7 +423,82 @@ function distance(pointA, pointB) {
   return result;
 }
 
-// let clusters = mstClustering(vertexes, 3, distance);
-let kMeansClusters = kMeansClustering(vertexes, 2, 100, distance);
-console.log(clusters);
-document.writeln(clusters);
+function convertToData(pointArray)
+{
+  let data = [];
+  for (let point of pointArray)
+  {
+    data.push({X : point.coordinates[0], Y : point.coordinates[1]});
+  }
+
+  return data;
+}
+
+let color = [ "#ff5733", "#00FFFF", "#00FF00", "#FF00FF", "#0000FF" ];
+
+let randPoints = [];
+let NUMPOINTS = 100;
+
+for (let i = 0; i < NUMPOINTS; ++i)
+{
+  randPoints.push(genRandPoint());
+}
+
+randPoints.forEach(p => { console.log(p.coordinates); });
+
+let clusters = mstClustering(randPoints, 3, distance);
+// let kMeansClusters = kMeansClustering(randPoints, 5, 100, distance);
+// let clusters = kMeansClusters["clusters"];
+
+// ===================================================================
+// ===================================================================
+
+var margin = {top : 20, right : 20, bottom : 30, left : 40};
+
+var width = 700 - margin.left - margin.right;
+var height = 700 - margin.top - margin.bottom;
+
+var x = d3.scaleLinear().range([ 0, width ]);
+var y = d3.scaleLinear().range([ height, 0 ]); // Scale the range of the data
+
+x.domain([ 0, 100 ]);
+y.domain([ 0, 100 ]);
+
+var svg =
+    d3.select("#my_scatter")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+svg.append('g')
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x));
+svg.append('g').call(d3.axisLeft(y));
+
+clusters.forEach(function(cluster, index) {
+
+  let clusterData = convertToData(cluster);
+
+  var path = svg.selectAll("dot")
+     .data(clusterData)
+     .enter().append("circle")
+     .attr("r", 5)
+     .attr("cx", function (d) {
+           return x(d.X);
+     })
+     .attr("cy", function (d) {
+          return y(d.Y);
+     })
+     .attr("stroke", "#32CD32")
+     .attr("stroke-width", 1.5)
+     .attr("fill", color[index]);
+
+});
+// ===================================================================
+// ===================================================================
+
+clusters.forEach(c => {
+  console.log(c);
+})
