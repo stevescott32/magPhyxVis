@@ -40,9 +40,7 @@ for (let i = 0; i < settings.NUM_FILES; i++) {
 let dataPromises = [];
 for (let i = 0; i < settings.NUM_FILES; i++) {
   let path = `data/${settings.dataset}/events/events${('00' + i).slice(-3)}.csv`
-  console.log(`Path: ${path}`);
   dataPromises.push(d3.csv(path));
-
 }
 
 // load the param data

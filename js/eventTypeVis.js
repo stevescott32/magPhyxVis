@@ -324,6 +324,7 @@ class EventTypeVis {
 
     // update the event type vis with the new data
     updateHelper(data, paramData, distances) {
+        console.log('Updating, reordering');
         const self = this;
 
         if (null == data) { return; }
@@ -456,7 +457,6 @@ class EventTypeVis {
             simulationGroup = this.svg.append('g')
                 .attr('class', 'simulations')
         }
-        console.log('Pre-problematic data: ', data);
         const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data.map(d => d.event))
 
@@ -566,6 +566,7 @@ class EventTypeVis {
                 }
             })
             ;
+            console.log('Finished updating, reordering');
     }
 
 
