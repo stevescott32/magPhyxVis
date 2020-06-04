@@ -1,7 +1,9 @@
 class Graph {
-  constructor() {
+  constructor(toKey, fromKey) {
     this.edges = {};
     this.nodes = [];
+    this.toKey = toKey;
+    this.fromKey = fromKey;
   }
 
   addNode(node) {
@@ -9,16 +11,16 @@ class Graph {
       return;
     }
     this.nodes.push(node);
-    this.edges[toKey(node)] = [];
+    this.edges[this.toKey(node)] = [];
   }
 
   addEdge(node1, node2, weight = 1) {
-    this.edges[toKey(node1)].push({node : node2, weight : weight});
-    // this.edges[toKey(node2)].push({node : node1, weight : weight});
+    this.edges[this.toKey(node1)].push({node : node2, weight : weight});
+    // this.edges[this.toKey(node2)].push({node : node1, weight : weight});
   }
 
   addDirectedEdge(node1, node2, weight = 1) {
-    this.edges[toKey(node1)].push({node : node2, weight : weight});
+    this.edges[this.toKey(node1)].push({node : node2, weight : weight});
   }
 
   // return dictionary contained two nodes with the heighest edge weight in the
@@ -31,7 +33,7 @@ class Graph {
         if (edge.weight > max)
         max = edge.weight;
         maxEdge = {
-          node1 : fromKey(key),
+          node1 : this.fromKey(key),
           node2 : edge.node,
           weight : edge.weight
         };
@@ -42,14 +44,14 @@ class Graph {
   }
 
   deleteEdge(edge) {
-    let index = this.edges[toKey(edge.node1)].forEach(function(e, index,
+    let index = this.edges[this.toKey(edge.node1)].forEach(function(e, index,
                                                         edgeArray) {
       if (this.isEdgeEqual(e, {node : edge.node2, weight : edge.weight})) {
         edgeArray.splice(index, 1);
       }
     }.bind(this));
 
-     index = this.edges[toKey(edge.node2)].forEach(function(e, index,
+     index = this.edges[this.toKey(edge.node2)].forEach(function(e, index,
                                                         edgeArray) {
       if (this.isEdgeEqual(e, {node : edge.node1, weight : edge.weight})) {
         edgeArray.splice(index, 1);
@@ -78,7 +80,7 @@ class Graph {
     for (let e of edges) {
       let nextNode = e.node;
       retArray.push(nextNode);
-      let nextEdges = this.edges[toKey(nextNode)];
+      let nextEdges = this.edges[this.toKey(nextNode)];
       if (nextEdges.length != 0)
       {
         this.exploreEdges(nextEdges).forEach(p => { retArray.push(p); });
@@ -95,7 +97,7 @@ class Graph {
     while (indicies.length != 0) {
       clusters[currentCluster] = [];
       let currNode = this.nodes[indicies[0]];
-      let currentEdge = this.edges[toKey(currNode)];
+      let currentEdge = this.edges[this.toKey(currNode)];
       let foundNodes = this.exploreEdges(currentEdge);
       foundNodes.push(currNode);
 
@@ -144,9 +146,9 @@ class Graph {
     console.log(graph);
   }
 
-  primsMST() {
+  primsMST(toKey, fromKey) {
     // Initialize graph that'll contain the MST
-    const MST = new Graph();
+    const MST = new Graph(toKey, fromKey);
     if (this.nodes.length === 0) {
       return MST;
     }
@@ -194,9 +196,9 @@ class Graph {
     return MST;
   }
 
-  kruskalsMST() {
+  kruskalsMST(toKey, fromKey) {
     // Initialize graph that'll contain the MST
-    const MST = new Graph();
+    const MST = new Graph(toKey, fromKey);
 
     this.nodes.forEach(node => MST.addNode(node));
     if (this.nodes.length === 0) {
@@ -209,7 +211,7 @@ class Graph {
     // Add all edges to the Queue:
     for (let node in this.edges) {
       this.edges[node].forEach(edge => {
-        edgeQueue.enqueue([ fromKey(node), edge.node ], edge.weight);
+        edgeQueue.enqueue([ this.fromKey(node), edge.node ], edge.weight);
       });
     }
     let uf = new UnionFind(this.nodes);
@@ -346,13 +348,6 @@ class Cluster {
   points = [];
 }
 
-function genRandPoint(lowerBound = 0, upperBound = 100){
-  return new Point([
-    Math.floor(Math.random() * (upperBound + 1 - lowerBound)) + lowerBound,
-    Math.floor(Math.random() * (upperBound + 1 - lowerBound)) + lowerBound
-  ]);
-}
-
 /* Function utilizes minimum spanning tree algorithm to find clusters
  *
  * @param[in] point -- array of points to form clusters from
@@ -361,9 +356,9 @@ function genRandPoint(lowerBound = 0, upperBound = 100){
  * parameter list must follow: (pointA, pointB) and must return a single
  * comparable value. Closer values with be clustered
  * */
-function mstClustering(points, k, distFunc) {
+function mstClustering(points, k, distFunc, toKey, fromKey) {
   // init graph
-  MST = new Graph();
+  MST = new Graph(toKey, fromKey);
   for (p1 of points) {
     MST.addNode(p1);
     for (let p2 of points) {
@@ -375,7 +370,7 @@ function mstClustering(points, k, distFunc) {
     }
   }
 
-  MST = MST.kruskalsMST();
+  MST = MST.kruskalsMST(toKey, fromKey);
 
   for (let i = 0; i < k-1; ++i) {
     let maxEdge = MST.findLargestEdge();
@@ -387,10 +382,10 @@ function mstClustering(points, k, distFunc) {
   return clusters;
 }
 
-function kMeansClustering(points, k, numIters, distFunc)
+function kMeansClustering(points, k, numIters, distFunc, toKey, fromKey)
 {
   // init graph
-  MST = new Graph();
+  MST = new Graph(toKey, fromKey);
   for (p1 of points) {
     MST.addNode(p1);
     for (let p2 of points) {
@@ -406,99 +401,3 @@ function kMeansClustering(points, k, numIters, distFunc)
 
   return clusters;
 }
-
-function fromKey(key) { return new Point(key.split(',').map(x => +x)); }
-function toKey(key) {return key.coordinates.toString();}
-
-let failCase = [
-  new Point([ 2, 16 ]), new Point([ 76, 17 ]), new Point([ 61, 25 ]),
-  new Point([ 75, 17 ]), new Point([ 18, 9 ]), new Point([ 54, 70 ]),
-  new Point([ 3, 52 ]), new Point([ 55, 43 ]), new Point([ 81, 46 ]),
-  new Point([ 84, 33 ])
-];
-
-function distance(pointA, pointB) {
-  let result = Math.sqrt(Math.pow(Math.abs(pointA.coordinates[0] - pointB.coordinates[0]), 2) +
-                         Math.pow(Math.abs(pointA.coordinates[1] - pointB.coordinates[1]), 2));
-  return result;
-}
-
-function convertToData(pointArray)
-{
-  let data = [];
-  for (let point of pointArray)
-  {
-    data.push({X : point.coordinates[0], Y : point.coordinates[1]});
-  }
-
-  return data;
-}
-
-let color = [ "#ff5733", "#00FFFF", "#00FF00", "#FF00FF", "#0000FF" ];
-
-let randPoints = [];
-let NUMPOINTS = 100;
-
-for (let i = 0; i < NUMPOINTS; ++i)
-{
-  randPoints.push(genRandPoint());
-}
-
-randPoints.forEach(p => { console.log(p.coordinates); });
-
-let clusters = mstClustering(randPoints, 3, distance);
-// let kMeansClusters = kMeansClustering(randPoints, 5, 100, distance);
-// let clusters = kMeansClusters["clusters"];
-
-// ===================================================================
-// ===================================================================
-
-var margin = {top : 20, right : 20, bottom : 30, left : 40};
-
-var width = 700 - margin.left - margin.right;
-var height = 700 - margin.top - margin.bottom;
-
-var x = d3.scaleLinear().range([ 0, width ]);
-var y = d3.scaleLinear().range([ height, 0 ]); // Scale the range of the data
-
-x.domain([ 0, 100 ]);
-y.domain([ 0, 100 ]);
-
-var svg =
-    d3.select("#my_scatter")
-        .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-svg.append('g')
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x));
-svg.append('g').call(d3.axisLeft(y));
-
-clusters.forEach(function(cluster, index) {
-
-  let clusterData = convertToData(cluster);
-
-  var path = svg.selectAll("dot")
-     .data(clusterData)
-     .enter().append("circle")
-     .attr("r", 5)
-     .attr("cx", function (d) {
-           return x(d.X);
-     })
-     .attr("cy", function (d) {
-          return y(d.Y);
-     })
-     .attr("stroke", "#32CD32")
-     .attr("stroke-width", 1.5)
-     .attr("fill", color[index]);
-
-});
-// ===================================================================
-// ===================================================================
-
-clusters.forEach(c => {
-  console.log(c);
-})
