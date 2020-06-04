@@ -39,7 +39,9 @@ for (let i = 0; i < settings.NUM_FILES; i++) {
 // promise the event data
 let dataPromises = [];
 for (let i = 0; i < settings.NUM_FILES; i++) {
-  dataPromises.push(d3.csv(`data/${settings.dataset}/events/events${('0' + i).slice(-2)}.csv`));
+  let path = `data/${settings.dataset}/events/events${('00' + i).slice(-3)}.csv`
+  console.log(`Path: ${path}`);
+  dataPromises.push(d3.csv(path));
 
 }
 

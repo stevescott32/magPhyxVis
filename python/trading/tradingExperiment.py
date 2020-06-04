@@ -15,7 +15,7 @@ print("Starting Trading Experiment")
 print("##################################")
 
 numDataPoints = 100
-headings = ['n', 'event_type', ' t', 'close-price', 'indicator-category']
+headings = ['n', 'event_type', ' t', 'close-price', 'indicator', 'category']
 
 global trace 
 trace = False
@@ -39,8 +39,9 @@ stockData = {
 }
 
 def getAllIndicators(marketData):
-    indicators = []
+    signals = []
     categories = []
+    added_indicators = []
     all_categories = talib.get_function_groups()
     last_count = 0
     for category in all_categories:
@@ -96,24 +97,25 @@ def getAllIndicators(marketData):
                     if isinstance(val, Number):
                         isValid |= True
                 if isValid:
-                    indicators.append(possible_result)
+                    signals.append(possible_result)
                     categories.append(category)
+                    added_indicators.append(indicator)
 
-        log(f"Category '{category}' added {str(len(indicators) - last_count)} indicators")
+        log(f"Category '{category}' added {str(len(signals) - last_count)} indicators")
         log(f"- Category '{category}' missed {category_misses} indicators")
-        last_count = len(indicators)
+        last_count = len(signals)
 
-    return (indicators, categories)
+    return (signals, added_indicators, categories)
 
 
 # coefficients - an array of 23 coefficients corresponding to the 23 included momentum indicators
-def momentumTrader(marketData, indicators, categories, coefficients, stdDevParam, file):
+def momentumTrader(marketData, signals, indicators, categories, coefficients, stdDevParam, file):
 
     lower_thresholds = []
     upper_thresholds = []
-    for indicator in indicators:
+    for signal in signals:
         filtered = []
-        for val in indicator:
+        for val in signal:
             if not math.isnan(val):
                 filtered.append(val)
         stdDev = numpy.std(filtered)
@@ -122,23 +124,25 @@ def momentumTrader(marketData, indicators, categories, coefficients, stdDevParam
         upper_thresholds.append(mean + (stdDevParam * stdDev))
 
     category = categories[0]
-    for (cat, coeff) in zip(categories, coefficients):
+    indicator = indicators[0]
+    for (ind, cat, coeff) in zip(indicators, categories, coefficients):
         if coeff == 1:
             category = cat
+            indicator = ind
             logDebug(category)
     # iterate through all time periods, deciding to buy, sell, or stay
     #i = 1
     log("#########################")
-    for i in range(len(indicators[0])):
-        score = calculateMomentumScore(indicators, coefficients, i)
+    for i in range(len(signals[0])):
+        score = calculateMomentumScore(signals, coefficients, i)
         if score > calculateThreshold(upper_thresholds, coefficients):
-            addEvent(i, "buy", i, marketData["close"][i], category, file)
+            addEvent(i, "buy", i, marketData["close"][i], indicator, category, file)
             log("buy")
         elif score < calculateThreshold(lower_thresholds, coefficients):
-            addEvent(i, "sell", i, marketData["close"][i], category, file)
+            addEvent(i, "sell", i, marketData["close"][i], indicator, category, file)
             log("sell")
         else:
-            addEvent(i, "stay", i, marketData["close"][i], category, file)
+            addEvent(i, "stay", i, marketData["close"][i], indicator, category, file)
             log("stay")
 
 def calculateThreshold(thresholds, coefficients):
@@ -147,11 +151,11 @@ def calculateThreshold(thresholds, coefficients):
         result += threshold * coefficient
     return result
 
-def calculateMomentumScore(indicators, coefficients, timeindex):
+def calculateMomentumScore(signals, coefficients, timeindex):
     score = 0
-    for (indicator, coefficient) in zip(indicators, coefficients):
-        if not numpy.isnan(indicator[timeindex]):
-            score += indicator[timeindex] * coefficient
+    for (signal, coefficient) in zip(signals, coefficients):
+        if not numpy.isnan(signal[timeindex]):
+            score += signal[timeindex] * coefficient
     return score
 
 def printHeadings(headings, file):
@@ -161,24 +165,24 @@ def printHeadings(headings, file):
     file.write('\n')
 
 # helper function to print events
-def addEvent(n, event_type, t, price, category, file):
-    file.write(f"{n},{event_type},{t},{price},{category}\n")
+def addEvent(n, event_type, t, price, indicator, category, file):
+    file.write(f"{n},{event_type},{t},{price},{indicator},{category}\n")
 
 
-(all_indicators, categories) = getAllIndicators(stockData)
-numIndicators = len(all_indicators)
+(signals, indicators, categories) = getAllIndicators(stockData)
+numIndicators = len(signals)
 print(f"Processing {numIndicators} indicators")
 for j in range(1):
     for i in range(numIndicators):
         filenum = j * numIndicators + i
         logDebug(filenum)
-        filename = './../../data/momentumTradingData/events/events' + f'{filenum:02}' + '.csv'
+        filename = './../../data/momentumTradingData/events/events' + f'{filenum:03}' + '.csv'
         f = open(filename, 'w')
         printHeadings(headings, f)
 
         coeffs = numpy.zeros(numIndicators)
         coeffs[i] = 1
-        momentumTrader(stockData, all_indicators, categories, coeffs, 0.01 * (j + 1), f)
+        momentumTrader(stockData, signals, indicators, categories, coeffs, 0.01 * (j + 1), f)
         print('.', end='', flush=True)
         f.close()
 

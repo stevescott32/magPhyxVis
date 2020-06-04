@@ -503,10 +503,11 @@ class EventTypeVis {
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                let color = customColorScale(d['indicator-category']);
+                let color = customColorScale(d['category']);
                 return color;
             })
             .on('mouseover', function (d) {
+                console.log('Mouseovered the event', d);
                 if (self.state.match) {
                     self.state.match.hover = d.simulationIndex
                     self.highlightSimulation(d.simulationIndex)
