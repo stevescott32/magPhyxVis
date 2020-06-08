@@ -1,9 +1,7 @@
 class Graph {
-  constructor(toKey, fromKey) {
+  constructor() {
     this.edges = {};
     this.nodes = [];
-    this.toKey = toKey;
-    this.fromKey = fromKey;
   }
 
   addNode(node) {
@@ -11,16 +9,16 @@ class Graph {
       return;
     }
     this.nodes.push(node);
-    this.edges[this.toKey(node)] = [];
+    this.edges[node] = [];
   }
 
   addEdge(node1, node2, weight = 1) {
-    this.edges[this.toKey(node1)].push({node : node2, weight : weight});
-    // this.edges[this.toKey(node2)].push({node : node1, weight : weight});
+    this.edges[node1].push({node : node2, weight : weight});
+    // this.edges[node2].push({node : node1, weight : weight});
   }
 
   addDirectedEdge(node1, node2, weight = 1) {
-    this.edges[this.toKey(node1)].push({node : node2, weight : weight});
+    this.edges[node1].push({node : node2, weight : weight});
   }
 
   // return dictionary contained two nodes with the heighest edge weight in the
@@ -33,7 +31,7 @@ class Graph {
         if (edge.weight > max)
         max = edge.weight;
         maxEdge = {
-          node1 : this.fromKey(key),
+          node1 : key,
           node2 : edge.node,
           weight : edge.weight
         };
@@ -44,14 +42,14 @@ class Graph {
   }
 
   deleteEdge(edge) {
-    let index = this.edges[this.toKey(edge.node1)].forEach(function(e, index,
+    let index = this.edges[edge.node1].forEach(function(e, index,
                                                         edgeArray) {
       if (this.isEdgeEqual(e, {node : edge.node2, weight : edge.weight})) {
         edgeArray.splice(index, 1);
       }
     }.bind(this));
 
-     index = this.edges[this.toKey(edge.node2)].forEach(function(e, index,
+     index = this.edges[edge.node2].forEach(function(e, index,
                                                         edgeArray) {
       if (this.isEdgeEqual(e, {node : edge.node1, weight : edge.weight})) {
         edgeArray.splice(index, 1);
@@ -80,7 +78,7 @@ class Graph {
     for (let e of edges) {
       let nextNode = e.node;
       retArray.push(nextNode);
-      let nextEdges = this.edges[this.toKey(nextNode)];
+      let nextEdges = this.edges[nextNode];
       if (nextEdges.length != 0)
       {
         this.exploreEdges(nextEdges).forEach(p => { retArray.push(p); });
@@ -97,7 +95,7 @@ class Graph {
     while (indicies.length != 0) {
       clusters[currentCluster] = [];
       let currNode = this.nodes[indicies[0]];
-      let currentEdge = this.edges[this.toKey(currNode)];
+      let currentEdge = this.edges[currNode];
       let foundNodes = this.exploreEdges(currentEdge);
       foundNodes.push(currNode);
 
@@ -146,9 +144,9 @@ class Graph {
     console.log(graph);
   }
 
-  primsMST(toKey, fromKey) {
+  primsMST() {
     // Initialize graph that'll contain the MST
-    const MST = new Graph(toKey, fromKey);
+    const MST = new Graph();
     if (this.nodes.length === 0) {
       return MST;
     }
@@ -196,9 +194,9 @@ class Graph {
     return MST;
   }
 
-  kruskalsMST(toKey, fromKey) {
+  kruskalsMST() {
     // Initialize graph that'll contain the MST
-    const MST = new Graph(toKey, fromKey);
+    const MST = new Graph();
 
     this.nodes.forEach(node => MST.addNode(node));
     if (this.nodes.length === 0) {
@@ -211,7 +209,7 @@ class Graph {
     // Add all edges to the Queue:
     for (let node in this.edges) {
       this.edges[node].forEach(edge => {
-        edgeQueue.enqueue([ this.fromKey(node), edge.node ], edge.weight);
+        edgeQueue.enqueue([ Number(node), edge.node ], edge.weight);
       });
     }
     let uf = new UnionFind(this.nodes);
@@ -356,21 +354,23 @@ class Cluster {
  * parameter list must follow: (pointA, pointB) and must return a single
  * comparable value. Closer values with be clustered
  * */
-function mstClustering(points, k, distFunc, toKey, fromKey) {
+function mstClustering(points, k, distFunc) {
+  let indicies = [...Array(points.length).keys() ];
+
   // init graph
-  MST = new Graph(toKey, fromKey);
-  for (p1 of points) {
+  MST = new Graph();
+  for (p1 of indicies) {
     MST.addNode(p1);
-    for (let p2 of points) {
-      if (p1.equals(p2)) {
+    for (let p2 of indicies) {
+      if (p1 == (p2)) {
         continue;
       }
       MST.addNode(p2);
-      MST.addEdge(p1, p2, distFunc(p1, p2))
+      MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
     }
   }
 
-  MST = MST.kruskalsMST(toKey, fromKey);
+  MST = MST.kruskalsMST();
 
   for (let i = 0; i < k-1; ++i) {
     let maxEdge = MST.findLargestEdge();
@@ -382,14 +382,23 @@ function mstClustering(points, k, distFunc, toKey, fromKey) {
   return clusters;
 }
 
-function kMeansClustering(points, k, numIters, distFunc, toKey, fromKey)
+/* Function utilizes kMeans algorithm to find clusters
+ *
+ * @param[in] point -- array of points to form clusters from
+ * @param[in] k -- number of clusters to form
+ * @param[in] numIters -- number of iterations to perform
+ * @param[in] distFunc -- function to compare two given points, function
+ * parameter list must follow: (pointA, pointB) and must return a single
+ * comparable value. Closer values with be clustered
+ * */
+function kMeansClustering(points, k, numIters, distFunc)
 {
   // init graph
-  MST = new Graph(toKey, fromKey);
+  MST = new Graph();
   for (p1 of points) {
     MST.addNode(p1);
     for (let p2 of points) {
-      if (p1.equals(p2)) {
+      if (p1 == (p2)) {
         continue;
       }
       MST.addNode(p2);

@@ -61,7 +61,18 @@ function genRandPoint(lowerBound = 0, upperBound = 100){
   ]);
 }
 
-function convertToData(pointArray)
+function convertToDataMST(indices, points)
+{
+  let data = [];
+  for (let i of indices)
+  {
+    data.push({X : points[i].coordinates[0], Y : points[i].coordinates[1]});
+  }
+
+  return data;
+}
+
+function convertToDataKMeans(pointArray)
 {
   let data = [];
   for (let point of pointArray)
@@ -71,9 +82,6 @@ function convertToData(pointArray)
 
   return data;
 }
-
-function fromKey(key) { return new Point(key.split(',').map(x => +x)); }
-function toKey(key) {return key.coordinates.toString();}
 
 function distance(pointA, pointB) {
   let result = Math.sqrt(Math.pow(Math.abs(pointA.coordinates[0] - pointB.coordinates[0]), 2) +
@@ -86,8 +94,8 @@ for (let i = 0; i < NUMPOINTS; ++i)
   randPoints.push(genRandPoint());
 }
 
-// let clusters = mstClustering(randPoints, NUMCLUSTERS, distance, toKey, fromKey);
-let kMeansClusters = kMeansClustering(randPoints, NUMCLUSTERS, NUMITERS, distance, toKey, fromKey);
+// let clusters = mstClustering(randPoints, NUMCLUSTERS, distance);
+let kMeansClusters = kMeansClustering(randPoints, NUMCLUSTERS, NUMITERS, distance);
 let clusters = kMeansClusters["clusters"];
 
 // ===================================================================
@@ -119,7 +127,8 @@ svg.append('g').call(d3.axisLeft(y));
 
 clusters.forEach(function(cluster, index) {
 
-  let clusterData = convertToData(cluster);
+  let clusterData = convertToDataKMeans(cluster);
+  // let clusterData = convertToDataMST(cluster, randPoints);
 
   var path = svg.selectAll("dot")
      .data(clusterData)
