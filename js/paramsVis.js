@@ -1,5 +1,5 @@
 /**
- * ParamVis: Class to encapsulate the code for the 
+ * ParamVis: Class to encapsulate the code for the
  * parameter visualization.
  */
 class ParamsVis {
