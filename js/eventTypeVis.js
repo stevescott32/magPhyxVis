@@ -457,6 +457,25 @@ class EventTypeVis {
             simulationGroup = this.svg.append('g')
                 .attr('class', 'simulations')
         }
+
+        // cluster data ===============================
+        var distFunc = function(a, b) {
+          return getDTWDistance(a.event, b.event, d => d[' t']).distance;
+        };
+
+        let kMeansClusters = kMeansClustering(data, 5, 1, distFunc);
+
+        data = []
+        for (var i = 0; i < kMeansClusters.clusters.length; ++i)
+        {
+          kMeansClusters.clusters[i].forEach(function(d) {
+            d.event.color = i;
+          })
+
+          data = data.concat(kMeansClusters.clusters[i]);
+        }
+        // ============================================
+
         const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data.map(d => d.event))
 
@@ -478,19 +497,18 @@ class EventTypeVis {
             .data((d, i) => {
                 for (let a = 0; a < d.length; a++) {
                     d[a]['parentIndex'] = i;
+                    d[a].color = d.color;
                 }
                 return d;
             });
 
         circleSel.exit().remove();
 
-        var customColorScale = d3.scaleOrdinal()
-            .domain(['Volume Indicators', 'Volatility Indicators', 
-                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
-                'Overlap Studies', 'Momentum Indicators', 'Math Transform', 
-                'Math Operators', 'Cycle Indicators'])
-            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 
-                'green', 'black', 'red', 'pink']);
+        var customColorScale = [
+          'grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 'green',
+          'black', 'red', 'pink'
+        ];
+        var getColor = (index) => { return customColorScale[index]; };
 
         circleSel
             .enter()
@@ -503,7 +521,7 @@ class EventTypeVis {
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                let color = customColorScale(d['category']);
+                let color = getColor(d['color']);
                 return color;
             })
             .on('mouseover', function (d) {
