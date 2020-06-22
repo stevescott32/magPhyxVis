@@ -38,3 +38,20 @@
 .slider > div:first-child {
     white-space: nowrap;
 }
+
+.match-actions {
+    display: flex;
+}
+
+.match-actions > * + * {
+    margin-left: 20px;
+}
+
+.ordering-methods {
+    display: flex;
+    flex-direction: column;
+}
+
+.wrap-time-range-2 {
+    width: 200px;
+}

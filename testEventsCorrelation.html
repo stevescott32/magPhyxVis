@@ -23,6 +23,17 @@
     <header>
         <button class="match-a-to-b">MATCH A TO B</button>
         <button class="match-b-to-a">MATCH B TO A</button>
+        <button class="match-both">MATCH BOTH</button>
+        <button class="match-dtw">MATCH DTW</button>
+        <button class="clear-event-a">Clear event A</button>
+        <button class="clear-event-b">Clear event B</button>
+        <button class="add-event-a">Add eventA to set</button>
+        <button class="add-event-b">Add eventB to set</button>
+        <label>
+            Number of deaths
+            <input min="0" type="range" class="dtw-deaths">
+            <span class="death-count">0</span>
+        </label>
     </header>
     <div class="content">
         <svg width="100%" height="100%">
@@ -32,151 +43,10 @@
 </div>
 
 <script src="d3.js"></script>
+<script type="application/javascript" src="js/utils.js"></script>
+<script type="application/javascript" src="js/dtw.js"></script>
+<script src="js/union_find.js"></script>
 <script src="js/eventTypeVis.js"></script>
-<script>
-
-    const root = d3.select('#root');
-
-    const svg = root.select('svg');
-
-    const bounds = svg.node().getBoundingClientRect();
-
-    const height = 100;
-
-    const generateChart = (group_name, data, params = {}) => {
-        params = {
-            ...params,
-            color: params.color || "black",
-            offsetY: params.offsetY || 0
-        }
-
-        let group = svg.select('g#' + group_name)
-
-        if (group.empty()) {
-            group = svg
-                .append('g')
-                .attr('id', group_name)
-                .attr('transform', `translate(0, ${params.offsetY})`)
-        }
-
-        let rect = group.select('rect.background');
-        if (rect.empty()) {
-            rect = group.append('rect')
-                .attr('class', 'background')
-                .attr('fill', 'white')
-                .attr('stroke-width', 2)
-                .attr('stroke', 'black')
-                .attr('height', height)
-                .attr('width', bounds.width)
-        }
-
-        let bar = group.select('rect.bar')
-        if (bar.empty()) {
-            bar = group.append('rect')
-                .attr('class', 'bar')
-                .attr('width', 2)
-                .style('pointer-events', 'none')
-                .attr('fill', 'black')
-                .attr('height', height)
-        }
-
-        let pointGroup = group.select('g.points')
-        if (pointGroup.empty()) {
-            pointGroup = group.append('g')
-                .attr('class', 'points')
-                .attr('pointer-events', 'none')
-        }
-
-        let distanceScale = d3.scaleLinear()
-            .domain([0, bounds.width])
-            .range([0, bounds.width])
-
-        const pointSel = pointGroup
-            .selectAll('circle')
-            .data(data)
-
-        pointSel.enter()
-            .append('circle')
-            .merge(pointSel)
-            .attr('fill', params.color)
-            .attr('cx', d => d)
-            .attr('cy', height / 2)
-            .attr('r', 5)
-
-        rect.on('mousemove', function () {
-            const coordinates= d3.mouse(this);
-            const x = coordinates[0];
-
-            bar.style('visibility', 'visible')
-                .attr('x', x)
-        })
-
-        rect.on('mouseout', function () {
-            bar.style('visibility', 'hidden')
-        })
-
-        rect.on('mousedown', function() {
-            const coordinates= d3.mouse(this);
-            const x = coordinates[0];
-            data.push(x)
-            generateChart(group_name, data, params)
-        })
-
-    };
-
-    const dataA = [];
-    const dataB = [];
-
-    const getGroupOffset = (index = 0) => index * (height + 20);
-    const getYMid = (index = 0) => getGroupOffset(index) + height / 2;
-    const sd = new SimulationDistance();
-
-    const drawCorrelation = (data1, data2, index1, index2, color) => {
-        const indices = sd.getEventsDistance(data1, data2, d => d)
-
-        const distanceScale = d3.scaleLinear()
-            .domain([0, bounds.width])
-            .range([0, bounds.width])
-
-        let arrows = svg.select('g.arrows')
-        if (arrows.empty()) {
-            arrows = svg.append('g')
-                .attr('class', 'arrows')
-        }
-
-        const arrowSel = arrows.selectAll('line')
-            .data(indices);
-
-        arrowSel.enter()
-            .append('line')
-            .merge(arrowSel)
-            .attr('x1', (_, i) => distanceScale(data1[i]))
-            .attr('y1', getYMid(index1))
-            .attr('x2', (d, i) => distanceScale(data2[d]))
-            .attr('y2', getYMid(index2))
-            .attr('stroke', color)
-            .attr('stroke-width', 2);
-
-        arrowSel.exit()
-            .remove();
-
-    }
-
-    const register_button_handlers = () => {
-        root.select('.match-a-to-b').on('click', function() {
-            drawCorrelation(dataA, dataB, 0, 1, 'green')
-        })
-        root.select('.match-b-to-a').on('click', function() {
-            drawCorrelation(dataB, dataA, 1, 0, 'red')
-        })
-    }
-
-    register_button_handlers()
-
-    generateChart('event1', dataA, { color: 'green' });
-    generateChart('event2', dataB, { color: 'red', offsetY: getGroupOffset(1) });
-
-
-</script>
+<script src="js/eventsCorrelation.js"></script>
 </body>
 </html>
