@@ -59,12 +59,12 @@ class Scatter {
       .domain([
         d3.min(data, (file) => {
           return d3.min(file, (row => {
-            return +row[' theta'];
+            return +row[' t'];
           }))
         }),
         d3.max(data, (file) => {
           return d3.max(file, (row => {
-            return +row[' theta'];
+            return +row[' t'];
           }))
         })
       ])
@@ -75,12 +75,12 @@ class Scatter {
       .domain([
         d3.max(data, (file) => {
           return d3.max(file, (row => {
-            return +row[' phi'];
+            return +row['close-price'];
           }))
         }),
         d3.min(data, (file) => {
           return d3.min(file, (row => {
-            return +row[' phi'];
+            return +row['close-price'];
           }))
         })
       ])
@@ -152,8 +152,8 @@ class Scatter {
       })
       .enter()
       .append('circle')
-      .attr('cx', (d) => { return xscale(+d[' theta']); })
-      .attr('cy', (d) => { return yscale(+d[' phi']); })
+      .attr('cx', (d) => { return xscale(+d[' t']); })
+      .attr('cy', (d) => { return yscale(+d['close-price']); })
       .attr('r', this.circleSize)
       .style('fill', (d) => { return Utils.getFill(d[' event_type']); })
       .on('mouseover', function (d) {

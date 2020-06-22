@@ -56,15 +56,15 @@ const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) 
                 return datumSelector(dataB[vertex - NA]);
             }
         })
-        console.log(values)
+        // console.log(values)
         const center = Utils.arrayAverage(values);
         earthMoverDistance += values.reduce((acc, val) => {
-            console.log(Math.abs(val - center))
+            // console.log(Math.abs(val - center))
             return Math.abs(val - center)
         })
     })
 
-    console.log({ earthMoverDistance })
+    // console.log({ earthMoverDistance })
 
     return {
         distance: dtw[deaths][NA][NB][0] + earthMoverDistance,

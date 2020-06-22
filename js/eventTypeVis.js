@@ -115,7 +115,7 @@ class EventTypeVis {
 
         const root = d3.select(`#${this.divId}`)
 
-        root.select('.match-exact').on('click', function() {
+        root.select('.match-exact').on('click', function () {
             self.state.matchExact = this.checked;
             self.updateHelper(data, paramData, distances);
         })
@@ -156,7 +156,7 @@ class EventTypeVis {
             .attr('min', this.diffMin)
             .attr('max', this.diffMax)
             .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
-            .on('click', function() {
+            .on('click', function () {
                 self.config.distanceThreshold = +this.value;
                 // because events may not be in the new data set
                 if (self.state.match) {
@@ -174,7 +174,7 @@ class EventTypeVis {
             .attr('value', self.config.width)
             .attr('max', maxw)
             .attr('step', 0.1)
-            .on('click', function() {
+            .on('click', function () {
                 self.config.width = +this.value;
                 self.updateHelper(data, paramData, distances);
             })
@@ -186,7 +186,7 @@ class EventTypeVis {
             .attr('value', self.config.height)
             .attr('max', maxh)
             .attr('step', 0.1)
-            .on('click', function() {
+            .on('click', function () {
                 self.config.height = +this.value;
                 self.updateHelper(data, paramData, distances);
             })
@@ -198,7 +198,7 @@ class EventTypeVis {
             .attr('value', self.circleSize)
             .attr('max', maxr)
             .attr('step', 0.1)
-            .on('click', function() {
+            .on('click', function () {
                 self.circleSize = +this.value;
                 self.updateHelper(data, paramData, distances);
             })
@@ -282,7 +282,7 @@ class EventTypeVis {
         return d3.scaleLinear()
             .domain([0, data.length])
             .range([this.config.padding.top, this.config.height + this.config.padding.top])
-        ;
+            ;
     }
 
     getTimeRange(data) {
@@ -324,6 +324,7 @@ class EventTypeVis {
 
     // update the event type vis with the new data
     updateHelper(data, paramData, distances) {
+        console.log('Updating, reordering');
         const self = this;
 
         if (null == data) { return; }
@@ -361,16 +362,16 @@ class EventTypeVis {
 
             this.svg.append("svg:defs")
                 .append("marker")
-                .attr("id","arrow")
-                .attr("viewBox","0 -5 10 10")
-                .attr("refX",5)
-                .attr("refY",0)
-                .attr("markerWidth",4)
-                .attr("markerHeight",4)
-                .attr("orient","auto")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 5)
+                .attr("refY", 0)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5")
-                .attr("class","arrowHead")
+                .attr("class", "arrowHead")
 
         }
 
@@ -483,6 +484,14 @@ class EventTypeVis {
 
         circleSel.exit().remove();
 
+        var customColorScale = d3.scaleOrdinal()
+            .domain(['Volume Indicators', 'Volatility Indicators', 
+                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
+                'Overlap Studies', 'Momentum Indicators', 'Math Transform', 
+                'Math Operators', 'Cycle Indicators'])
+            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 
+                'green', 'black', 'red', 'pink']);
+
         circleSel
             .enter()
             .append('circle')
@@ -494,10 +503,11 @@ class EventTypeVis {
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                // if (+d[' t'] > 50) { return 'white'; }
-                return Utils.getFill(d[' event_type']);
+                let color = customColorScale(d['category']);
+                return color;
             })
             .on('mouseover', function (d) {
+                console.log('Mouseovered the event', d);
                 if (self.state.match) {
                     self.state.match.hover = d.simulationIndex
                     self.highlightSimulation(d.simulationIndex)
@@ -556,6 +566,7 @@ class EventTypeVis {
                 }
             })
             ;
+            console.log('Finished updating, reordering');
     }
 
 
@@ -697,7 +708,7 @@ class SimulationDistance {
     // data = [];
     paramData = [];
     paramDistances = [];
-    constructor(){
+    constructor() {
 
     }
 
@@ -724,7 +735,7 @@ class SimulationDistance {
         const data_sum = [];
 
         let main_datum;
-        for(let i=0; i<data.length; i++){
+        for (let i = 0; i < data.length; i++) {
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let min;
             if (ordering === 'dtw') {
@@ -755,10 +766,10 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    getMinInArray(arr){
+    getMinInArray(arr) {
         let min = Number.MAX_VALUE;
         arr.forEach(num => {
-            if (num < min){
+            if (num < min) {
                 min = num;
             }
         });
@@ -774,7 +785,7 @@ class SimulationDistance {
     }
 
     // returns array of distances of sets of points
-    getCorrelatingEventDistances(events1,  events2){
+    getCorrelatingEventDistances(events1, events2) {
         let smallEvents = events1
         let largeEvents = events2
         const valueSelector = d => d[' t']
@@ -783,9 +794,9 @@ class SimulationDistance {
 
         let correlatingPointsDistances = [];
         const pairs = []
-        for (let i=0; i<largeEventsDistances.length; i++){
+        for (let i = 0; i < largeEventsDistances.length; i++) {
             let possibleCorrelatingPoint = largeEventsDistances[i];
-            if (smallEventsDistances[possibleCorrelatingPoint] == i){
+            if (smallEventsDistances[possibleCorrelatingPoint] == i) {
                 let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t'] - largeEvents[i][' t']);
                 correlatingPointsDistances.push(distance);
                 pairs.push([possibleCorrelatingPoint, i])
@@ -795,24 +806,24 @@ class SimulationDistance {
     }
 
     // returns array of indexes from correlating array of closest event
-    getEventsDistance(events1, events2, valueSelector){
+    getEventsDistance(events1, events2, valueSelector) {
         let correlatingEventDistances = [];
-        for (let i=0; i<events1.length; i++){
-            correlatingEventDistances.push(this.getClosestEventIndex(valueSelector(events1[i]), events2, valueSelector) );
+        for (let i = 0; i < events1.length; i++) {
+            correlatingEventDistances.push(this.getClosestEventIndex(valueSelector(events1[i]), events2, valueSelector));
         }
         return correlatingEventDistances;
     }
 
     // returns index of closest event in correlating array
-    getClosestEventIndex(value, arr, valueSelector){
+    getClosestEventIndex(value, arr, valueSelector) {
         let minIndex = 0;
         let minValue = Number.MAX_SAFE_INTEGER;
 
 
 
-        for (let i=0; i<arr.length; i++){
+        for (let i = 0; i < arr.length; i++) {
             let difference = Math.abs(value - valueSelector(arr[i]));
-            if (difference < minValue){
+            if (difference < minValue) {
                 minValue = difference;
                 minIndex = i;
             }
