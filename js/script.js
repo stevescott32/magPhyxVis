@@ -5,6 +5,8 @@
 
 console.log('Starting script');
 
+// TODO define an array of data possibilities that has a similar
+// structure to these settings but can be switched at runtime
 let settings = {
   NUM_FILES: 144, // change this to vary how many files of events/commands will be used
   reorderData: false, // change this to false to turn off z-ordering
@@ -31,6 +33,7 @@ eventTypeVis.setScatterVis(scatter);
 // create promises so all data can load asynchronous
 // promise the param data
 let paramDataPromises = [];
+// TODO put these promises into the data possibilities structure
 for (let i = 0; i < settings.NUM_FILES; i++) {
   // paramDataPromises.push(d3.csv(`data/${settings.dataset}/commands/commands${('0' + i).slice(-2)}.csv`));
   paramDataPromises.push(d3.csv(`data/data7/commands/commands${('0' + i).slice(-2)}.csv`));
@@ -38,6 +41,7 @@ for (let i = 0; i < settings.NUM_FILES; i++) {
 
 // promise the event data
 let dataPromises = [];
+// TODO put these promises into the data possibilities structure
 for (let i = 0; i < settings.NUM_FILES; i++) {
   let path = `data/${settings.dataset}/events/events${('00' + i).slice(-3)}.csv`
   dataPromises.push(d3.csv(path));
@@ -48,8 +52,11 @@ Promise.all([...paramDataPromises]).then((paramData) => {
   // load the event data
   Promise.all([...dataPromises]).then(function (eventData) {
     console.log('All data loaded');
+    // TODO not sure what to do with this line
     paramData = standardizeParamData(paramData);
 
+    // starting here, all this should be simplified to a single
+    // call to dataEngine.parse
     let combinedData = [];
     // combine data so it is ordered together
     for(let i = 0; i < paramData.length; i++) {
@@ -97,13 +104,18 @@ Promise.all([...paramDataPromises]).then((paramData) => {
       orderedParamData.push(orderedData[i].param);
       orderedEventsData.push(orderedData[i].events);
     }
+    // End TODO of simplifying to a single call to data.parse
 
     // initialize the param and the scatter vis
     paramVis.init(orderedParamData, orderEngine.getBoundaries());
     scatter.init(orderedEventsData);
 
+    // TODO this should be more dynamic - switched to an array of 
+    // distance calculation functions
     let distances = calcDistances(orderedParamData);
 
+    // TODO instead of hard-coding these, parse them and store them on
+    // the data object
     // let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
     let eventTypes = ['buy', 'sell', 'stay'];
     eventTypeVis.setEventCols(eventTypes);
