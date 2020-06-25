@@ -737,26 +737,26 @@ class SimulationDistance {
         let main_datum;
         for (let i = 0; i < data.length; i++) {
             // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
-            let min;
+            let metric;
             if (ordering === 'dtw') {
-                min = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
+                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
-                min = this.getMinInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
                     ...data[i],
-                    "min": min,
+                    "metric": metric,
                 });
             } else {
                 main_datum = {
                     ...data[i],
-                    min: 0
+                    metric: 0
                 };
             }
         }
 
-        data_sum.sort((obj1, obj2) => obj1['min'] - obj2['min']);
+        data_sum.sort((obj1, obj2) => obj1['metric'] - obj2['metric']);
 
         const reOrderedData = [main_datum];
         data_sum.forEach(element => {
@@ -766,14 +766,14 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    getMinInArray(arr) {
-        let min = Number.MAX_VALUE;
+    getMaxInArray(arr) {
+        let max = Number.MIN_VALUE;
         arr.forEach(num => {
-            if (num < min) {
-                min = num;
+            if (num > max) {
+                max = num;
             }
         });
-        return min;
+        return max;
     }
 
     getSimulationDistanceBySum(correlatingEventDistances){
