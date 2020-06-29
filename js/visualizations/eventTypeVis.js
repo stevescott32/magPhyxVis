@@ -3,13 +3,13 @@
  * event type
  */
 class EventTypeVis {
-    constructor(numEvents) {
+    constructor(/*numEvents*/) {
         this.circleSize = 2;
         this.highlightScale = 2;
 
         this.config = {
             width: 850, // 1200,
-            height: (this.circleSize * 2) * numEvents,
+            height: 0, // (this.circleSize * 2) * numEvents,
             padding: {
                 left: 80,
                 top: 100,
@@ -31,6 +31,10 @@ class EventTypeVis {
         this.divId = 'event-type-vis';
 
         this.registerHeaderEvents();
+    }
+
+    setNumSimulations(numSims) {
+        this.config.height = (this.circleSize * 2) * numSims;
     }
 
     registerHeaderEvents() {
