@@ -249,7 +249,7 @@ class EventTypeVis {
                 .map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
-                arrowInfo = simulationDistance.getCorrelatingEventDistances(eventA, eventB)[1]
+                arrowInfo = simulationDistance.getHausdorffDistances(eventA, eventB)[1]
             } else {
                 arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d[' t']).map((d, i) => [i, d])
             }
@@ -722,8 +722,13 @@ class EventTypeVis {
     }
 }
 
+/*
+    Calculates distance between two simulations based on either Hausdorff Distance or Dynamic Time Warping
+    Hausdorff Distance: https://en.wikipedia.org/wiki/Hausdorff_distance
+    Dynamic Time Warping: https://en.wikipedia.org/wiki/Dynamic_time_warping
 
-
+    TODO: Decouple DTW and Hausdorff Distance
+*/
 class SimulationDistance {
     // data = [];
     paramData = [];
@@ -756,12 +761,11 @@ class SimulationDistance {
 
         let main_datum;
         for (let i = 0; i < data.length; i++) {
-            // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let metric;
             if (ordering === 'dtw') {
                 metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
-                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+                metric = this.getMaxInArray(this.getHausdorffDistances(orderingParent.event, data[i].event)[0]);
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
@@ -786,6 +790,7 @@ class SimulationDistance {
         return reOrderedData;
     }
 
+    // Finds Hausdorff Distance by finding maximum distance between two correlating points
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;
         arr.forEach(num => {
@@ -804,8 +809,8 @@ class SimulationDistance {
         return sum;
     }
 
-    // returns array of distances of sets of points
-    getCorrelatingEventDistances(events1, events2) {
+    // returns array of distances of correlating sets of points
+    getHausdorffDistances(events1, events2) {
         let smallEvents = events1
         let largeEvents = events2
         const valueSelector = d => d[' t']

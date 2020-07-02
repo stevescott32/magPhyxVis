@@ -1,3 +1,10 @@
+/*
+    Data Structure of K-tree and Hilbert Curve. These algorithms deconstruct space to fit
+    nodes(Boundary) around points and traverse them in an order that preserves spatial locality.
+    K-Tree: https://en.wikipedia.org/wiki/K-tree
+    Hilbert Curve: https://en.wikipedia.org/wiki/Hilbert_curve
+*/
+
 class Point {
     coordinates = [];
     constructor(coordinates, data) {
@@ -26,6 +33,7 @@ class Point {
     }
 }
 
+// Node in space, contains 0 or more points
 class Boundary {
     dimensionMins = [];
     dimensionMaxs = [];
@@ -80,6 +88,7 @@ class DataStructure {
         this.capacity = capacity;
     }
 
+    // Inserts point and readjusts boundaries by subdividing around point
     insertPoint(point) {
         if (this.boundary.contains(point)) {
             if (this.isDivided) {
@@ -105,7 +114,6 @@ class DataStructure {
         }
         return false;
     }
-
 
     iterate(dimensions, index) {
         let arr = [];
@@ -191,13 +199,9 @@ class KTree extends DataStructure{
             this.children.push(new KTree(new Boundary(mins, maxs), this.capacity));
         }
         this.isDivided = true;
-
-
     }
 
 }
-
-
 
 class HilbertCurve extends DataStructure{
     orientationAgainstParent;
