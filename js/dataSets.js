@@ -8,16 +8,16 @@ let data_sets = [
     },
     {
         name: 'MagPhyx Grid',
-        sim_count: 144,
+        sim_count: 99,
         events_folder: 'data4/events',
-        param_folder: 'data4/params',
+        param_folder: 'data4/commands',
         parse: parseMagPhyxData,
     },
     {
         name: 'MagPhyx Random (7)',
-        sim_count: 144,
+        sim_count: 99,
         events_folder: 'data7/events',
-        param_folder: 'data7/params',
+        param_folder: 'data7/commands',
         parse: parseMagPhyxData,
     }
 ];
@@ -57,7 +57,6 @@ function parseStockMarketData(eventData) {
             simulations[i].events.push(oneSim[j]);
         }
     }
-    console.log('Parsed stock market data', simulations);
 
     return {
         simulations: simulations,
@@ -85,10 +84,21 @@ function parseMagPhyxData(eventData, paramData) {
             }
         )
         for (let j = 0; j < oneSim.length; j++) {
-            simulations[i].events.push(oneSim[j]);
+            let oneEvent = oneSim[j];
+            simulations[i].events.push({
+                n: oneEvent.n,
+                event_type: oneEvent[' event_type'],
+                beta: oneEvent[' beta'],
+                phi: oneEvent[' phi'],
+                pphi: oneEvent[' pphi'],
+                ptheta: oneEvent[' ptheta'],
+                theta: oneEvent[' theta'],
+                r: oneEvent[' r'],
+                ' t': oneEvent[' t']
+            });
+            simulations[i].events[j][' t'] = oneEvent[' t'];
         }
     }
-    console.log('Parsed MagPhyx data', simulations);
 
     return {
         simulations: simulations,

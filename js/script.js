@@ -8,7 +8,7 @@ console.log('Starting script');
 let dataSet = data_sets[0];
 let reorderer = ways_to_reorder[0];
 
-let eventTypeVis = new EventTypeVis(/*data_set.sim_count*/);
+let eventTypeVis = new EventTypeVis();
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
 let allData = {};
@@ -31,12 +31,12 @@ loadDataAndVis(dataSet);
 
 
 function loadDataAndVis(selectedDataSet) {
-  let slice_format = (selectedDataSet.sim_count % 10) - 1;
+  // get how many digits are required to represent the number
+  let slice_format = selectedDataSet.sim_count.toString().length; 
   let zeros = '0'.repeat(slice_format);
   // create promises so all data can load asynchronous
   // promise the param data
   let paramDataPromises = [];
-  // TODO put these promises into the data possibilities structure
   if (selectedDataSet.param_folder != null) {
     for (let i = 0; i < selectedDataSet.sim_count; i++) {
       let path = `data/${selectedDataSet.param_folder}/commands${(zeros + i).slice(-1 * slice_format)}.csv`;
@@ -47,7 +47,6 @@ function loadDataAndVis(selectedDataSet) {
 
   // promise the event data
   let dataPromises = [];
-  // TODO put these promises into the data possibilities structure
   for (let i = 0; i < selectedDataSet.sim_count; i++) {
     let path = `data/${selectedDataSet.events_folder}/events${(zeros + i).slice(-1 * slice_format)}.csv`
     // console.log('Path: ', path);
@@ -56,6 +55,7 @@ function loadDataAndVis(selectedDataSet) {
 
   // load the param data
   Promise.all([...paramDataPromises]).then((paramData) => {
+    console.log('Param data loaded');
     // load the event data
     Promise.all([...dataPromises]).then(function (eventData) {
       console.log('All data loaded');
@@ -63,6 +63,7 @@ function loadDataAndVis(selectedDataSet) {
       paramData = standardizeParamData(paramData);
 
       let data = selectedDataSet.parse(eventData, paramData);
+      console.log('Parsed data: ', data);
       allData = JSON.parse(JSON.stringify(data));
 
       loadVis(data, reorderer);
