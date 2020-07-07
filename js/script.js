@@ -11,6 +11,7 @@ let reorderer = ways_to_reorder[0];
 let eventTypeVis = new EventTypeVis(/*data_set.sim_count*/);
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
+let allData = {};
 
 
 // let each vis know about the other event vis
@@ -62,6 +63,7 @@ function loadDataAndVis(selectedDataSet) {
       paramData = standardizeParamData(paramData);
 
       let data = selectedDataSet.parse(eventData, paramData);
+      allData = JSON.parse(JSON.stringify(data));
 
       loadVis(data, reorderer);
 
@@ -76,15 +78,16 @@ function loadVis(data, reorderer) {
   let orderedData = reorderer.reorder(data);
 
   // initialize the param and the scatter vis
-  paramVis.init(data);
-  scatter.init(data);
+  paramVis.init(orderedData);
+  scatter.init(orderedData);
 
   // TODO this should be more dynamic - switched to an array of 
   // distance calculation functions
   // let distances = calcDistances(orderedParamData);
 
-  eventTypeVis.setEventCols(data.eventTypes);
-  addEventTypeSelector(data);
+  eventTypeVis.setNumSimulations(orderedData.simulations.length);
+  eventTypeVis.setEventCols(orderedData.eventTypes);
+  addEventTypeSelector(orderedData);
 }
 
 function addDataInput() {
@@ -150,11 +153,11 @@ function addReorderSelector() {
     .attr('name', 'event')
     .attr('value', (d) => { return d; })
     .text(d => { return `${d.name}`; })
-    .on('click', (d) => {
-      console.log('order', d);
+    .on('click', (selectedOrder) => {
+      console.log('order', selectedOrder);
       for (let i = 0; i < ways_to_reorder.length; i++) {
         let oneWayToReorder = ways_to_reorder[i];
-        if (oneWayToReorder.name == d) {
+        if (oneWayToReorder.name == selectedOrder) {
           loadVis(dataSet, oneWayToReorder);
         }
       }
@@ -193,7 +196,6 @@ function addEventTypeSelector(data) {
     ;
 
   // create buttons so the user can select which event type to display
-  console.log('Pre map X', data.simulations);
   d3.selectAll('.checkboxes')
     .append('input')
     .attr('type', 'radio')
@@ -201,17 +203,16 @@ function addEventTypeSelector(data) {
     .attr('value', (d) => { return d; })
     .text(d => { return `${d}`; })
     .on('click', (type) => {
-      console.log('type', type);
-      let filteredData = data.simulations.map(d => {
-        return d.events.filter(d => {
-          return d['event_type'] == type;
+      data.simulations = allData.simulations.map(simulation => {
+        simulation.events = simulation.events.filter(event => {
+          return event['event_type'] == type;
         })
-        // return true;
+        return simulation;
       })
-      console.log("filtered data: ");
-      console.log(filteredData);
+      console.log("filtered data: ", data);
+      console.log("filtered data simulations: ", data.simulations);
       eventTypeVis.removeEventsMatch()
-      eventTypeVis.update(filteredData);
+      eventTypeVis.update(data);
     })
     ;
 

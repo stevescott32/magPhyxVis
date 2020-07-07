@@ -115,7 +115,7 @@ class EventTypeVis {
 
             this.diffMin = 0; // d3.min(distances);
             this.diffMax = 20; // d3.max(distances) + this.config.tolerance;
-            this.originalData = [...data];
+            this.originalData = JSON.parse(JSON.stringify(data));
             // this.originalParamData = [...paramData];
             // this.originalDistances = [...distances];
 
@@ -289,24 +289,28 @@ class EventTypeVis {
     }
 
     getEventCountScale(data) {
+        console.log('Event count scale max: ', data.simulations.length);
         return d3.scaleLinear()
-            .domain([0, data.length])
+            .domain([0, data.simulations.length])
             .range([this.config.padding.top, this.config.height + this.config.padding.top])
             ;
     }
 
     getTimeRange(data) {
-        console.log('Time range data', data);
-        const min = d3.min(data.simulations, (sim) => {
-            console.log('Time range sim', sim);
-            return d3.min(sim.events, (d) => {
-                console.log('Time range event', d);
-                return d[' t'];
+        // console.log('debug data', data);
+        let sims = data.simulations;
+        // console.log('debug sims', sims);
+        const min = d3.min(sims, (sim) => {
+            // console.log('debug sim', d);
+            // TODO i think this should be min(sim.events)
+            return d3.min(sim.events, (event) => {
+                // console.log('debug event', event);
+                return event[' t'];
             })
         })
         const max = d3.max(data.simulations, (sim) => {
-            return d3.max(sim.events, (d) => {
-                return d[' t'];
+            return d3.max(sim.events, (event) => {
+                return event[' t'];
             })
         })
         return [min, max]
@@ -325,13 +329,15 @@ class EventTypeVis {
     }
 
     getTimeFilteredData(data) {
-        data = [...data]
-        for (let i = 0; i < data.length; i++) {
-            data[i] = {
+        // data = [...data]
+        /*
+        for (let i = 0; i < data.simulations.length; i++) {
+            data.simulations[i] = {
                 event: this.filterEventByTimeThreshold(data[i].event),
                 simulationIndex: data[i].simulationIndex
             }
         }
+        */
         return data;
     }
 
@@ -347,21 +353,26 @@ class EventTypeVis {
         for(let i = 0; i < data.simulations.length; i++) {
             let oneSim = data.simulations[i];
             oneSim.meta['simulationIndex'] = i;
+            for(let j = 0; j < oneSim.events.length; j++) {
+                oneSim.events[j].simulationIndex = i;
+            }
         }
 
         const simulationDistances = new SimulationDistance();
-        data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
+        // data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
 
-        const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
-        data = result[0];
-        paramData = result[1];
-        distances = result[2];
+        // const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
+        // data = result[0];
+        // paramData = result[1];
+        // distances = result[2];
 
+        /*
         if (self.state.reorderSimulationIndex != null) {
             data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
         }
+        */
 
-        const timeScale = this.getTimeScale(data.map(d => d.event))
+        const timeScale = this.getTimeScale(data)
 
         const eventCountScale = this.getEventCountScale(data);
 
@@ -395,6 +406,7 @@ class EventTypeVis {
         this.svg.attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
 
+            /*
         let distanceScale = d3.scaleLinear()
             .domain([d3.min(distances), d3.max(distances)])
             .range([0, 20])
@@ -430,6 +442,7 @@ class EventTypeVis {
             })
             .attr('height', 1)
             .attr('class', 'distanceBars')
+            */
 
         this.svg.selectAll('g.axis').remove();
         let xaxis = this.svg.append('g').attr('class', 'axis')
@@ -484,7 +497,8 @@ class EventTypeVis {
             .append('g')
             .merge(simsSel)
             .attr('class', (d, i) => {
-                return `oneSimulation group${d[0].simulationIndex}`;
+                // return `oneSimulation group${d[0].simulationIndex}`;
+                return `oneSimulation group${i}`;
             })
 
         simsSel.exit().remove();
@@ -511,6 +525,7 @@ class EventTypeVis {
             .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple',
                 'green', 'black', 'red', 'pink']);
 
+        let debugCount = 0;
         circleSel
             .enter()
             .append('circle')
@@ -519,7 +534,7 @@ class EventTypeVis {
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
-            .attr('cy', d => { return eventCountScale(d.parentIndex) })
+            .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
                 let color = customColorScale(d['category']);
