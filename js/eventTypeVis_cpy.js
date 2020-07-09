@@ -468,15 +468,8 @@ class EventTypeVis {
         data = []
         for (var i = 0; i < kMeansClusters.clusters.length; ++i)
         {
-          // intra cluster ordering
-          var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
-
-          kMeansClusters.clusters[i] = simulationDistances.reorder(
-              kMeansClusters.clusters[i], clusterOriginIdx,
-              self.state.ordering, self.state.maxDeaths);
-
-          kMeansClusters.clusters[i].forEach(function(d) {
-            d.event.color = i;
+          kMeansClusters.clusters[i].forEach(function(d, index, cluster) {
+            d.index = i;
           })
 
           data = data.concat(kMeansClusters.clusters[i]);
@@ -499,28 +492,25 @@ class EventTypeVis {
         let paramVis = this.paramVis;
         let scatter = this.scatter;
 
+
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
             .data((d, i) => {
                 for (let a = 0; a < d.length; a++) {
                     d[a]['parentIndex'] = i;
-                    if (kMeansClusters.clusterOrigins.some(
-                            o => o.simulationIndex == d[a].simulationIndex)) {
-                      d[a].color = 9;
-                    } else {
-                      d[a].color = d.color;
-                    }
                 }
                 return d;
             });
 
         circleSel.exit().remove();
 
-        var customColorScale = [
-          'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
-          'pink', 'yellow', 'black'
-        ];
-        var getColor = (index) => { return customColorScale[index]; };
+        var customColorScale = d3.scaleOrdinal()
+            .domain(['Volume Indicators', 'Volatility Indicators', 
+                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
+                'Overlap Studies', 'Momentum Indicators', 'Math Transform', 
+                'Math Operators', 'Cycle Indicators'])
+            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 
+                'green', 'black', 'red', 'pink']);
 
         circleSel
             .enter()
@@ -533,7 +523,7 @@ class EventTypeVis {
             .attr('cy', d => { return eventCountScale(d.parentIndex) })
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
-                let color = getColor(d['color']);
+                let color = customColorScale(d['category']);
                 return color;
             })
             .on('mouseover', function (d) {
