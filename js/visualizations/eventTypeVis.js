@@ -137,7 +137,7 @@ class EventTypeVis {
                 self.state.maxDeaths = +this.value;
                 deathCount.html(+this.value)
                 self.updateHelper(data);
-            })
+            });
 
             root.select('.ordering-methods').selectAll('input[type="radio"]').each(function () {
                 const node = d3.select(this);
@@ -172,7 +172,7 @@ class EventTypeVis {
                             .dispatch('click')
                     }
                     self.updateHelper(data);
-                })
+                });
 
             const minw = 200, maxw = window.innerWidth;
             sliders.select('.graph-width')
@@ -184,7 +184,7 @@ class EventTypeVis {
                 .on('click', function () {
                     self.config.width = +this.value;
                     self.updateHelper(data);
-                })
+                });
 
             const minh = 200, maxh = window.innerHeight * 5;
             sliders.select('.graph-height')
@@ -196,7 +196,7 @@ class EventTypeVis {
                 .on('click', function () {
                     self.config.height = +this.value;
                     self.updateHelper(data);
-                })
+                });
 
             const minr = 2, maxr = 10;
             sliders.select('.circle-radius')
@@ -208,10 +208,10 @@ class EventTypeVis {
                 .on('click', function () {
                     self.circleSize = +this.value;
                     self.updateHelper(data);
-                })
+                });
 
-            const range = this.getTimeRange(this.originalData)
-            self.config.timeRange = range
+            const range = this.getTimeRange(this.originalData);
+            self.config.timeRange = range;
 
             $(".time-range-2").slider({
                 min: range[0],
@@ -297,7 +297,7 @@ class EventTypeVis {
     }
 
     getTimeRange(data) {
-        // console.log('debug data', data);
+        // console.log('getting time range from data', data);
         let sims = data.simulations;
         // console.log('debug sims', sims);
         const min = d3.min(sims, (sim) => {
@@ -313,7 +313,8 @@ class EventTypeVis {
                 return event[' t'];
             })
         })
-        return [min, max]
+        // console.log('Time range result', [parseFloat(min), parseFloat(max)]);
+        return [parseFloat(min), parseFloat(max)]
     }
 
     getTimeScale(data) {
