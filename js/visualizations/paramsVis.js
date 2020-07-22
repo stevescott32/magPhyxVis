@@ -20,10 +20,6 @@ class ParamsVis {
         right: 15
       }
     };
-    // define a base url that the specific params can use to link to the MagPhyx simulation
-    // sample url: http://edwardsjohnmartin.github.io/MagPhyx/?initparams=1,0,0,0.721905,-0.0589265,0.0455992
-    this.baseUrl = 'http://edwardsjohnmartin.github.io/MagPhyx/?initparams=';
-
   }
 
   highlightSimulation(simulation) {
@@ -46,13 +42,6 @@ class ParamsVis {
     this.eventVis = eventVis;
   }
 
-  // given a row number, create a url so the simulation can be replayed in MagPhyx
-  getUrlFromCsv(row) {
-    let split = row.split(' ');
-    let result = `${this.baseUrl}${split[6]},${split[7]},${split[8]},${split[9]},${split[10]},${split[11]}`;
-    return result;
-  }
-
   /**
    * Init function - initialize the vis, linking the simulations in order
    * @param data - an array containing the data in order 
@@ -64,34 +53,16 @@ class ParamsVis {
       console.log('Param data', data);
 
       // create a derived data set that gives each point a reference to the id
-      // of the point before it, a url to link to, the correct theta and beta
-      // from the command.
-      for(let i = 0; i < data.simulations.length; i++) {
+      // of the point before it
+      for (let i = 0; i < data.simulations.length; i++) {
         let oneSim = data.simulations[i];
         // TODO find a more elegant way of dealing with lack of parameters
         // than just returning out of this whole method
-        if(null == oneSim.params) 
+        if (null == oneSim.params)
           return;
-        console.log('One sim', oneSim);
-        oneSim.meta['url'] = this.getUrlFromCsv(oneSim.params);
         oneSim.meta['id'] = i;
         oneSim.meta['parent'] = i - 1;
       }
-      /*
-      let id = 0;
-      let parent = -1;
-      let derived = data.map((d) => {
-        let value = d;
-        value['id'] = id;
-        value['parent'] = parent;
-        value['command'] = d.originalCommand['columns'][0];
-        value['url'] = this.getUrlFromCsv(d.originalCommand['columns'][0]);
-
-        parent = id;
-        id++;
-        return value;
-      })
-      */
 
       // set up the x axis
       let xscale = d3.scaleLinear()
@@ -119,6 +90,7 @@ class ParamsVis {
         .range([this.config.padding.top, this.config.height + this.config.padding.top])
         ;
 
+      d3.select('#param-vis').selectAll('svg').remove();
       // add a svg for the vis
       let displaySvg = d3.select('#param-vis')
         .append('svg')
@@ -128,27 +100,30 @@ class ParamsVis {
 
 
       // add a rectangle around each boundary
-      displaySvg.selectAll('.boundaries')
-        .data(boundaries)
-        .enter()
-        .append('rect')
-        .attr('x', d => {
-          return xscale(d.dimensionMins[0]);
-        })
-        .attr('y', d => {
-          return yscale(d.dimensionMins[1]);
-        })
-        .attr('width', d => {
-          return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
-        })
-        .attr('height', d => {
-          return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
-        })
-        .style('fill', 'white')
-        .style('stroke-width', 3)
-        .style('stroke', 'lightgrey')
-        .attr('class', 'boundaries')
-        ;
+      if (boundaries != undefined) {
+        console.log('Boundaries', boundaries);
+        displaySvg.selectAll('.boundaries')
+          .data(boundaries)
+          .enter()
+          .append('rect')
+          .attr('x', d => {
+            return xscale(d.dimensionMins[0]);
+          })
+          .attr('y', d => {
+            return yscale(d.dimensionMins[1]);
+          })
+          .attr('width', d => {
+            return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
+          })
+          .attr('height', d => {
+            return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
+          })
+          .style('fill', 'white')
+          .style('stroke-width', 3)
+          .style('stroke', 'lightgrey')
+          .attr('class', 'boundaries')
+          ;
+      }
 
       // draw a line from each point to its parent
       let links = displaySvg.selectAll('.link')
@@ -156,19 +131,19 @@ class ParamsVis {
         .enter()
         .append('path')
         .attr('d', function (d) {
-          let p = data.filter(dd => {
-            return dd.id == d.parent;
+          let p = data.simulations.filter(dd => {
+            return dd.meta.id == d.meta.parent;
           })[0];
           if (undefined == p) {
-            return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(d.theta)} ${yscale(d.beta)}`;
+            return `M ${xscale(d.params.theta)} ${yscale(d.params.beta)} L ${xscale(d.params.theta)} ${yscale(d.params.beta)}`;
           }
-          return `M ${xscale(d.theta)} ${yscale(d.beta)} L ${xscale(p.theta)} ${yscale(p.beta)}`;
+          return `M ${xscale(d.params.theta)} ${yscale(d.params.beta)} L ${xscale(p.params.theta)} ${yscale(p.params.beta)}`;
         })
         .style('fill', 'red')
         .style('stroke', 'orange')
         .style('stroke-width', '2')
-        .attr('id', d => { return d.id; })
-        .attr('parent', d => { return d.parent; })
+        .attr('id', d => { return d.meta.id; })
+        .attr('parent', d => { return d.meta.parent; })
         .attr('class', 'link')
         ;
 
@@ -185,7 +160,6 @@ class ParamsVis {
         .attr('class', d => { return `group${d.index}`; })
         .style('fill', 'blue')
         .attr('id', d => { return d.meta.id; })
-        //.attr('zorder', d => d.zorder)
         .attr('parent', d => { return d.meta.parent; })
         .on('mouseover', function (d) {
           d3.select(this)
@@ -211,7 +185,7 @@ class ParamsVis {
         })
         .on('click', d => {
           // open the magPhyx simulation
-          window.open(d.url);
+          window.open(d.meta.url);
         })
         .append('svg:title')
         .text((d) => d.id)
@@ -248,7 +222,7 @@ class ParamsVis {
         .text('Beta')
         ;
 
-    } catch(error) { 
+    } catch (error) {
       console.log('Error in Param Vis: ', error);
     }
   }
