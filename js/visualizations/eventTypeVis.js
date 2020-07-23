@@ -3,13 +3,13 @@
  * event type
  */
 class EventTypeVis {
-    constructor(numEvents) {
+    constructor(/*numEvents*/) {
         this.circleSize = 2;
         this.highlightScale = 2;
 
         this.config = {
             width: 850, // 1200,
-            height: (this.circleSize * 2) * numEvents,
+            height: 0, // (this.circleSize * 2) * numEvents,
             padding: {
                 left: 80,
                 top: 100,
@@ -31,6 +31,10 @@ class EventTypeVis {
         this.divId = 'event-type-vis';
 
         this.registerHeaderEvents();
+    }
+
+    setNumSimulations(numSims) {
+        this.config.height = (this.circleSize * 2) * numSims;
     }
 
     registerHeaderEvents() {
@@ -104,123 +108,129 @@ class EventTypeVis {
 
     // methods outside of this class should call this update method,
     // not the update helper
-    update(data, paramData, distances) {
-        const self = this;
+    update(data) {
+        console.log('Updating event type vis', data);
+        try {
+            const self = this;
 
-        this.diffMin = d3.min(distances);
-        this.diffMax = d3.max(distances) + this.config.tolerance;
-        this.originalData = [...data];
-        this.originalParamData = [...paramData];
-        this.originalDistances = [...distances];
+            this.diffMin = 0; // d3.min(distances);
+            this.diffMax = 20; // d3.max(distances) + this.config.tolerance;
+            this.originalData = JSON.parse(JSON.stringify(data));
+            // this.originalParamData = [...paramData];
+            // this.originalDistances = [...distances];
 
-        const root = d3.select(`#${this.divId}`)
+            const root = d3.select(`#${this.divId}`)
 
-        root.select('.match-exact').on('click', function () {
-            self.state.matchExact = this.checked;
-            self.updateHelper(data, paramData, distances);
-        })
+            root.select('.match-exact')
+              .on('click', function () {
+                self.state.matchExact = this.checked;
+                self.updateHelper(data);
+              })
 
-        const slider = root.select('.ordering-methods')
-            .select('.max-deaths')
+            const slider = root.select('.ordering-methods')
+                .select('.max-deaths')
 
-        const deathCount = root.select('.ordering-methods')
-            .select('.death-count')
+            const deathCount = root.select('.ordering-methods')
+                .select('.death-count')
 
-        slider.on('click', function () {
-            self.state.maxDeaths = +this.value;
-            deathCount.html(+this.value)
-            self.updateHelper(data, paramData, distances);
-        })
+            slider.on('click', function () {
+                self.state.maxDeaths = +this.value;
+                deathCount.html(+this.value)
+                self.updateHelper(data);
+            });
 
-        root.select('.ordering-methods').selectAll('input[type="radio"]').each(function() {
-            const node = d3.select(this);
-            node.on('change', function() {
-                self.state.ordering = this.value;
-                let disable = false;
-                if (this.value === 'dtw') {
-                    disable = false;
-                } else {
-                    disable = true;
+            root.select('.ordering-methods').selectAll('input[type="radio"]').each(function () {
+                const node = d3.select(this);
+                node.on('change', function () {
+                    self.state.ordering = this.value;
+                    let disable = false;
+                    if (this.value === 'dtw') {
+                        disable = false;
+                    } else {
+                        disable = true;
+                    }
+
+                    slider.attr('disabled', disable ? 'disabled' : null);
+
+                    self.updateHelper(data);
+                })
+            });
+
+            const sliders = root.select('.sliders');
+
+            sliders.select('.filter-distances')
+                .select('input')
+                .attr('min', this.diffMin)
+                .attr('max', this.diffMax)
+                .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
+                .on('click', function () {
+                    self.config.distanceThreshold = +this.value;
+                    // because events may not be in the new data set
+                    if (self.state.match) {
+                        self.removeEventsMatch()
+                        root.select('.header').select('.match-a-to-b')
+                            .dispatch('click')
+                    }
+                    self.updateHelper(data);
+                });
+
+            const minw = 200, maxw = window.innerWidth;
+            sliders.select('.graph-width')
+                .select('input')
+                .attr('min', minw)
+                .attr('value', self.config.width)
+                .attr('max', maxw)
+                .attr('step', 0.1)
+                .on('click', function () {
+                    self.config.width = +this.value;
+                    self.updateHelper(data);
+                });
+
+            const minh = 200, maxh = window.innerHeight * 5;
+            sliders.select('.graph-height')
+                .select('input')
+                .attr('min', minh)
+                .attr('value', self.config.height)
+                .attr('max', maxh)
+                .attr('step', 0.1)
+                .on('click', function () {
+                    self.config.height = +this.value;
+                    self.updateHelper(data);
+                });
+
+            const minr = 2, maxr = 10;
+            sliders.select('.circle-radius')
+                .select('input')
+                .attr('min', minr)
+                .attr('value', self.circleSize)
+                .attr('max', maxr)
+                .attr('step', 0.1)
+                .on('click', function () {
+                    self.circleSize = +this.value;
+                    self.updateHelper(data);
+                });
+
+            const range = this.getTimeRange(this.originalData);
+            self.config.timeRange = range;
+
+            $(".time-range-2").slider({
+                min: range[0],
+                max: range[1],
+                values: range,
+                slide: function (event, ui) {
+                    $(".amount").html("From " + ui.values[0] + " to " + ui.values[1]);
+                    self.config.timeRange = ui.values;
+                    self.updateHelper(data);
                 }
+            });
 
-                slider.attr('disabled', disable ? 'disabled' : null);
-
-                self.updateHelper(data, paramData, distances);
-            })
-        });
-
-        const sliders = root.select('.sliders');
-
-        sliders.select('.filter-distances')
-            .select('input')
-            .attr('min', this.diffMin)
-            .attr('max', this.diffMax)
-            .attr('step', ((this.diffMax - this.diffMin) / this.config.stepCount))
-            .on('click', function () {
-                self.config.distanceThreshold = +this.value;
-                // because events may not be in the new data set
-                if (self.state.match) {
-                    self.removeEventsMatch()
-                    root.select('.header').select('.match-a-to-b')
-                        .dispatch('click')
-                }
-                self.updateHelper(data, paramData, distances);
-            })
-
-        const minw = 200, maxw = window.innerWidth;
-        sliders.select('.graph-width')
-            .select('input')
-            .attr('min', minw)
-            .attr('value', self.config.width)
-            .attr('max', maxw)
-            .attr('step', 0.1)
-            .on('click', function () {
-                self.config.width = +this.value;
-                self.updateHelper(data, paramData, distances);
-            })
-
-        const minh = 200, maxh = window.innerHeight * 5;
-        sliders.select('.graph-height')
-            .select('input')
-            .attr('min', minh)
-            .attr('value', self.config.height)
-            .attr('max', maxh)
-            .attr('step', 0.1)
-            .on('click', function () {
-                self.config.height = +this.value;
-                self.updateHelper(data, paramData, distances);
-            })
-
-        const minr = 2, maxr = 10;
-        sliders.select('.circle-radius')
-            .select('input')
-            .attr('min', minr)
-            .attr('value', self.circleSize)
-            .attr('max', maxr)
-            .attr('step', 0.1)
-            .on('click', function () {
-                self.circleSize = +this.value;
-                self.updateHelper(data, paramData, distances);
-            })
-
-        const range = this.getTimeRange(this.originalData)
-        self.config.timeRange = range
-
-        $(".time-range-2").slider({
-            min: range[0],
-            max: range[1],
-            values: range,
-            slide: function( event, ui ) {
-                $(".amount" ).html("From " + ui.values[0] + " to " + ui.values[1] );
-                self.config.timeRange = ui.values;
-                self.updateHelper(data, paramData, distances);
-            }
-        });
-
-        $( ".amount" ).html( "From " + $( ".time-range-2" ).slider( "values", 0 ) +
-            " to " + $( ".time-range-2" ).slider( "values", 1 ) );
-        this.updateHelper(data, paramData, distances);
-
+            $(".amount").html("From " + $(".time-range-2").slider("values", 0) +
+                " to " + $(".time-range-2").slider("values", 1));
+            this.updateHelper(data);
+        }
+        catch (error) {
+            console.log('Error in event type vis: ', error);
+        }
     }
 
     correlateEvents(data, infoA, infoB, timeScale, eventCountScale) {
@@ -239,7 +249,7 @@ class EventTypeVis {
                 .map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
-                arrowInfo = simulationDistance.getCorrelatingEventDistances(eventA, eventB)[1]
+                arrowInfo = simulationDistance.getHausdorffDistances(eventA, eventB)[1]
             } else {
                 arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d[' t']).map((d, i) => [i, d])
             }
@@ -261,7 +271,7 @@ class EventTypeVis {
             .attr('marker-mid', this.state.ordering === 'dtw' || this.state.matchExact ? 'none' : 'url(#arrow)')
             .attr('d', d => {
                 // Coordinates of mid point on line to add new vertex.
-                const sourceX =  timeScale(eventA[d[0]][' t']);
+                const sourceX = timeScale(eventA[d[0]][' t']);
                 const sourceY = eventCountScale(eventAIdx)
                 const targetX = timeScale(eventB[d[1]][' t'])
                 const targetY = eventCountScale(eventBIdx)
@@ -279,24 +289,32 @@ class EventTypeVis {
     }
 
     getEventCountScale(data) {
+        console.log('Event count scale max: ', data.simulations.length);
         return d3.scaleLinear()
-            .domain([0, data.length])
+            .domain([0, data.simulations.length])
             .range([this.config.padding.top, this.config.height + this.config.padding.top])
             ;
     }
 
     getTimeRange(data) {
-        const min = d3.min(data, (sim) => {
-            return d3.min(sim, (d) => {
-                return d[' t'];
+        // console.log('getting time range from data', data);
+        let sims = data.simulations;
+        // console.log('debug sims', sims);
+        const min = d3.min(sims, (sim) => {
+            // console.log('debug sim', d);
+            // TODO i think this should be min(sim.events)
+            return d3.min(sim.events, (event) => {
+                // console.log('debug event', event);
+                return event[' t'];
             })
         })
-        const max = d3.max(data, (sim) => {
-            return d3.max(sim, (d) => {
-                return d[' t'];
+        const max = d3.max(data.simulations, (sim) => {
+            return d3.max(sim.events, (event) => {
+                return event[' t'];
             })
         })
-        return [min, max]
+        // console.log('Time range result', [parseFloat(min), parseFloat(max)]);
+        return [parseFloat(min), parseFloat(max)]
     }
 
     getTimeScale(data) {
@@ -312,39 +330,50 @@ class EventTypeVis {
     }
 
     getTimeFilteredData(data) {
-        data = [...data]
-        for (let i = 0; i < data.length; i++) {
-            data[i] = {
+        // data = [...data]
+        /*
+        for (let i = 0; i < data.simulations.length; i++) {
+            data.simulations[i] = {
                 event: this.filterEventByTimeThreshold(data[i].event),
                 simulationIndex: data[i].simulationIndex
             }
         }
+        */
         return data;
     }
 
     // update the event type vis with the new data
-    updateHelper(data, paramData, distances) {
-        console.log('Updating, reordering');
+    updateHelper(data) {
+        console.log('Running the update helper', data);
         const self = this;
 
         if (null == data) { return; }
 
         // assign id to each event to make everything easier
-        data = data.map((d, i) => ({ event: d, simulationIndex: i }))
+        // data = data.map((d, i) => ({ event: d, simulationIndex: i }))
+        for(let i = 0; i < data.simulations.length; i++) {
+            let oneSim = data.simulations[i];
+            oneSim.meta['simulationIndex'] = i;
+            for(let j = 0; j < oneSim.events.length; j++) {
+                oneSim.events[j].simulationIndex = i;
+            }
+        }
 
         const simulationDistances = new SimulationDistance();
-        data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
+        // data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
 
-        const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
-        data = result[0];
-        paramData = result[1];
-        distances = result[2];
+        // const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
+        // data = result[0];
+        // paramData = result[1];
+        // distances = result[2];
 
+        /*
         if (self.state.reorderSimulationIndex != null) {
             data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
         }
+        */
 
-        const timeScale = this.getTimeScale(data.map(d => d.event))
+        const timeScale = this.getTimeScale(data)
 
         const eventCountScale = this.getEventCountScale(data);
 
@@ -358,7 +387,7 @@ class EventTypeVis {
         if (this.svg.empty()) {
             this.svg = root.append('svg')
                 .attr('class', 'event-type-vis')
-                .attr('id', 'event-type-svg')
+                .attr('id', 'event-type-svg');
 
             this.svg.append("svg:defs")
                 .append("marker")
@@ -371,13 +400,14 @@ class EventTypeVis {
                 .attr("orient", "auto")
                 .append("path")
                 .attr("d", "M0,-5L10,0L0,5")
-                .attr("class", "arrowHead")
+                .attr("class", "arrowHead");
 
         }
 
         this.svg.attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
 
+            /*
         let distanceScale = d3.scaleLinear()
             .domain([d3.min(distances), d3.max(distances)])
             .range([0, 20])
@@ -413,6 +443,7 @@ class EventTypeVis {
             })
             .attr('height', 1)
             .attr('class', 'distanceBars')
+            */
 
         this.svg.selectAll('g.axis').remove();
         let xaxis = this.svg.append('g').attr('class', 'axis')
@@ -458,14 +489,17 @@ class EventTypeVis {
                 .attr('class', 'simulations')
         }
         const simsSel = simulationGroup.selectAll('.oneSimulation')
-            .data(data.map(d => d.event))
+            .data(data.simulations)
+            // .data(data.simulations.map(d => d.event))
+            ;
 
         const sims = simsSel
             .enter()
             .append('g')
             .merge(simsSel)
             .attr('class', (d, i) => {
-                return `oneSimulation group${d[0].simulationIndex}`;
+                // return `oneSimulation group${d[0].simulationIndex}`;
+                return `oneSimulation group${i}`;
             })
 
         simsSel.exit().remove();
@@ -479,18 +513,10 @@ class EventTypeVis {
                 for (let a = 0; a < d.length; a++) {
                     d[a]['parentIndex'] = i;
                 }
-                return d;
+                return d.events;
             });
 
         circleSel.exit().remove();
-
-        var customColorScale = d3.scaleOrdinal()
-            .domain(['Volume Indicators', 'Volatility Indicators', 
-                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
-                'Overlap Studies', 'Momentum Indicators', 'Math Transform', 
-                'Math Operators', 'Cycle Indicators'])
-            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple', 
-                'green', 'black', 'red', 'pink']);
 
         circleSel
             .enter()
@@ -500,12 +526,9 @@ class EventTypeVis {
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
-            .attr('cy', d => { return eventCountScale(d.parentIndex) })
+            .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { return this.circleSize; })
-            .style('fill', d => {
-                let color = customColorScale(d['category']);
-                return color;
-            })
+            .style('fill', d => { return data.getColor(d); })
             .on('mouseover', function (d) {
                 console.log('Mouseovered the event', d);
                 if (self.state.match) {
@@ -566,7 +589,7 @@ class EventTypeVis {
                 }
             })
             ;
-            console.log('Finished updating, reordering');
+        console.log('Finished updating, reordering');
     }
 
 
@@ -699,11 +722,17 @@ class EventTypeVis {
             .attr('x', 30)
             .text('Std. Dev.')
             ;
+
     }
 }
 
+/*
+    Calculates distance between two simulations based on either Hausdorff Distance or Dynamic Time Warping
+    Hausdorff Distance: https://en.wikipedia.org/wiki/Hausdorff_distance
+    Dynamic Time Warping: https://en.wikipedia.org/wiki/Dynamic_time_warping
 
-
+    TODO: Decouple DTW and Hausdorff Distance
+*/
 class SimulationDistance {
     // data = [];
     paramData = [];
@@ -723,7 +752,7 @@ class SimulationDistance {
     }
 
     // data is an array of { data: [event time series data], simulationIndex }
-    reorder(data, simulationIndex, ordering, maxDeaths){
+    reorder(data, simulationIndex, ordering, maxDeaths) {
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
 
         const orderingParent = data.find(d => d.simulationIndex === simulationIndex)
@@ -736,7 +765,6 @@ class SimulationDistance {
 
         let main_datum;
         for (let i = 0; i < data.length; i++) {
-            // let sum = this.getSimulationDistanceBySum(this.getCorrelatingEventDistances(data[simulationIndex], data[i]));
             let metric;
             if (ordering === 'dtw') {
                 metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
@@ -840,7 +868,7 @@ class SimulationDistance {
         return max;
     }
 
-    getSimulationDistanceBySum(correlatingEventDistances){
+    getSimulationDistanceBySum(correlatingEventDistances) {
         let sum = 0;
         correlatingEventDistances.forEach(distance => {
             sum += distance;
@@ -848,8 +876,8 @@ class SimulationDistance {
         return sum;
     }
 
-    // returns array of distances of sets of points
-    getCorrelatingEventDistances(events1, events2) {
+    // returns array of distances of correlating sets of points
+    getHausdorffDistances(events1, events2) {
         let smallEvents = events1
         let largeEvents = events2
         const valueSelector = d => d[' t']
