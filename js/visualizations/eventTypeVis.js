@@ -518,15 +518,6 @@ class EventTypeVis {
 
         circleSel.exit().remove();
 
-        var customColorScale = d3.scaleOrdinal()
-            .domain(['Volume Indicators', 'Volatility Indicators',
-                'Statistic Functions', 'Price Transform', 'Pattern Recognition',
-                'Overlap Studies', 'Momentum Indicators', 'Math Transform',
-                'Math Operators', 'Cycle Indicators'])
-            .range(['grey', 'orange', 'yellow', 'brown', 'blue', 'purple',
-                'green', 'black', 'red', 'pink']);
-
-        let debugCount = 0;
         circleSel
             .enter()
             .append('circle')
@@ -537,10 +528,7 @@ class EventTypeVis {
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { return this.circleSize; })
-            .style('fill', d => {
-                let color = customColorScale(d['category']);
-                return color;
-            })
+            .style('fill', d => { return data.getColor(d); })
             .on('mouseover', function (d) {
                 console.log('Mouseovered the event', d);
                 if (self.state.match) {

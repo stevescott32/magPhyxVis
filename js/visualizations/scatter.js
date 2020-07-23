@@ -200,7 +200,7 @@ class Scatter {
         .attr('cx', (d) => { return xscale(+d[xCol]); })
         .attr('cy', (d) => { return yscale(+d[yCol]); })
         .attr('r', this.circleSize)
-        .style('fill', (d) => { return Utils.getFill(d['event_type']); })
+        .style('fill', (d) => { return data.getColor(d); })
         .on('mouseover', function (d) {
           d3.select(this)
             .attr('r', () => { return scatterVis.circleSize * scatterVis.highlightScale; });
