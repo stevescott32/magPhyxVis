@@ -8,7 +8,7 @@ console.log('Starting script');
 // TODO define an array of data possibilities that has a similar
 // structure to these settings but can be switched at runtime
 let settings = {
-  NUM_FILES: 144, // change this to vary how many files of events/commands will be used
+  NUM_FILES: 2, // change this to vary how many files of events/commands will be used
   reorderData: false, // change this to false to turn off z-ordering
   dataset: 'momentumTradingData', // change this to use a different data set
     // data4 - grid data

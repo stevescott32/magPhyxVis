@@ -774,61 +774,83 @@ class SimulationDistance {
         // first sequence is vertical
         // second sequence is horizontal
         var matrix = []
-        const GAP_PENALTY = -4
-        const MISMATCH_PENALTY = -1
-        const MATCH_REWARD = 1
-        const MAX_OFFSET_PENALTY = -3
+        const GAP_SCORE = -1
+        const MATCH_SCORE = 1
+        const MAX_OFFSET_PENALTY = -1
         let deathCount = 0
 
         // initialize first row
         let firstRow = []
         for (let i=0; i<simulation2.length+1; i++) {
-            firstRow[i] = i * GAP_PENALTY
+            firstRow[i] = i * GAP_SCORE
         }
         matrix.push(firstRow)
 
         // initialize first column
         for (let i=1; i<simulation1.length+1; i++){
             let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
-            row[0] = i * GAP_PENALTY
+            row[0] = i * GAP_SCORE
             matrix.push(row)
         }
 
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
-                
-                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+                let cellMax = matrix[i-1][j-1] + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)                
                 // if (simulation1[i-1] === simulation2[j-1]) {
-                //     cellMax = matrix[i-1][j-1] + MATCH_REWARD
+                //     cellMax = matrix[i-1][j-1] + MATCH_SCORE
                 // } else {
-                //     cellMax = matrix[i-1][j-1] + MISMATCH_PENALTY
+                //     cellMax = matrix[i-1][j-1] + MISMATCH_SCORE
                 // }
 
-                if (matrix[i-1][j] + GAP_PENALTY > cellMax) {
-                    cellMax = matrix[i-1][j] + GAP_PENALTY
+                if (matrix[i-1][j] + GAP_SCORE > cellMax) {
+                    cellMax = matrix[i-1][j] + GAP_SCORE
                     deathCount++
                 }
 
-                if (matrix[i][j-1] + GAP_PENALTY > cellMax) {
-                    cellMax = matrix[i][j-1] + GAP_PENALTY
+                if (matrix[i][j-1] + GAP_SCORE > cellMax) {
+                    cellMax = matrix[i][j-1] + GAP_SCORE
                     deathCount++
                 }
 
                 matrix[i][j] = cellMax
             }
         }
-        return deathCount * -1
+
+        // return deathCount * -1
+        console.log(matrix)
+        if (simulation1.length != simulation2.length) this.makeTable(matrix)
+        return matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)]
     }
 
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
-        if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
+        if (event1 === undefined || event2 === undefined) {
+            console.log(event1 + ' : ' + event2)
+            return MAX_OFFSET_PENALTY
+        }
 
         event1 = event1[' t']
         event2 = event2[' t']
-
+        console.log(MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2)))
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
+
+    makeTable (data) {
+        console.log('making table')
+        let table = document.querySelector("table")
+        for (let element of data) {
+            let row = table.insertRow();
+            for (let key in element) {
+                let cell = row.insertCell();
+                let roundedNum = element[key].toFixed(2)
+                let text = document.createTextNode(roundedNum);
+                cell.appendChild(text);
+            }
+        }
+        
+        
+    }
+    
     
 
     getMaxInArray(arr) {
