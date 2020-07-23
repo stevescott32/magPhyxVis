@@ -49,24 +49,22 @@ class Scatter {
     console.log('Scatter data', data);
     try {
       this.data = data;
-      for (let i = 0; i < data.length; i++) {
-        for (let j = 0; j < data[i].length; j++) {
-          data[i][j]['parentIndex'] = i;
-          data[i][j].index = i;
-        }
+      for (let i = 0; i < data.simulations.length; i++) {
+        data.simulations[i].meta.index = i;
+        data.simulations[i].meta.parentIndex = i;
       }
 
       // set up the axes for the scatterplot
       let xscale = d3.scaleLinear()
         .domain([
-          d3.min(data, (file) => {
-            return d3.min(file, (row => {
-              return +row[' t'];
+          d3.min(data.simulations, (sim) => {
+            return d3.min(sim.events, (event => {
+              return +event[' t'];
             }))
           }),
-          d3.max(data, (file) => {
-            return d3.max(file, (row => {
-              return +row[' t'];
+          d3.max(data.simulations, (sim) => {
+            return d3.max(sim.events, (event => {
+              return +event[' t'];
             }))
           })
         ])
@@ -75,14 +73,14 @@ class Scatter {
 
       let yscale = d3.scaleLinear()
         .domain([
-          d3.max(data, (file) => {
-            return d3.max(file, (row => {
-              return +row['close-price'];
+          d3.max(data.simulations, (sim) => {
+            return d3.max(sim.events, (event => {
+              return +event['close-price'];
             }))
           }),
-          d3.min(data, (file) => {
-            return d3.min(file, (row => {
-              return +row['close-price'];
+          d3.min(data.simulations, (sim) => {
+            return d3.min(sim.events, (event => {
+              return +event['close-price'];
             }))
           })
         ])
@@ -130,12 +128,12 @@ class Scatter {
 
       // break the data up into one group per file
       let fileGroups = svg.selectAll('.demo')
-        .data(data)
+        .data(data.simulations)
         .enter()
         .append('g')
         .attr('class', (d, i) => { return `fileGroup group${i}`; })
         .attr('groupIndex', (d, i) => {
-          d.index = i;
+          d.meta.index = i;
           return i;
         })
         .style('position', 'relative')
@@ -150,7 +148,7 @@ class Scatter {
       // add a circle for every event 
       let circles = fileGroups.selectAll('circle')
         .data((d) => {
-          return d;
+          return d.events;
         })
         .enter()
         .append('circle')
@@ -161,14 +159,14 @@ class Scatter {
         .on('mouseover', function (d) {
           d3.select(this)
             .attr('r', () => { return scatterVis.circleSize * scatterVis.highlightScale; });
-          paramVis.highlightSimulation(d.index);
-          eventVis.highlightSimulation(d.index);
+          paramVis.highlightSimulation(d.meta.index);
+          eventVis.highlightSimulation(d.meta.index);
         })
         .on('mouseout', function (d) {
           d3.select(this)
             .attr('r', () => { return scatterVis.circleSize; });
-          paramVis.unhighlightSimulation(d.index);
-          eventVis.unhighlightSimulation(d.index);
+          paramVis.unhighlightSimulation(d.meta.index);
+          eventVis.unhighlightSimulation(d.meta.index);
         })
         .on('click', function (d) {
           console.log('clicked', d);
