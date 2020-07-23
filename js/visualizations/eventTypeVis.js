@@ -769,7 +769,9 @@ class SimulationDistance {
             if (ordering === 'dtw') {
                 metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
-                metric = this.getMaxInArray(this.getHausdorffDistances(orderingParent.event, data[i].event)[0]);
+                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+            } else if (ordering === 'temporal-needleman-wunsch') {
+                metric = this.getTNWScore(orderingParent.event, data[i].event)
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
@@ -794,7 +796,68 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    // Finds Hausdorff Distance by finding maximum distance between two correlating points
+    getTNWScore(simulation1, simulation2) {
+        console.log(simulation1, simulation2);
+
+        // first sequence is vertical
+        // second sequence is horizontal
+        var matrix = []
+        const GAP_PENALTY = -4
+        const MISMATCH_PENALTY = -1
+        const MATCH_REWARD = 1
+        const MAX_OFFSET_PENALTY = -3
+
+        // initialize first row
+        let firstRow = []
+        for (let i=0; i<simulation2.length+1; i++) {
+            firstRow[i] = i * GAP_PENALTY
+        }
+        matrix.push(firstRow)
+
+        // initialize first column
+        for (let i=1; i<simulation1.length+1; i++){
+            let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
+            row[0] = i * GAP_PENALTY
+            matrix.push(row)
+        }
+
+        // fill in the rest of the table
+        for (let i=1; i<simulation1.length+1; i++){
+            for (let j=1; j<simulation2.length+1; j++){
+                
+                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+                // if (simulation1[i-1] === simulation2[j-1]) {
+                //     cellMax = matrix[i-1][j-1] + MATCH_REWARD
+                // } else {
+                //     cellMax = matrix[i-1][j-1] + MISMATCH_PENALTY
+                // }
+
+                if (matrix[i-1][j] + GAP_PENALTY > cellMax) {
+                    cellMax = matrix[i-1][j] + GAP_PENALTY
+                }
+
+                if (matrix[i][j-1] + GAP_PENALTY > cellMax) {
+                    cellMax = matrix[i][j-1] + GAP_PENALTY
+                }
+
+                matrix[i][j] = cellMax
+            }
+        }
+        console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
+
+        return matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1
+    }
+
+    offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
+        if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
+
+        event1 = event1[' t']
+        event2 = event2[' t']
+
+        return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
+    }
+    
+
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;
         arr.forEach(num => {
