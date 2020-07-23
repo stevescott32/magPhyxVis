@@ -778,6 +778,7 @@ class SimulationDistance {
         const MISMATCH_PENALTY = -1
         const MATCH_REWARD = 1
         const MAX_OFFSET_PENALTY = -3
+        let deathCount = 0
 
         // initialize first row
         let firstRow = []
@@ -806,18 +807,18 @@ class SimulationDistance {
 
                 if (matrix[i-1][j] + GAP_PENALTY > cellMax) {
                     cellMax = matrix[i-1][j] + GAP_PENALTY
+                    deathCount++
                 }
 
                 if (matrix[i][j-1] + GAP_PENALTY > cellMax) {
                     cellMax = matrix[i][j-1] + GAP_PENALTY
+                    deathCount++
                 }
 
                 matrix[i][j] = cellMax
             }
         }
-        console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
-
-        return matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1
+        return deathCount * -1
     }
 
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
