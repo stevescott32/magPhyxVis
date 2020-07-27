@@ -798,15 +798,16 @@ class SimulationDistance {
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
                 let arrowImage = 'd.png'
-                let cellMax = matrix[i-1][j-1] + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+                let cellMax = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
 
-                if (matrix[i-1][j] + GAP_SCORE > cellMax) {
-                    cellMax = matrix[i-1][j] + GAP_SCORE
+                if (matrix[i-1][j].cellMax + GAP_SCORE > cellMax) {
+                    cellMax = matrix[i-1][j].cellMax + GAP_SCORE
                     arrowImage = 'u.png'
+                    console.log(cellMax)
                 }
 
-                if (matrix[i][j-1] + GAP_SCORE > cellMax) {
-                    cellMax = matrix[i][j-1] + GAP_SCORE
+                if (matrix[i][j-1].cellMax + GAP_SCORE > cellMax) {
+                    cellMax = matrix[i][j-1].cellMax + GAP_SCORE
                     arrowImage = 's.png'
                 }
 
@@ -821,13 +822,11 @@ class SimulationDistance {
 
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
         if (event1 === undefined || event2 === undefined) {
-            console.log(event1 + ' : ' + event2)
             return MAX_OFFSET_PENALTY
         }
 
         event1 = event1[' t']
         event2 = event2[' t']
-        console.log(MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2)))
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
 
@@ -839,7 +838,7 @@ class SimulationDistance {
             for (let key in element) {
                 let cell = row.insertCell();
                 let roundedNum = element[key]   
-                let text = document.createTextNode(roundedNum);
+                let text = document.createTextNode(roundedNum.cellMax);
                 cell.appendChild(text);
                 cell.setAttribute("style", "background-image: url(../assets/images/d.png); background-repeat: no-repeat; background-size: 20px 20px")
             }
