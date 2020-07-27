@@ -798,18 +798,42 @@ class SimulationDistance {
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
                 let arrowImage = 'd.png'
-                let cellMax = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
-
-                if (matrix[i-1][j].cellMax + GAP_SCORE > cellMax) {
-                    cellMax = matrix[i-1][j].cellMax + GAP_SCORE
+                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+                let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
+                let hGap = matrix[i][j-1].cellMax + GAP_SCORE
+                let cellMax
+                if (match >= vGap && match >= hGap) {
+                    cellMax = match
+                    arrowImage = 'd.png'
+                    if (match === vGap && match === hGap) arrowImage = 'dsu.png'
+                    if (match === vGap) arrowImage = 'du.png'
+                    if (match === hGap) arrowImage = 'ds.png'
+                }
+                else if (vGap >= match && vGap >= hGap) {
+                    cellMax = vGap
                     arrowImage = 'u.png'
-                    console.log(cellMax)
+                    if (vGap === match && vGap === hGap) arrowImage = 'dsu.png'
+                    if (vGap === match) arrowImage = 'du.png'
+                    if (vGap === hGap) arrowImage = 'su.png'
+                }
+                else if (hGap >= match && hGap >= vGap) {
+                    cellMax = hGap
+                    arrowImage = 's.png'
+                    if (hGap === match && hGap === vGap) arrowImage = 'dsu.png'
+                    if (hGap === match) arrowImage = 'ds.png'
+                    if (hGap === vGap) arrowImage = 'su.png'
                 }
 
-                if (matrix[i][j-1].cellMax + GAP_SCORE > cellMax) {
-                    cellMax = matrix[i][j-1].cellMax + GAP_SCORE
-                    arrowImage = 's.png'
-                }
+                // if (matrix[i-1][j].cellMax + GAP_SCORE > cellMax) {
+                //     cellMax = matrix[i-1][j].cellMax + GAP_SCORE
+                //     arrowImage = 'u.png'
+                //     console.log(cellMax)
+                // }
+
+                // if (matrix[i][j-1].cellMax + GAP_SCORE > cellMax) {
+                //     cellMax = matrix[i][j-1].cellMax + GAP_SCORE
+                //     arrowImage = 's.png'
+                // }
 
                 matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
             }
@@ -837,10 +861,10 @@ class SimulationDistance {
             let row = table.insertRow();
             for (let key in element) {
                 let cell = row.insertCell();
-                let roundedNum = element[key]   
-                let text = document.createTextNode(roundedNum.cellMax);
+                let roundedNum = element[key].cellMax.toFixed(2)  
+                let text = document.createTextNode(roundedNum);
                 cell.appendChild(text);
-                cell.setAttribute("style", "background-image: url(../assets/images/d.png); background-repeat: no-repeat; background-size: 20px 20px")
+                cell.setAttribute("style", `background-image: url(../assets/images/${element[key].arrowImage}); background-repeat: no-repeat; background-size: 100% 20px`)
             }
         }
         
