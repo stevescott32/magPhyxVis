@@ -777,47 +777,43 @@ class SimulationDistance {
         const GAP_SCORE = -1
         const MATCH_SCORE = 1
         const MAX_OFFSET_PENALTY = -1
-        let deathCount = 0
 
         // initialize first row
         let firstRow = []
         for (let i=0; i<simulation2.length+1; i++) {
-            firstRow[i] = i * GAP_SCORE
+            // firstRow[i] = i * GAP_SCORE
+            firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: null}
         }
         matrix.push(firstRow)
 
         // initialize first column
         for (let i=1; i<simulation1.length+1; i++){
             let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
-            row[0] = i * GAP_SCORE
+            // row[0] = i * GAP_SCORE
+            row[0] = { cellMax: i*GAP_SCORE, arrowImage: null }
             matrix.push(row)
         }
 
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
-                let cellMax = matrix[i-1][j-1] + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)                
-                // if (simulation1[i-1] === simulation2[j-1]) {
-                //     cellMax = matrix[i-1][j-1] + MATCH_SCORE
-                // } else {
-                //     cellMax = matrix[i-1][j-1] + MISMATCH_SCORE
-                // }
+                let arrowImage = 'd.png'
+                let cellMax = matrix[i-1][j-1] + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
 
                 if (matrix[i-1][j] + GAP_SCORE > cellMax) {
                     cellMax = matrix[i-1][j] + GAP_SCORE
-                    deathCount++
+                    arrowImage = 'u.png'
                 }
 
                 if (matrix[i][j-1] + GAP_SCORE > cellMax) {
                     cellMax = matrix[i][j-1] + GAP_SCORE
-                    deathCount++
+                    arrowImage = 's.png'
                 }
 
-                matrix[i][j] = cellMax
+                matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
             }
         }
 
-        // return deathCount * -1
         console.log(matrix)
         if (simulation1.length != simulation2.length) this.makeTable(matrix)
         return matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)]
@@ -842,9 +838,10 @@ class SimulationDistance {
             let row = table.insertRow();
             for (let key in element) {
                 let cell = row.insertCell();
-                let roundedNum = element[key].toFixed(2)
+                let roundedNum = element[key]   
                 let text = document.createTextNode(roundedNum);
                 cell.appendChild(text);
+                cell.setAttribute("style", "background-image: url(../assets/images/d.png); background-repeat: no-repeat; background-size: 20px 20px")
             }
         }
         
