@@ -20,6 +20,21 @@ function reorder_hausdorff(data) {
     return data;
 }
 
+function reorder_dist_from_first(data, distFunction) {
+    console.log('Reordering by distance from first', data, distFunction);
+    let firstSim = data.simulations[0];
+
+    data.simulations.sort(function(a, b) {
+        let distA = distFunction.calculate(firstSim, a)
+        let distB = distFunction.calculate(firstSim, b)
+        // a.meta.distance = distA;
+        // b.meta.distance = distB;
+        return distA - distB;
+    });
+    console.log('Reordered data: ', data);
+    return data;
+}
+
 let ways_to_reorder = [
     {
         name: 'Hilbert (parameter space)',
@@ -30,11 +45,7 @@ let ways_to_reorder = [
         reorder: reorder_z_order,
     },
     {
-        name: 'Dynamic Time Warp',
-        reorder: reorder_dtw
-    },
-    {
-        name: 'Hausdorff',
-        reorder: reorder_hausdorff
+        name: 'Distance From First Sim',
+        reorder: reorder_dist_from_first
     }
 ]

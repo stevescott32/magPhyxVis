@@ -7,6 +7,7 @@ console.log('Starting script');
 
 let dataSet = data_sets[0];
 let reorderer = ways_to_reorder[0];
+let distance_func = distance_functions[0];
 
 let eventTypeVis = new EventTypeVis();
 let paramVis = new ParamsVis();
@@ -25,6 +26,7 @@ eventTypeVis.setScatterVis(scatter);
 // setup the radio buttons for the settings
 addDataInput();
 addReorderSelector();
+// addDistanceSelector();
 
 // kick off the vis by loading the data
 loadDataAndVis(dataSet);
@@ -64,7 +66,8 @@ function loadDataAndVis(selectedDataSet) {
 
       let data = selectedDataSet.parse(eventData, paramData);
       console.log('Parsed data: ', data);
-      allData = JSON.parse(JSON.stringify(data));
+      // allData = JSON.parse(JSON.stringify(data));
+      allData = data;
 
       loadVis(data, reorderer);
 
@@ -76,7 +79,7 @@ function loadDataAndVis(selectedDataSet) {
 }
 
 function loadVis(data, reorderer) {
-  let orderedData = reorderer.reorder(data);
+  let orderedData = reorderer.reorder(data, distance_func);
 
   // initialize the param and the scatter vis
   paramVis.init(orderedData);
@@ -158,8 +161,13 @@ function addReorderSelector() {
       console.log('order', selectedOrder);
       for (let i = 0; i < ways_to_reorder.length; i++) {
         let oneWayToReorder = ways_to_reorder[i];
-        if (oneWayToReorder.name == selectedOrder) {
-          loadVis(dataSet, oneWayToReorder);
+        if (oneWayToReorder.name == selectedOrder.name) {
+          if(selectedOrder.name.toLowerCase().includes('distance')) {
+            addDistanceSelector();
+          } else {
+            removeDistanceSelector();
+          }
+          loadVis(allData, oneWayToReorder);
         }
       }
     })
@@ -178,6 +186,61 @@ function addReorderSelector() {
     .append('br')
     ;
 }
+
+const distClassTag = 'distance-function';
+const distHeadingTag = 'distance-select-heading';
+function removeDistanceSelector() {
+  d3.selectAll(distClassTag)
+    .remove();
+
+  d3.selectAll(`.${distHeadingTag}`)
+    .remove();
+}
+
+function addDistanceSelector() {
+  // add the event type selection boxes
+  d3.select('#settings')
+    .append('h4')
+    .text('Distance Function:')
+    ;
+
+  d3.select('#settings')
+    .append('form')
+    .selectAll('input')
+    .data(distance_functions)
+    .enter()
+    .append('g')
+    .attr('class', distClassTag)
+    ;
+
+  // create buttons so the user can select which event type to display
+  d3.selectAll(`.${distClassTag}`)
+    .append('input')
+    .attr('type', 'radio')
+    .attr('name', 'event')
+    .attr('value', (d) => { return d; })
+    .text(d => { return `${d.name}`; })
+    .on('click', (selectedDistance) => {
+      console.log('Selected Distance', selectedDistance);
+      distance_func = selectedDistance;
+      loadVis(allData, reorderer);
+    })
+    ;
+
+  d3.selectAll(`.${distClassTag}`)
+    .append('label')
+    .text(d => { return `${d.name}`; })
+    ;
+
+  d3.selectAll(`.${distClassTag}`)
+    .append('br')
+    ;
+
+  d3.select('#settings')
+    .append('br')
+    ;
+}
+
 
 function addEventTypeSelector(data) {
   console.log('Adding event type selector', data);
@@ -211,7 +274,6 @@ function addEventTypeSelector(data) {
         return simulation;
       })
       console.log("filtered data: ", data);
-      console.log("filtered data simulations: ", data.simulations);
       eventTypeVis.removeEventsMatch()
       eventTypeVis.update(data);
     })
@@ -226,3 +288,4 @@ function addEventTypeSelector(data) {
     .append('br')
     ;
 }
+
