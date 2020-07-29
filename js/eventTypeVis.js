@@ -463,7 +463,8 @@ class EventTypeVis {
           return getDTWDistance(a.event, b.event, d => d[' t']).distance;
         };
 
-        let kMeansClusters = kMeansClustering(data, 5, 50, distFunc);
+        // let mstClusters = spectralClustering(data, 5, distFunc);
+        let kMeansClusters = kMeansClustering(data, 5, 5, distFunc);
 
         data = []
         for (var i = 0; i < kMeansClusters.clusters.length; ++i)
@@ -471,9 +472,20 @@ class EventTypeVis {
           // intra cluster ordering
           var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
 
-          kMeansClusters.clusters[i] = simulationDistances.reorder(
-              kMeansClusters.clusters[i], clusterOriginIdx,
-              self.state.ordering, self.state.maxDeaths);
+          let indicies = simulationDistances.minimizeTravel(kMeansClusters.clusters[i], null,10);
+
+          let reorderedArray = Array(indicies.length);
+          let counter = 0;
+          for (var index of indicies[0])
+          {
+            reorderedArray[counter] = kMeansClusters.clusters[i][index];
+            ++counter;
+          }
+
+          kMeansClusters.clusters[i] = reorderedArray;
+          // kMeansClusters.clusters[i] = simulationDistances.reorder(
+          //     kMeansClusters.clusters[i], clusterOriginIdx,
+          //     self.state.ordering, self.state.maxDeaths);
 
           kMeansClusters.clusters[i].forEach(function(d) {
             d.event.color = i;
@@ -750,6 +762,117 @@ class SimulationDistance {
             dist = Math.min(dist, match.distance);
         }
         return dist;
+    }
+
+    crossOver(orderings, numOfNewOffspring)
+    {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find Parents(random)
+        var parentA = Math.floor(Math.random() * orderings.length);
+        var parentB = Math.floor(Math.random() * orderings.length);
+        parentB = parentB == parentA ? (parentB + 1) % orderings.length : parentB;
+
+        // Find places to cut(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut = Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+        secondCut += firstCut;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentB];
+        for (var cutIndex = firstCut; cutIndex <= secondCut; ++cutIndex) {
+          // Swap elements in the 'cut zone'
+          let aElement = orderings[parentA][cutIndex];
+          let bElement = offspring[cutIndex];
+          let indexA = offspring.findIndex(e => e == aElement);
+          let indexB = offspring.findIndex(e => e == bElement);
+          [offspring[indexA],offspring[indexB]] = [offspring[indexB],offspring[indexA]];
+        }
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    mutation(orderings, numOfNewOffspring) {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find parent to mutate from(random)
+        let parentA = Math.floor(Math.random() * orderings.length);
+
+        // Find section to mutate(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut =
+            Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+
+        secondCut += firstCut + 1;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentA];
+
+        // Mutate 'mutation zone'
+        let subarray = offspring.slice(firstCut, secondCut);
+        subarray.reverse()
+        offspring.splice(firstCut, (secondCut - firstCut), ...subarray);
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    fitness(data, order) {
+      let totalDist = 0.0;
+      for (var i = 1; i < order.length; ++i) {
+        totalDist += this.getDTWWithDeaths(
+            data[order[i - 1]].event, data[order[i]].event, d => d[' t'], 0);
+      }
+
+      return totalDist;
+    }
+
+    selection(data, orderings, baseNumberOfOffspring) {
+      // Sort offspring based off fitness
+      orderings.sort((a,b) => this.fitness(data, a) < this.fitness(data, b));
+
+      // Only take the top offspring
+      orderings.splice(baseNumberOfOffspring,
+                       orderings.length - baseNumberOfOffspring);
+
+      return orderings;
+    }
+
+    minimizeTravel(data, startPoint, numIters)
+    {
+      var numStrains = 5;
+      var baseNumberOfOffspring = 5
+      let indicies = Array(numStrains);
+
+      for (var i = 0; i < numStrains; ++i)
+      {
+        indicies[i] = [...Array(data.length).keys() ];
+
+        for (let j = indicies[i].length - 1; j > 0; --j) {
+          var r = Math.floor(Math.random() * j); 
+          var temp = indicies[i][i];
+          indicies[i][i] = indicies[i][r];
+          indicies[i][r] = temp;
+        }
+      }
+
+      for (var i = 0; i < numIters; ++i)
+      {
+        indicies = this.crossOver(indicies, 3);
+        indicies = this.mutation(indicies, 3);
+        indicies = this.selection(data, indicies, baseNumberOfOffspring)
+      }
+
+      return indicies;
     }
 
     // data is an array of { data: [event time series data], simulationIndex }

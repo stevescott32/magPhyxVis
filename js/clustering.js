@@ -229,6 +229,29 @@ class Graph {
     return MST;
   }
 
+  kNeighbors(k)
+  {
+    const MST = new Graph();
+
+    this.nodes.forEach(node => MST.addNode(node));
+    if (this.nodes.length === 0) {
+      return MST;
+    }
+
+    for (var key in this.edges)
+    {
+      let sorted =
+          this.edges[key].sort((a, b) => a.weight > b.weight).slice(0, k);
+
+      for (var edge of sorted)
+      {
+        MST.addEdge(Number(key), edge.node, edge.weight);
+      }
+    }
+
+    return MST;
+  }
+
   findClusterOrigins(clusters, distFunc)
   {
     let clusterOrigins = [];
@@ -295,6 +318,47 @@ class Graph {
 
     return {"clusters" : clusters, "clusterOrigins" : clusterOrigins};
   }
+
+  genAdjacencyMatrix()
+  {
+    let N = this.nodes.length;
+    let adjMat = new Array(N);
+    for (let i = 0; i < N; ++i)
+    {
+      adjMat[i] = new Array(N).fill(0);
+    }
+
+    for (var key in this.edges) {
+      for (var edge of this.edges[key]) {
+        adjMat[key][edge.node] = 1;
+        adjMat[edge.node][key] = 1;
+      }
+    }
+
+    return adjMat;
+  }
+
+  genDegreeMatrix()
+  {
+    let N = this.nodes.length;
+    let degMat = new Array(N);
+    for (let i = 0; i < N; ++i)
+    {
+      degMat[i] = new Array(N).fill(0);
+    }
+
+    for (var key in this.edges) {
+      for (var edge of this.edges[key]) {
+        if (edge.weight != 0)
+        {
+          degMat[key][key] += 1;
+          degMat[edge.node][edge.node] += 1;
+        }
+      }
+    }
+
+    return degMat;
+  }
 }
 
 class UnionFind {
@@ -346,9 +410,28 @@ class Cluster {
   points = [];
 }
 
+function minMats(aMat, bMat)
+{
+  let N = aMat[0].length;
+  let lapMat = new Array(N);
+  for (let i = 0; i < N; ++i) {
+    lapMat[i] = new Array(N);
+  }
+
+  for (let i = 0; i < N; ++i)
+  {
+    for (let j = 0; j < N; ++j)
+    {
+      lapMat[i][j] = aMat[i][j] - bMat[i][j]
+    }
+  }
+
+  return lapMat;
+}
+
 /* Function utilizes minimum spanning tree algorithm to find clusters
  *
- * @param[in] point -- array of points to form clusters from
+ * @param[in] points -- array of points to form clusters from
  * @param[in] k -- number of clusters to form
  * @param[in] distFunc -- function to compare two given points, function
  * parameter list must follow: (pointA, pointB) and must return a single
@@ -382,9 +465,74 @@ function mstClustering(points, k, distFunc) {
   return clusters;
 }
 
+/* Function utilizes minimum spanning tree algorithm and spectral clustering to
+ * generate clusters
+ *
+ * @param[in] points -- array of points to form clusters from
+ * @param[in] k -- number of clusters to form
+ * @param[in] distFunc -- function to compare two given points, function
+ * parameter list must follow: (pointA, pointB) and must return a single
+ * comparable value. Closer values with be clustered
+ * */
+function spectralClustering(points, k, distFunc) {
+  let indicies = [...Array(points.length).keys() ];
+
+  // init graph
+  MST = new Graph();
+  for (p1 of indicies) {
+    MST.addNode(p1);
+    for (let p2 of indicies) {
+      if (p1 == (p2)) {
+        continue;
+      }
+      MST.addNode(p2);
+      MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
+    }
+  }
+
+  // MST = MST.kruskalsMST();
+
+  MST = MST.kNeighbors(3);
+
+  let adjMat = MST.genAdjacencyMatrix();
+
+  let degMat = MST.genDegreeMatrix();
+
+  let lapMat = minMats(degMat, adjMat);
+
+  let ans = math.eigs(lapMat);
+
+  let testMat = [
+    [ 4, -1, -1, 0, 0,-1, 0, 0, -1, -1 ],
+    [ -1, 2, -1, 0, 0, 0, 0, 0, 0, 0 ],
+    [ -1, -1, 2, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 0, 0, 0, 2, -1, -1, 0, 0, 0, 0 ],
+    [ 0, 0, 0, -1, 2, -1, 0, 0, 0, 0 ],
+    [-1, 0, 0, -1, -1, 4, -1, -1, 0, 0 ],
+    [ 0, 0, 0, 0, 0, -1, 2, -1, 0, 0 ],
+    [ 0, 0, 0, 0, 0, -1, -1, 2, 0, 0 ],
+    [ -1, 0, 0, 0, 0, 0, 0, 0, 2, -1 ],
+    [ -1, 0, 0, 0, 0, 0, 0, 0, -1, 2 ],
+  ];
+  let testAns = math.eigs(testMat);
+  // const H = [[5, 2.3], [2.3, 1]];
+  // const ans = math.eigs(H);
+
+  console.log(math.sqrt(-4).toString());
+
+  for (let i = 0; i < k-1; ++i) {
+    let maxEdge = MST.findLargestEdge();
+    MST.deleteEdge(maxEdge);
+  }
+
+  let clusters = MST.cluster(k);
+
+  return clusters;
+}
+
 /* Function utilizes kMeans algorithm to find clusters
  *
- * @param[in] point -- array of points to form clusters from
+ * @param[in] points -- array of points to form clusters from
  * @param[in] k -- number of clusters to form
  * @param[in] numIters -- number of iterations to perform
  * @param[in] distFunc -- function to compare two given points, function
