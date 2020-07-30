@@ -66,7 +66,6 @@ function loadDataAndVis(selectedDataSet) {
 
       let data = selectedDataSet.parse(eventData, paramData);
       console.log('Parsed data: ', data);
-      // allData = JSON.parse(JSON.stringify(data));
       allData = data;
 
       loadVis(data, reorderer);
@@ -84,10 +83,6 @@ function loadVis(data, reorderer) {
   // initialize the param and the scatter vis
   paramVis.init(orderedData);
   scatter.init(orderedData);
-
-  // TODO this should be more dynamic - switched to an array of 
-  // distance calculation functions
-  // let distances = calcDistances(orderedParamData);
 
   eventTypeVis.setNumSimulations(orderedData.simulations.length);
   eventTypeVis.setEventCols(orderedData.eventTypes);
@@ -162,12 +157,13 @@ function addReorderSelector() {
       for (let i = 0; i < ways_to_reorder.length; i++) {
         let oneWayToReorder = ways_to_reorder[i];
         if (oneWayToReorder.name == selectedOrder.name) {
+          reorderer = oneWayToReorder;
           if(selectedOrder.name.toLowerCase().includes('distance')) {
             addDistanceSelector();
           } else {
             removeDistanceSelector();
           }
-          loadVis(allData, oneWayToReorder);
+          loadVis(allData, reorderer);
         }
       }
     })
@@ -278,16 +274,8 @@ function addEventTypeSelector(data) {
           }
         }
       }
-      /*
-      data.simulations = allData.simulations.map(simulation => {
-        simulation.events = simulation.events.filter(event => {
-          return event['event_type'] == type;
-        })
-        return simulation;
-      })
-      console.log("filtered data: ", data);
-      */
       eventTypeVis.removeEventsMatch()
+      data = reorderer.reorder(data, distance_func);
       eventTypeVis.update(data);
     })
     ;

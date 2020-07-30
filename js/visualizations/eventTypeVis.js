@@ -243,15 +243,15 @@ class EventTypeVis {
         const eventB = eventBIdx !== -1 ? data[eventBIdx].event : []
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
-            const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d[' t'], this.state.maxDeaths)
-            arrowInfo = buildMatchingEvents(dtw, eventA, eventB, this.state.maxDeaths, d => d[' t'])
+            const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d.t, this.state.maxDeaths)
+            arrowInfo = buildMatchingEvents(dtw, eventA, eventB, this.state.maxDeaths, d => d.t)
                 .pairs
                 .map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
                 arrowInfo = simulationDistance.getHausdorffDistances(eventA, eventB)[1]
             } else {
-                arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d[' t']).map((d, i) => [i, d])
+                arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d.t).map((d, i) => [i, d])
             }
         }
 
@@ -271,9 +271,9 @@ class EventTypeVis {
             .attr('marker-mid', this.state.ordering === 'dtw' || this.state.matchExact ? 'none' : 'url(#arrow)')
             .attr('d', d => {
                 // Coordinates of mid point on line to add new vertex.
-                const sourceX = timeScale(eventA[d[0]][' t']);
+                const sourceX = timeScale(eventA[d[0]].t);
                 const sourceY = eventCountScale(eventAIdx)
-                const targetX = timeScale(eventB[d[1]][' t'])
+                const targetX = timeScale(eventB[d[1]].t)
                 const targetY = eventCountScale(eventBIdx)
                 const midX = (targetX - sourceX) / 2 + sourceX;
                 const midY = (targetY - sourceY) / 2 + sourceY;
@@ -305,12 +305,12 @@ class EventTypeVis {
             // TODO i think this should be min(sim.events)
             return d3.min(sim.events, (event) => {
                 // console.log('debug event', event);
-                return event[' t'];
+                return event.t;
             })
         })
         const max = d3.max(data.simulations, (sim) => {
             return d3.max(sim.events, (event) => {
-                return event[' t'];
+                return event.t;
             })
         })
         // console.log('Time range result', [parseFloat(min), parseFloat(max)]);
@@ -325,7 +325,7 @@ class EventTypeVis {
 
     filterEventByTimeThreshold(event) {
         return event.filter(d => {
-            return d[' t'] > this.config.timeRange[0] && d[' t'] < this.config.timeRange[1];
+            return d.t > this.config.timeRange[0] && d.t < this.config.timeRange[1];
         })
     }
 
@@ -522,10 +522,10 @@ class EventTypeVis {
             .enter()
             .append('circle')
             .merge(circleSel)
-            .attr('time', d => { return d[' t']; })
+            .attr('time', d => { return d.t; })
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
-            .attr('cx', d => { return timeScale(+d[' t']); })
+            .attr('cx', d => { return timeScale(+d.t); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { 
                 if(d.on) {
@@ -774,7 +774,7 @@ class SimulationDistance {
         for (let i = 0; i < data.length; i++) {
             let metric;
             if (ordering === 'dtw') {
-                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
+                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d.t, maxDeaths)
             } else if (ordering === 'hausdorff') {
                 metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
@@ -858,8 +858,8 @@ class SimulationDistance {
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
         if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
 
-        event1 = event1[' t']
-        event2 = event2[' t']
+        event1 = event1.t
+        event2 = event2.t
 
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
@@ -887,7 +887,7 @@ class SimulationDistance {
     getHausdorffDistances(events1, events2) {
         let smallEvents = events1
         let largeEvents = events2
-        const valueSelector = d => d[' t']
+        const valueSelector = d => d.t
         let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents, valueSelector);
         let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents, valueSelector);
 
@@ -896,7 +896,7 @@ class SimulationDistance {
         for (let i = 0; i < largeEventsDistances.length; i++) {
             let possibleCorrelatingPoint = largeEventsDistances[i];
             if (smallEventsDistances[possibleCorrelatingPoint] == i) {
-                let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t'] - largeEvents[i][' t']);
+                let distance = Math.abs(smallEvents[possibleCorrelatingPoint].t - largeEvents[i].t);
                 correlatingPointsDistances.push(distance);
                 pairs.push([possibleCorrelatingPoint, i])
             }
