@@ -267,6 +267,18 @@ function addEventTypeSelector(data) {
     .attr('value', (d) => { return d; })
     .text(d => { return `${d}`; })
     .on('click', (type) => {
+      console.log(`Select all events of type ${type}`);
+      for(let sim = 0; sim < data.simulations.length; sim++) {
+        for(let e = 0; e < data.simulations[sim].events.length; e++) {
+          let event = data.simulations[sim].events[e];
+          if(event['event_type'] == type) {
+            event.on = true;
+          } else {
+            event.on = false;
+          }
+        }
+      }
+      /*
       data.simulations = allData.simulations.map(simulation => {
         simulation.events = simulation.events.filter(event => {
           return event['event_type'] == type;
@@ -274,6 +286,7 @@ function addEventTypeSelector(data) {
         return simulation;
       })
       console.log("filtered data: ", data);
+      */
       eventTypeVis.removeEventsMatch()
       eventTypeVis.update(data);
     })

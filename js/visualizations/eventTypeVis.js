@@ -527,18 +527,25 @@ class EventTypeVis {
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
-            .attr('r', d => { return this.circleSize; })
+            .attr('r', d => { 
+                if(d.on) {
+                    return this.circleSize; 
+                }
+                return 0; // events that are turned off should not display
+            })
             .style('fill', d => { return data.getColor(d); })
             .on('mouseover', function (d) {
-                console.log('Mouseovered the event', d);
-                if (self.state.match) {
-                    self.state.match.hover = d.simulationIndex
-                    self.highlightSimulation(d.simulationIndex)
+                if (d.on) {
+                    console.log('Mouseovered the event', d);
+                    if (self.state.match) {
+                        self.state.match.hover = d.simulationIndex
+                        self.highlightSimulation(d.simulationIndex)
+                    }
+                    scatter.highlightSimulation(d.index);
+                    paramVis.highlightSimulation(d.index);
+                    d3.select(this)
+                        .attr('r', () => { return self.circleSize * self.highlightScale; });
                 }
-                scatter.highlightSimulation(d.index);
-                paramVis.highlightSimulation(d.index);
-                d3.select(this)
-                    .attr('r', () => { return self.circleSize * self.highlightScale; });
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {
