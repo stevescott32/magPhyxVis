@@ -824,17 +824,6 @@ class SimulationDistance {
                     if (hGap === vGap) arrowImage = 'su.png'
                 }
 
-                // if (matrix[i-1][j].cellMax + GAP_SCORE > cellMax) {
-                //     cellMax = matrix[i-1][j].cellMax + GAP_SCORE
-                //     arrowImage = 'u.png'
-                //     console.log(cellMax)
-                // }
-
-                // if (matrix[i][j-1].cellMax + GAP_SCORE > cellMax) {
-                //     cellMax = matrix[i][j-1].cellMax + GAP_SCORE
-                //     arrowImage = 's.png'
-                // }
-
                 matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
             }
         }
