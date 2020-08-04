@@ -193,7 +193,8 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
         const deaths = +range.node().value;
         const result = buildMatchingEvents(dtw, dataA, dataB, deaths)
         indices = result.pairs
-        console.log(result);
+        console.log(sd.getEventsDistance(data2, data1, d => d).map((d, i) => ({ a: i, b: d})))
+        console.log(sd.getEventsDistance(data2, data1, d => d))
     } else if (method === 'dist_basic') {
         const matchBtoA = sd
             .getEventsDistance(data2, data1, d => d)
@@ -244,6 +245,10 @@ const register_button_handlers = () => {
         dtw = getDTWDistanceWithDeaths(dataA, dataB)
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
         range.attr('max', dataA.length + dataB.length)
+    })
+
+    root.select('.match-tnw').on('click', function() {
+        console.log('clicked')
     })
 
     range.on('click', function() {
