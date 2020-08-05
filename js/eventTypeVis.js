@@ -769,7 +769,7 @@ class SimulationDistance {
     }
 
     getTNWScore(simulation1, simulation2, datumSelector = d => d) {
-        console.log(simulation1, simulation2);
+        console.log('original data', simulation1, simulation2);
 
         // first sequence is vertical
         // second sequence is horizontal
@@ -830,8 +830,10 @@ class SimulationDistance {
             }
         }
 
-        if (simulation1.length != simulation2.length) this.makeTable(matrix)
-        return matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)]
+        return {
+            score: matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)],
+            trace: this.makeTable(matrix) 
+        }
     }
 
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY, datumSelector) {
@@ -847,22 +849,27 @@ class SimulationDistance {
     makeTable (data) {
         console.log('making table')
         let table = document.querySelector("table")
-        for (let element of data) {
+        for (let element in data) {
             let row = table.insertRow();
-            for (let key in element) {
+            for (let key in data[element]) {
                 let cell = row.insertCell();
-                let roundedNum = element[key].cellMax.toFixed(2)  
+                let roundedNum = data[element][key].cellMax.toFixed(2)  
                 let text = document.createTextNode(roundedNum);
                 cell.appendChild(text);
-                cell.setAttribute("style", `background-image: url(../assets/images/${element[key].arrowImage}); background-repeat: no-repeat; background-size: 100% 20px`)
+                cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].arrowImage}); 
+                                            background-repeat: no-repeat; 
+                                            background-size: 100% 20px;
+                                            background-color: aqua;`)
+                cell.setAttribute("id", `${element},${key}`)
+
             }
         }
-        
-       this.backtrace(data) 
+        return this.backtrace(data)
     }
     
-   backtrace(data, table) {
-       console.log(data)
+   backtrace(data) {
+        let trace = []
+
         let j = data[data.length -1].length - 1
         let i = data.length - 1
 
@@ -877,10 +884,12 @@ class SimulationDistance {
                     j--
                 } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
                 else i--
+            trace.push({ a: i, b: j })
         }
-
+        console.log(trace)
         let cell = document.getElementById('0,0')
         cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+        return trace
     } 
 
     getMaxInArray(arr) {
