@@ -778,11 +778,13 @@ class SimulationDistance {
         const MATCH_SCORE = 1
         const MAX_OFFSET_PENALTY = -1
 
+
         // initialize first row
         let firstRow = []
         for (let i=0; i<simulation2.length+1; i++) {
             // firstRow[i] = i * GAP_SCORE
-            firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: null}
+            if (i === 0) firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: null}
+            else firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: 's.png'}
         }
         matrix.push(firstRow)
 
@@ -790,7 +792,7 @@ class SimulationDistance {
         for (let i=1; i<simulation1.length+1; i++){
             let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
             // row[0] = i * GAP_SCORE
-            row[0] = { cellMax: i*GAP_SCORE, arrowImage: null }
+            row[0] = { cellMax: i*GAP_SCORE, arrowImage: 'u.png' }
             matrix.push(row)
         }
 
@@ -860,9 +862,9 @@ class SimulationDistance {
     }
     
    backtrace(data, table) {
+       console.log(data)
         let j = data[data.length -1].length - 1
         let i = data.length - 1
-        console.log(data[i][j])
 
         while (data[i][j].arrowImage !== null) {
             let cell = document.getElementById(`${i},${j}`)
