@@ -184,6 +184,10 @@ const sd = new SimulationDistance();
 let dtw;
 
 const range = root.select('.dtw-deaths');
+const mismatch = root.select('.mismatch')
+const match = root.select('.match')
+const gap = root.select('.gap')
+
 const drawCorrelation = (data1, data2, index1, index2, color, method) => {
     let indices = sd
         .getEventsDistance(data1, data2, d => d)
@@ -193,8 +197,6 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
         const deaths = +range.node().value;
         const result = buildMatchingEvents(dtw, dataA, dataB, deaths)
         indices = result.pairs
-        console.log(sd.getEventsDistance(data2, data1, d => d).map((d, i) => ({ a: i, b: d})))
-        console.log(sd.getEventsDistance(data2, data1, d => d))
     } else if (method === 'dist_basic') {
         const matchBtoA = sd
             .getEventsDistance(data2, data1, d => d)
@@ -214,7 +216,6 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
     const arrowSel = arrows.selectAll('line')
         .data(indices);
-
     arrowSel.enter()
         .append('line')
         .merge(arrowSel)
@@ -223,11 +224,15 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
         .attr('x2', (d, i) => distanceScale(data2[d.b]))
         .attr('y2', getYMid(index2))
         .attr('stroke', color)
-        .attr('stroke-width', 2);
+        .attr('stroke-width', 5);
 
     arrowSel.exit()
         .remove();
 
+}
+
+const drawTNWCorrelation = (data1, data2, color) => {
+    console.log(sd.getTNWScore(data1, data2))
 }
 
 const register_button_handlers = () => {
@@ -248,7 +253,7 @@ const register_button_handlers = () => {
     })
 
     root.select('.match-tnw').on('click', function() {
-        console.log('clicked')
+        drawTNWCorrelation(dataA, dataB, 0, 1, 'red', 'tnw')
     })
 
     range.on('click', function() {

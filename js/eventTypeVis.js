@@ -743,7 +743,7 @@ class SimulationDistance {
             } else if (ordering === 'hausdorff') {
                 metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
-                metric = this.getTNWScore(orderingParent.event, data[i].event)
+                metric = this.getTNWScore(orderingParent.event, data[i].event, d => d[' t'])
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
@@ -768,7 +768,7 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    getTNWScore(simulation1, simulation2) {
+    getTNWScore(simulation1, simulation2, datumSelector = d => d) {
         console.log(simulation1, simulation2);
 
         // first sequence is vertical
@@ -798,7 +798,7 @@ class SimulationDistance {
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
                 let arrowImage = 'd.png'
-                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY, datumSelector)
                 let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
                 let hGap = matrix[i][j-1].cellMax + GAP_SCORE
                 let cellMax
@@ -828,18 +828,17 @@ class SimulationDistance {
             }
         }
 
-        console.log(matrix)
         if (simulation1.length != simulation2.length) this.makeTable(matrix)
         return matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)]
     }
 
-    offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
+    offsetPenalty(event1, event2, MAX_OFFSET_PENALTY, datumSelector) {
         if (event1 === undefined || event2 === undefined) {
             return MAX_OFFSET_PENALTY
         }
 
-        event1 = event1[' t']
-        event2 = event2[' t']
+        event1 = datumSelector(event1)
+        event2 = datumSelector(event2)
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
 

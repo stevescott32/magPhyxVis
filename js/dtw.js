@@ -174,7 +174,7 @@ const getDTWDistanceWithDeaths = (eventA, eventB, datumSelector = d => d, maxDea
             }
         }
     }
-
+    console.log(dtw)
     return dtw;
 }
 
