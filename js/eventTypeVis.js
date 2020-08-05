@@ -856,10 +856,30 @@ class SimulationDistance {
             }
         }
         
-        
+       this.backtrace(data) 
     }
     
-    
+   backtrace(data, table) {
+        let j = data[data.length -1].length - 1
+        let i = data.length - 1
+        console.log(data[i][j])
+
+        while (data[i][j].arrowImage !== null) {
+            let cell = document.getElementById(`${i},${j}`)
+            cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+            if (data[i][j].arrowImage === 'd.png' || 
+                data[i][j].arrowImage === 'du.png' || 
+                data[i][j].arrowImage === 'ds.png' || 
+                data[i][j].arrowImage === 'dsu.png') {
+                    i--
+                    j--
+                } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
+                else i--
+        }
+
+        let cell = document.getElementById('0,0')
+        cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+    } 
 
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;
