@@ -1,3 +1,20 @@
+
+let MAX_DEATHS = 1;
+function calculateDTW(sim1, sim2) {
+    let dist = getDTWWithDeaths(sim1.events, sim2.events, (d) => d.t, MAX_DEATHS);
+    return dist;
+}
+
+function getDTWWithDeaths(eventA, eventB, valueSelector, maxDeaths) {
+        const dtw = getDTWDistanceWithDeaths(eventA, eventB, valueSelector, maxDeaths)
+        let dist = Infinity
+        for (let i = 0; i <= maxDeaths; ++i) {
+            const match = buildMatchingEvents(dtw, eventA, eventB, i, valueSelector)
+            dist = Math.min(dist, match.distance);
+        }
+        return dist;
+    }
+
 const buildMatchingEvents = (dtw, dataA, dataB, deaths, datumSelector = d => d) => {
     const NA = dataA.length;
     const NB = dataB.length;

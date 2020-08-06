@@ -61,7 +61,7 @@ function parseStockMarketData(eventData) {
         for (let j = 0; j < oneSim.length; j++) {
             simulations[i].events.push(oneSim[j]);
             simulations[i].events[j].t = +oneSim[j][" t"];
-            simulations[i].events[j].on = true;
+            simulations[i].events[j].on = false;
         }
     }
 
@@ -144,7 +144,7 @@ function parseMagPhyxData(eventData, paramData) {
                 theta: +oneEvent[' theta'],
                 r: +oneEvent[' r'],
                 t: +oneEvent[' t'],
-                on: true
+                on: false
             });
             // simulations[i].events[j].t = +oneEvent[' t'];
         }
