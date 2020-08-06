@@ -231,7 +231,8 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
 }
 
-const drawTNWCorrelation = (indices, color) => {
+const drawTNWCorrelation = (dataA, dataB, color) => {
+    let indices = sd.getTNWScore(dataA, dataB).trace
     console.log(indices)
 }
 
@@ -254,7 +255,7 @@ const register_button_handlers = () => {
 
     root.select('.match-tnw').on('click', function() {
 
-        drawTNWCorrelation(sd.getTNWScore(dataA, dataB).trace, 'red')
+        drawTNWCorrelation(dataA, dataB, 'red')
     })
 
     range.on('click', function() {

@@ -769,7 +769,6 @@ class SimulationDistance {
     }
 
     getTNWScore(simulation1, simulation2, datumSelector = d => d) {
-        console.log('original data', simulation1, simulation2);
 
         // first sequence is vertical
         // second sequence is horizontal
@@ -882,11 +881,11 @@ class SimulationDistance {
                 data[i][j].arrowImage === 'dsu.png') {
                     i--
                     j--
+                    trace.push({ a: i, b: j })
+
                 } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
                 else i--
-            trace.push({ a: i, b: j })
         }
-        console.log(trace)
         let cell = document.getElementById('0,0')
         cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
         return trace
