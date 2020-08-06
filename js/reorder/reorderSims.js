@@ -31,8 +31,8 @@ function reorder_dist_from_first(data, distFunction) {
         if(reorderLogs-- > 0) {
             console.log(`Calculating another distance as ${distA - distB}`);
         }
-        // a.meta.distance = distA;
-        // b.meta.distance = distB;
+        a.meta.distance = distA;
+        b.meta.distance = distB;
         return distA - distB;
     });
     console.log('Reordered data: ', data);

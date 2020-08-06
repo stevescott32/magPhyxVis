@@ -14,7 +14,6 @@ let paramVis = new ParamsVis();
 let scatter = new Scatter();
 let allData = {};
 
-
 // let each vis know about the other event vis
 scatter.setParamVis(paramVis);
 scatter.setEventVis(eventTypeVis);
@@ -30,7 +29,6 @@ addReorderSelector();
 
 // kick off the vis by loading the data
 loadDataAndVis(dataSet);
-
 
 function loadDataAndVis(selectedDataSet) {
   // get how many digits are required to represent the number
@@ -126,7 +124,6 @@ function addDataInput() {
   d3.selectAll('.data-options')
     .append('br')
     ;
-
 }
 
 function addReorderSelector() {
@@ -159,11 +156,13 @@ function addReorderSelector() {
         if (oneWayToReorder.name == selectedOrder.name) {
           reorderer = oneWayToReorder;
           if(selectedOrder.name.toLowerCase().includes('distance')) {
+            // add the distance selector, but do not load the vis until the user
+            // has selected a distance method
             addDistanceSelector();
           } else {
             removeDistanceSelector();
+            loadVis(allData, reorderer);
           }
-          loadVis(allData, reorderer);
         }
       }
     })
@@ -219,7 +218,7 @@ function addDistanceSelector() {
     .on('click', (selectedDistance) => {
       console.log('Selected Distance', selectedDistance);
       distance_func = selectedDistance;
-      loadVis(allData, reorderer);
+      // loadVis(allData, reorderer);
     })
     ;
 
@@ -237,7 +236,7 @@ function addDistanceSelector() {
     ;
 }
 
-
+// create buttons so the user can select which event type to display
 function addEventTypeSelector(data) {
   console.log('Adding event type selector', data);
 
@@ -275,7 +274,8 @@ function addEventTypeSelector(data) {
         }
       }
       eventTypeVis.removeEventsMatch()
-      data = reorderer.reorder(data, distance_func);
+      // data = reorderer.reorder(data, distance_func);
+      loadVis(allData, reorderer);
       eventTypeVis.update(data);
     })
     ;
@@ -289,4 +289,3 @@ function addEventTypeSelector(data) {
     .append('br')
     ;
 }
-
