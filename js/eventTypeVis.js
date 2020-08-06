@@ -768,14 +768,15 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    getTNWScore(simulation1, simulation2, datumSelector = d => d) {
+    getTNWScore(simulation1, simulation2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY=-1, datumSelector = d => d) {
+        console.log(simulation1, simulation2)
 
         // first sequence is vertical
         // second sequence is horizontal
         var matrix = []
-        const GAP_SCORE = -1
-        const MATCH_SCORE = 1
-        const MAX_OFFSET_PENALTY = -1
+        // const GAP_SCORE = -1
+        // const MATCH_SCORE = 1
+        // const MAX_OFFSET_PENALTY = -1
 
 
         // initialize first row
@@ -798,8 +799,9 @@ class SimulationDistance {
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
+                if (simulation1[i] === undefined || simulation2[j] === undefined) console.log(simulation1[i], simulation2[j], i, j)
                 let arrowImage = 'd.png'
-                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY, datumSelector)
+                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, datumSelector)
                 let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
                 let hGap = matrix[i][j-1].cellMax + GAP_SCORE
                 let cellMax
@@ -828,7 +830,6 @@ class SimulationDistance {
                 matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
             }
         }
-
         return {
             score: matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)],
             trace: this.makeTable(matrix) 
@@ -846,7 +847,6 @@ class SimulationDistance {
     }
 
     makeTable (data) {
-        console.log('making table')
         let table = document.querySelector("table")
         for (let element in data) {
             let row = table.insertRow();
@@ -874,7 +874,7 @@ class SimulationDistance {
 
         while (data[i][j].arrowImage !== null) {
             let cell = document.getElementById(`${i},${j}`)
-            cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+            // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
             if (data[i][j].arrowImage === 'd.png' || 
                 data[i][j].arrowImage === 'du.png' || 
                 data[i][j].arrowImage === 'ds.png' || 
@@ -887,9 +887,16 @@ class SimulationDistance {
                 else i--
         }
         let cell = document.getElementById('0,0')
-        cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+        // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
         return trace
     } 
+
+    clearTable() {
+        let table = document.querySelector("table")
+        for (const child of table.children) {
+            table.removeChild(child)
+        }
+    }
 
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;

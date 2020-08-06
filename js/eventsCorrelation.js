@@ -184,7 +184,7 @@ const sd = new SimulationDistance();
 let dtw;
 
 const range = root.select('.dtw-deaths');
-const mismatch = root.select('.mismatch')
+const maxOffsetPenalty = root.select('.max-offset-penalty')
 const match = root.select('.match')
 const gap = root.select('.gap')
 
@@ -231,9 +231,42 @@ const drawCorrelation = (data1, data2, index1, index2, color, method) => {
 
 }
 
-const drawTNWCorrelation = (dataA, dataB, color) => {
-    let indices = sd.getTNWScore(dataA, dataB).trace
+const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
+    console.log(dataA, dataB)
+    let indices = sd.getTNWScore(dataA,
+        dataB,
+        parseInt(gap.node().value),
+        parseInt(match.node().value), 
+        parseInt(maxOffsetPenalty.node().value)).trace
+
     console.log(indices)
+
+    const distanceScale = d3.scaleLinear()
+        .domain([0, bounds.width])
+        .range([0, bounds.width])
+
+    let arrows = svg.select('g.arrows')
+    if (arrows.empty()) {
+        arrows = svg.append('g')
+            .attr('class', 'arrows')
+    }
+
+    const arrowSel = arrows.selectAll('line')
+        .data(indices);
+
+    for (const correlation of indices) {
+        arrowSel.enter()
+            .append('line')
+            .merge(arrowSel)
+            .attr('x1', distanceScale(dataA[correlation.a]))
+            .attr('y1', getYMid(index1))
+            .attr('x2', distanceScale(dataB[correlation.b]))
+            .attr('y2', getYMid(index2))
+            .attr('stroke', color)
+            .attr('stroke-width', 5)
+    }
+    arrowSel.exit()
+        .remove();
 }
 
 const register_button_handlers = () => {
@@ -248,14 +281,15 @@ const register_button_handlers = () => {
     })
     range.attr('value', 0)
     root.select('.match-dtw').on('click', function() {
+        console.log(dataA, dataB)
         dtw = getDTWDistanceWithDeaths(dataA, dataB)
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
         range.attr('max', dataA.length + dataB.length)
     })
 
     root.select('.match-tnw').on('click', function() {
-
-        drawTNWCorrelation(dataA, dataB, 'red')
+        sd.clearTable()
+        drawTNWCorrelation(dataA, dataB, 0, 1, 'red')
     })
 
     range.on('click', function() {
@@ -276,12 +310,14 @@ const register_button_handlers = () => {
         dataA = []
         generateChart('event1', dataA, { color: 'green' });
         drawCorrelation([], [], 0, 1, 'green', 'dist_basic')
+        sd.clearTable()
     })
 
     root.select('.clear-event-b').on('click', function() {
         dataB = []
         generateChart('event2', dataB, { color: 'red' });
         drawCorrelation([], [], 0, 1, 'green', 'dist_basic')
+        sd.clearTable()
     })
 }
 

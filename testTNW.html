@@ -8,15 +8,19 @@
             display: grid
         }
         .header {
-            gird-row: 1
+            grid-row: 1;
         }
 
         .table {
             margin: 20px;
-            grid-row: 3
+            grid-row: 3;
+            width: 300px;
+            height: 300px;
+            text-align: center;
+            justify-self: start;
         }
         .content {
-            grid-row: 2
+            grid-row: 2;
             left: 50%;
             top: 50%;
             width: 80vw;
@@ -24,7 +28,7 @@
         }
 
         svg {
-            width: 50%;
+            width: 75%;
             right: 0;
             align-self: right;
         }
@@ -46,14 +50,14 @@
         <button class="add-event-a">Add eventA to set</button>
         <button class="add-event-b">Add eventB to set</button>
         <br>
-        <label for="mismatch">Mismatch Score</label>
-        <input class="mismatch" name="mismatch"/>
+        <label for="max-offset-penalty">Max Offset Score</label>
+        <input class="max-offset-penalty" name="max-offset-penalty" value="-1"/>
         <br>
         <label for="match">Match Score</label>
-        <input class="match" name="match"/>
+        <input class="match" name="match" value="1"/>
         <br>
         <label for="gap">Gap Score</label>
-        <input class="gap" name="gap"/>
+        <input class="gap" name="gap" value="-1"/>
     </header>
     <div class="content">
         <svg width="100%" height="100%">
@@ -61,9 +65,7 @@
         </svg>
     </div>
 
-    <div class="table">
-    <table></table> 
-    </div>
+    <table class="table"></table>>
     
 </div>
 
