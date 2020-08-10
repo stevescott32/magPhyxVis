@@ -81,18 +81,52 @@ class EventTypeVis {
         this.eventCols = eventCols;
     }
 
-    highlightSimulation(simulation) {
+    selectedClass = 'selected';
+    /**
+     * This method should be called when the user clicks on a simulation
+     * @param {Number} simIndex the index of the simulation to select
+     */
+    selectSim(simIndex) {
         d3.select(`#${this.divId}`)
-            .selectAll(`.group${simulation}`)
+            .selectAll(`.group${simIndex}`)
+            .selectAll('circle')
+            .classed(this.selectedClass, true)
+            ;
+    }
+
+    /**
+     * Unselect a simulation 
+     * @param {Number} simIndex the index of the simulation to select
+     */
+    unselectSim(simIndex) {
+        d3.select(`#${this.divId}`)
+            .selectAll(`.group${simIndex}`)
+            .selectAll('circle')
+            .classed(this.selectedClass, false)
+            ;
+    }
+
+    /**
+     * Unselect all the selected simulations
+     */
+    unselectAllSims() {
+        d3.selectAll(`.${this.selectedClass}`)
+            .classed(this.selectedClass, false)
+            ;
+    }
+
+    highlightSimulation(simIndex) {
+        d3.select(`#${this.divId}`)
+            .selectAll(`.group${simIndex}`)
             .selectAll('circle')
             // .attr('r', () => { return this.circleSize * this.highlightScale; })
             .classed('event-highlighted', true)
             ;
     }
 
-    unhighlightSimulation(simulation) {
+    unhighlightSimulation(simIndex) {
         d3.select(`#${this.divId}`)
-            .selectAll(`.group${simulation}`)
+            .selectAll(`.group${simIndex}`)
             .selectAll('circle')
             .attr('r', () => { return this.circleSize; })
             .classed('event-highlighted', false)
@@ -565,6 +599,11 @@ class EventTypeVis {
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
+                // WIP
+                self.unselectAllSims();
+                self.selectSim(d.simulationIndex);
+
+                /*
                 if (self.state.match) {
                     if (self.state.match.eventA && self.state.match.eventB) {
                         // there was an old match
@@ -594,6 +633,7 @@ class EventTypeVis {
 
                     self.updateHelper(self.originalData, self.originalParamData, self.originalDistances);
                 }
+                */
             })
             ;
         console.log('Finished updating, reordering');
