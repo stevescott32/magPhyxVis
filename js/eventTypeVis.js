@@ -769,7 +769,6 @@ class SimulationDistance {
     }
 
     getTNWScore(simulation1, simulation2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY=-1, datumSelector = d => d) {
-        console.log(simulation1, simulation2)
 
         // first sequence is vertical
         // second sequence is horizontal
@@ -799,7 +798,6 @@ class SimulationDistance {
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
-                if (simulation1[i] === undefined || simulation2[j] === undefined) console.log(simulation1[i], simulation2[j], i, j)
                 let arrowImage = 'd.png'
                 let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, datumSelector)
                 let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
@@ -830,6 +828,9 @@ class SimulationDistance {
                 matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
             }
         }
+
+        console.log(matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)])
+
         return {
             score: matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)],
             trace: this.makeTable(matrix) 
@@ -873,7 +874,6 @@ class SimulationDistance {
         let i = data.length - 1
 
         while (data[i][j].arrowImage !== null) {
-            let cell = document.getElementById(`${i},${j}`)
             // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
             if (data[i][j].arrowImage === 'd.png' || 
                 data[i][j].arrowImage === 'du.png' || 
@@ -886,7 +886,6 @@ class SimulationDistance {
                 } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
                 else i--
         }
-        let cell = document.getElementById('0,0')
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
         return trace
     } 
