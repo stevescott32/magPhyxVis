@@ -9,7 +9,9 @@ let dataSet = data_sets[0];
 let reorderer = ways_to_reorder[0];
 let distance_func = distance_functions[0];
 
-let eventTypeVis = new EventTypeVis();
+let keyboard = new Keyboard();
+
+let eventTypeVis = new EventTypeVis(keyboard);
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
 let allData = {};

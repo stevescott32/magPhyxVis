@@ -3,7 +3,7 @@
  * event type
  */
 class EventTypeVis {
-    constructor(/*numEvents*/) {
+    constructor(keyboard) {
         this.circleSize = 2;
         this.highlightScale = 2;
 
@@ -25,12 +25,29 @@ class EventTypeVis {
         this.state = {
             match: null,
             ordering: 'hausdorff',
-            maxDeaths: 0
+            maxDeaths: 0,
+            selectedSimIndex: 0
         }
 
         this.divId = 'event-type-vis';
 
         this.registerHeaderEvents();
+
+        this.selectedSimIndex = 0;
+        keyboard.registerHandler('ArrowUp', this.shiftSimUp);
+        keyboard.registerHandler('ArrowDown', this.shiftSimDown);
+    }
+
+    shiftSimUp() {
+        console.log('Arrowed up!')
+        if(this.selectedSimIndex > 0) {
+        }
+
+    }
+
+    shiftSimDown() {
+        console.log('Arrowed down!')
+
     }
 
     setNumSimulations(numSims) {
