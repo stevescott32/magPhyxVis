@@ -239,8 +239,8 @@ class EventTypeVis {
         const eventAIdx = data.findIndex(d => d.simulationIndex === infoA.simulationIndex)
         const eventBIdx = data.findIndex(d => d.simulationIndex === infoB.simulationIndex)
 
-        const eventA = eventAIdx !== -1 ? data[eventAIdx].event : []
-        const eventB = eventBIdx !== -1 ? data[eventBIdx].event : []
+        const eventA = eventAIdx !== -1 ? data[eventAIdx].events : []
+        const eventB = eventBIdx !== -1 ? data[eventBIdx].events : []
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
             const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d[' t'], this.state.maxDeaths)
@@ -488,6 +488,50 @@ class EventTypeVis {
             simulationGroup = this.svg.append('g')
                 .attr('class', 'simulations')
         }
+
+        // cluster data ===============================
+        var distFunc = function(a, b) {
+          if (a == undefined || b == undefined)
+          {
+            return Number.MAX_SAFE_INTEGER;
+          }
+
+          return getDTWDistance(a.events, b.events, d => d[' t']).distance;
+          // return -simulationDistances.getTNWScore(a.events, b.events);
+        };
+
+        // let mstClusters = spectralClustering(data.simulations, 5, distFunc);
+        let kMeansClusters = kMeansClustering(data.simulations, 5, 5, distFunc);
+
+        data.simulations = []
+        for (var i = 0; i < kMeansClusters.clusters.length; ++i)
+        {
+          // intra cluster ordering
+          var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
+
+          let indicies = simulationDistances.minimizeTravel(kMeansClusters.clusters[i], null,10);
+
+          let reorderedArray = Array(indicies.length);
+          let counter = 0;
+          for (var index of indicies[0])
+          {
+            reorderedArray[counter] = kMeansClusters.clusters[i][index];
+            ++counter;
+          }
+
+          kMeansClusters.clusters[i] = reorderedArray;
+          // kMeansClusters.clusters[i] = simulationDistances.reorder(
+          //     kMeansClusters.clusters[i], clusterOriginIdx,
+          //     "dtw", self.state.maxDeaths);
+
+          kMeansClusters.clusters[i].forEach(function(d) {
+            d.color = i;
+          })
+
+          data.simulations = data.simulations.concat(kMeansClusters.clusters[i]);
+        }
+        // ============================================
+
         const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data.simulations)
             // .data(data.simulations.map(d => d.event))
@@ -499,7 +543,7 @@ class EventTypeVis {
             .merge(simsSel)
             .attr('class', (d, i) => {
                 // return `oneSimulation group${d[0].simulationIndex}`;
-                return `oneSimulation group${i}`;
+                return `oneSimulation group${d.meta.simulationIndex}`;
             })
 
         simsSel.exit().remove();
@@ -510,13 +554,25 @@ class EventTypeVis {
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
             .data((d, i) => {
-                for (let a = 0; a < d.length; a++) {
-                    d[a]['parentIndex'] = i;
+                for (let a = 0; a < d.events.length; a++) {
+                    d.events[a].simulationIndex = i;
+                    if (kMeansClusters.clusterOrigins.some(
+                            o => o.meta.simulationIndex == d.events[a].simulationIndex)) {
+                      d.events[a].color = 9;
+                    } else {
+                      d.events[a].color = d.color;
+                    }
                 }
                 return d.events;
             });
 
         circleSel.exit().remove();
+
+        var customColorScale = [
+          'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
+          'pink', 'yellow', 'black'
+        ];
+        var getColor = (index) => { return customColorScale[index]; };
 
         circleSel
             .enter()
@@ -528,7 +584,10 @@ class EventTypeVis {
             .attr('cx', d => { return timeScale(+d[' t']); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { return this.circleSize; })
-            .style('fill', d => { return data.getColor(d); })
+            .style('fill', d => {
+                let color = getColor(d['color']);
+                return color;
+            })
             .on('mouseover', function (d) {
                 console.log('Mouseovered the event', d);
                 if (self.state.match) {
@@ -751,6 +810,117 @@ class SimulationDistance {
         return dist;
     }
 
+    crossOver(orderings, numOfNewOffspring)
+    {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find Parents(random)
+        var parentA = Math.floor(Math.random() * orderings.length);
+        var parentB = Math.floor(Math.random() * orderings.length);
+        parentB = parentB == parentA ? (parentB + 1) % orderings.length : parentB;
+
+        // Find places to cut(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut = Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+        secondCut += firstCut;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentB];
+        for (var cutIndex = firstCut; cutIndex <= secondCut; ++cutIndex) {
+          // Swap elements in the 'cut zone'
+          let aElement = orderings[parentA][cutIndex];
+          let bElement = offspring[cutIndex];
+          let indexA = offspring.findIndex(e => e == aElement);
+          let indexB = offspring.findIndex(e => e == bElement);
+          [offspring[indexA],offspring[indexB]] = [offspring[indexB],offspring[indexA]];
+        }
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    mutation(orderings, numOfNewOffspring) {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find parent to mutate from(random)
+        let parentA = Math.floor(Math.random() * orderings.length);
+
+        // Find section to mutate(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut =
+            Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+
+        secondCut += firstCut + 1;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentA];
+
+        // Mutate 'mutation zone'
+        let subarray = offspring.slice(firstCut, secondCut);
+        subarray.reverse()
+        offspring.splice(firstCut, (secondCut - firstCut), ...subarray);
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    fitness(data, order) {
+      let totalDist = 0.0;
+      for (var i = 1; i < order.length; ++i) {
+        totalDist += this.getDTWWithDeaths(
+            data[order[i - 1]].events, data[order[i]].events, d => d[' t'], 0);
+      }
+
+      return totalDist;
+    }
+
+    selection(data, orderings, baseNumberOfOffspring) {
+      // Sort offspring based off fitness
+      orderings.sort((a,b) => this.fitness(data, a) < this.fitness(data, b));
+
+      // Only take the top offspring
+      orderings.splice(baseNumberOfOffspring,
+                       orderings.length - baseNumberOfOffspring);
+
+      return orderings;
+    }
+
+    minimizeTravel(data, startPoint, numIters)
+    {
+      var numStrains = 5;
+      var baseNumberOfOffspring = 5
+      let indicies = Array(numStrains);
+
+      for (var i = 0; i < numStrains; ++i)
+      {
+        indicies[i] = [...Array(data.length).keys() ];
+
+        for (let j = indicies[i].length - 1; j > 0; --j) {
+          var r = Math.floor(Math.random() * j); 
+          var temp = indicies[i][i];
+          indicies[i][i] = indicies[i][r];
+          indicies[i][r] = temp;
+        }
+      }
+
+      for (var i = 0; i < numIters; ++i)
+      {
+        indicies = this.crossOver(indicies, 3);
+        indicies = this.mutation(indicies, 3);
+        indicies = this.selection(data, indicies, baseNumberOfOffspring)
+      }
+
+      return indicies;
+    }
+
     // data is an array of { data: [event time series data], simulationIndex }
     reorder(data, simulationIndex, ordering, maxDeaths) {
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
@@ -767,11 +937,11 @@ class SimulationDistance {
         for (let i = 0; i < data.length; i++) {
             let metric;
             if (ordering === 'dtw') {
-                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
+                metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
-                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.events, data[i].events)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
-                metric = this.getTNWScore(orderingParent.event, data[i].event)
+                metric = this.getTNWScore(orderingParent.events, data[i].events)
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({

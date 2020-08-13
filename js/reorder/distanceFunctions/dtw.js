@@ -92,6 +92,14 @@ const getDTWDistance = (eventA, eventB, datumSelector = d => d) => {
     while (i >= 1 || j >= 1) {
         const datumA = eventA[i - 1];
         const datumB = eventB[j - 1];
+        if (datumA == undefined || datumB == undefined)
+        {
+          return {
+            distance: Number.MAX_SAFE_INTEGER,
+            pairs
+          };
+        }
+
         const cost = Math.abs(datumSelector(datumA) - datumSelector(datumB));
         pairs.push({ a: i - 1, b: j - 1 });
         if (dtw[i - 1][j] + cost === dtw[i][j]) {
