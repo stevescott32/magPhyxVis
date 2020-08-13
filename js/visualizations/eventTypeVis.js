@@ -43,12 +43,16 @@ class EventTypeVis {
         keyboard.registerHandler('ArrowDown', this.shiftSimDown);
     }
 
+    /**
+     * Shift the selected simulation up one index
+     * Side effects: changes the order of simulations in state.data
+     *   and changes the selectedSimIndex
+     */
     shiftSimUp() {
         let self = eventTypeVisInstance;
         let index = self.state.selectedSimIndex;
         let data = self.state.data;
 
-        console.log('Arrowed up!', self);
         if(index > 0 && data != null) {
             let swap = data.simulations[index];
             data.simulations[index] = data.simulations[index - 1];
@@ -58,12 +62,16 @@ class EventTypeVis {
         }
     }
 
+    /**
+     * Shift the selected simulation down one index
+     * Side effects: changes the order of simulations in state.data
+     *   and changes the selectedSimIndex
+     */
     shiftSimDown() {
         let self = eventTypeVisInstance;
         let index = self.state.selectedSimIndex;
         let data = self.state.data;
 
-        console.log('Arrowed down!', self)
         if(data != null && index < data.simulations.length) {
             let swap = data.simulations[index];
             data.simulations[index] = data.simulations[index + 1];
@@ -128,6 +136,7 @@ class EventTypeVis {
      */
     selectSim(simIndex) {
         this.state.selectedSimIndex = simIndex;
+        this.state.data.simulations[simIndex].selected = true;
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simIndex}`)
             .selectAll('circle')
@@ -140,6 +149,7 @@ class EventTypeVis {
      * @param {Number} simIndex the index of the simulation to select
      */
     unselectSim(simIndex) {
+        this.state.data.simulations[simIndex].selected = false;
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simIndex}`)
             .selectAll('circle')
@@ -187,7 +197,6 @@ class EventTypeVis {
         console.log('Updating event type vis', data);
         try {
             const self = this;
-            // WIP
             self.state.data = data;
 
             this.diffMin = 0; // d3.min(distances);
@@ -611,9 +620,10 @@ class EventTypeVis {
                 return 0; // events that are turned off should not display
             })
             .style('fill', d => { return data.getColor(d); })
+            .classed('selected', (d) => { return d.selected; })
             .on('mouseover', function (d) {
                 if (d.on) {
-                    // console.log('Mouseovered the event', d);
+                    console.log('Mouseovered the event', d);
                     if (self.state.match) {
                         self.state.match.hover = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex)
@@ -642,7 +652,6 @@ class EventTypeVis {
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
-                // WIP
                 self.unselectAllSims();
                 self.selectSim(d.simulationIndex);
 
