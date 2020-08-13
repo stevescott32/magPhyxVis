@@ -1,9 +1,13 @@
+let eventTypeVisInstance = null;
+
 /**
  * Class for the vis containing a timeline chart for the selected
  * event type
  */
 class EventTypeVis {
     constructor(keyboard) {
+        console.log('This in the constructor ', this);
+        eventTypeVisInstance = this;
         this.circleSize = 2;
         this.highlightScale = 2;
 
@@ -26,7 +30,8 @@ class EventTypeVis {
             match: null,
             ordering: 'hausdorff',
             maxDeaths: 0,
-            selectedSimIndex: 0
+            selectedSimIndex: 0,
+            data: null
         }
 
         this.divId = 'event-type-vis';
@@ -39,15 +44,33 @@ class EventTypeVis {
     }
 
     shiftSimUp() {
-        console.log('Arrowed up!')
-        if(this.selectedSimIndex > 0) {
-        }
+        let self = eventTypeVisInstance;
+        let index = self.state.selectedSimIndex;
+        let data = self.state.data;
 
+        console.log('Arrowed up!', self);
+        if(index > 0 && data != null) {
+            let swap = data.simulations[index];
+            data.simulations[index] = data.simulations[index - 1];
+            data.simulations[index - 1] = swap;
+            self.state.selectedSimIndex = index - 1;
+            self.update(data);
+        }
     }
 
     shiftSimDown() {
-        console.log('Arrowed down!')
+        let self = eventTypeVisInstance;
+        let index = self.state.selectedSimIndex;
+        let data = self.state.data;
 
+        console.log('Arrowed down!', self)
+        if(data != null && index < data.simulations.length) {
+            let swap = data.simulations[index];
+            data.simulations[index] = data.simulations[index + 1];
+            data.simulations[index + 1] = swap;
+            self.state.selectedSimIndex = index + 1;
+            self.update(data);
+        }
     }
 
     setNumSimulations(numSims) {
@@ -104,6 +127,7 @@ class EventTypeVis {
      * @param {Number} simIndex the index of the simulation to select
      */
     selectSim(simIndex) {
+        this.state.selectedSimIndex = simIndex;
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simIndex}`)
             .selectAll('circle')
@@ -163,6 +187,8 @@ class EventTypeVis {
         console.log('Updating event type vis', data);
         try {
             const self = this;
+            // WIP
+            self.state.data = data;
 
             this.diffMin = 0; // d3.min(distances);
             this.diffMax = 20; // d3.max(distances) + this.config.tolerance;
@@ -587,7 +613,7 @@ class EventTypeVis {
             .style('fill', d => { return data.getColor(d); })
             .on('mouseover', function (d) {
                 if (d.on) {
-                    console.log('Mouseovered the event', d);
+                    // console.log('Mouseovered the event', d);
                     if (self.state.match) {
                         self.state.match.hover = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex)

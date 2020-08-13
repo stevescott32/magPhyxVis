@@ -20,6 +20,7 @@ class Keyboard {
      * @param {event} e an event object that fires from the window 
      */
     keyPress(e) {
+        e.preventDefault();
         keyboardInstance.keys[e.key] = e.timeStamp;
         keyboardInstance.update();
     }
