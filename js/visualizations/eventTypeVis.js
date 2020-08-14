@@ -38,8 +38,11 @@ class EventTypeVis {
 
         this.registerHeaderEvents();
 
+        // store the index of the most recently selected simulation
         this.selectedSimIndex = 0;
+        // pressing the arrow up key moves the selected simulation up
         keyboard.registerHandler('ArrowUp', this.shiftSimUp);
+        // pressing the arrow down key moves the selected simulation down
         keyboard.registerHandler('ArrowDown', this.shiftSimDown);
     }
 
@@ -129,7 +132,7 @@ class EventTypeVis {
         this.eventCols = eventCols;
     }
 
-    selectedClass = 'selected';
+    selectedSimClass = 'selected-sim';
     /**
      * This method should be called when the user clicks on a simulation
      * @param {Number} simIndex the index of the simulation to select
@@ -140,7 +143,7 @@ class EventTypeVis {
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simIndex}`)
             .selectAll('circle')
-            .classed(this.selectedClass, true)
+            .classed(this.selectedSimClass, true)
             ;
     }
 
@@ -153,7 +156,7 @@ class EventTypeVis {
         d3.select(`#${this.divId}`)
             .selectAll(`.group${simIndex}`)
             .selectAll('circle')
-            .classed(this.selectedClass, false)
+            .classed(this.selectedSimClass, false)
             ;
     }
 
@@ -161,8 +164,8 @@ class EventTypeVis {
      * Unselect all the selected simulations
      */
     unselectAllSims() {
-        d3.selectAll(`.${this.selectedClass}`)
-            .classed(this.selectedClass, false)
+        d3.selectAll(`.${this.selectedSimClass}`)
+            .classed(this.selectedSimClass, false)
             ;
     }
 
@@ -202,8 +205,6 @@ class EventTypeVis {
             this.diffMin = 0; // d3.min(distances);
             this.diffMax = 20; // d3.max(distances) + this.config.tolerance;
             this.originalData = JSON.parse(JSON.stringify(data));
-            // this.originalParamData = [...paramData];
-            // this.originalDistances = [...distances];
 
             const root = d3.select(`#${this.divId}`)
 
@@ -299,6 +300,7 @@ class EventTypeVis {
             const range = this.getTimeRange(this.originalData);
             self.config.timeRange = range;
 
+            // have a time slider to filter events outside of the time range
             $(".time-range-2").slider({
                 min: range[0],
                 max: range[1],
@@ -306,6 +308,7 @@ class EventTypeVis {
                 slide: function (event, ui) {
                     $(".amount").html("From " + ui.values[0] + " to " + ui.values[1]);
                     self.config.timeRange = ui.values;
+                    data = self.getTimeFilteredData(data);
                     self.updateHelper(data);
                 }
             });
@@ -409,22 +412,13 @@ class EventTypeVis {
             .range([this.config.padding.left, this.config.width + this.config.padding.left])
     }
 
-    filterEventByTimeThreshold(event) {
-        return event.filter(d => {
-            return d.t > this.config.timeRange[0] && d.t < this.config.timeRange[1];
-        })
-    }
-
     getTimeFilteredData(data) {
-        // data = [...data]
-        /*
-        for (let i = 0; i < data.simulations.length; i++) {
-            data.simulations[i] = {
-                event: this.filterEventByTimeThreshold(data[i].event),
-                simulationIndex: data[i].simulationIndex
+        for (let s = 0; s < data.simulations.length; s++) {
+            for (let e = 0; e < data.simulations[s].events.length; e++) {
+                let event = data.simulations[s].events[e];
+                event.on = event.eventTypeOn && event.t > this.config.timeRange[0] && event.t < this.config.timeRange[1];
             }
         }
-        */
         return data;
     }
 
@@ -620,7 +614,7 @@ class EventTypeVis {
                 return 0; // events that are turned off should not display
             })
             .style('fill', d => { return data.getColor(d); })
-            .classed('selected', (d) => { return d.selected; })
+            .classed('selected-sim', (d) => { return d.selected; })
             .on('mouseover', function (d) {
                 if (d.on) {
                     console.log('Mouseovered the event', d);
@@ -717,7 +711,6 @@ class EventTypeVis {
         }
         let colorScale = d3.scaleLinear()
             .range(["#ffffff", "#000000"])
-            // .range(["#000000", "#ffffff"])
             .domain([0, d3.max(distances)])
             ;
 

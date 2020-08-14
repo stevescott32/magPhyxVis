@@ -270,8 +270,10 @@ function addEventTypeSelector(data) {
           let event = data.simulations[sim].events[e];
           if(event['event_type'] == type) {
             event.on = true;
+            event.eventTypeOn = true;
           } else {
             event.on = false;
+            event.eventTypeOn = false;
           }
         }
       }

@@ -63,6 +63,7 @@ function parseStockMarketData(eventData) {
             simulations[i].events[j].t = +oneSim[j][" t"];
             simulations[i].events[j].on = false;
             simulations[i].events[j].selected = false;
+            simulations[i].events[j].eventTypeOn = false;
         }
     }
 
@@ -146,9 +147,9 @@ function parseMagPhyxData(eventData, paramData) {
                 r: +oneEvent[' r'],
                 t: +oneEvent[' t'],
                 on: false,
-                selected: false
+                selected: false,
+                eventTypeOn: false
             });
-            // simulations[i].events[j].t = +oneEvent[' t'];
         }
     }
 
