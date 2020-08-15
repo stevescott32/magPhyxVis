@@ -617,7 +617,7 @@ class EventTypeVis {
             .classed('selected-sim', (d) => { return d.selected; })
             .on('mouseover', function (d) {
                 if (d.on) {
-                    console.log('Mouseovered the event', d);
+                    // console.log('Mouseovered the event', d);
                     if (self.state.match) {
                         self.state.match.hover = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex)
@@ -646,7 +646,8 @@ class EventTypeVis {
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
-                self.unselectAllSims();
+                console.log('Clicked event', d);
+                // self.unselectAllSims();
                 self.selectSim(d.simulationIndex);
 
                 /*

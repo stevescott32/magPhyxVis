@@ -8,7 +8,7 @@
     width: 100%;
 }
 
-.selected {
+.selected-sim {
     stroke: silver; 
     stroke-width: 2;
 }
