@@ -761,7 +761,13 @@ class SimulationDistance {
             if (ordering === 'dtw') {
                 min = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d[' t'], maxDeaths)
             } else if (ordering === 'hausdorff') {
+<<<<<<< HEAD:js/eventTypeVis_cpy.js
                 min = this.getMinInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+=======
+                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+            } else if (ordering === 'temporal-needleman-wunsch') {
+                metric = this.getTNWScore(orderingParent.event, data[i].event, d => d[' t'])
+>>>>>>> TNWTest:js/eventTypeVis.js
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
@@ -786,8 +792,137 @@ class SimulationDistance {
         return reOrderedData;
     }
 
-    getMinInArray(arr) {
-        let min = Number.MAX_VALUE;
+    getTNWScore(simulation1, simulation2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY=-1, datumSelector = d => d) {
+
+        // first sequence is vertical
+        // second sequence is horizontal
+        var matrix = []
+        // const GAP_SCORE = -1
+        // const MATCH_SCORE = 1
+        // const MAX_OFFSET_PENALTY = -1
+
+
+        // initialize first row
+        let firstRow = []
+        for (let i=0; i<simulation2.length+1; i++) {
+            // firstRow[i] = i * GAP_SCORE
+            if (i === 0) firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: null}
+            else firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: 's.png'}
+        }
+        matrix.push(firstRow)
+
+        // initialize first column
+        for (let i=1; i<simulation1.length+1; i++){
+            let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
+            // row[0] = i * GAP_SCORE
+            row[0] = { cellMax: i*GAP_SCORE, arrowImage: 'u.png' }
+            matrix.push(row)
+        }
+
+        // fill in the rest of the table
+        for (let i=1; i<simulation1.length+1; i++){
+            for (let j=1; j<simulation2.length+1; j++){
+                let arrowImage = 'd.png'
+                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, datumSelector)
+                let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
+                let hGap = matrix[i][j-1].cellMax + GAP_SCORE
+                let cellMax
+                if (match >= vGap && match >= hGap) {
+                    cellMax = match
+                    arrowImage = 'd.png'
+                    if (match === vGap && match === hGap) arrowImage = 'dsu.png'
+                    if (match === vGap) arrowImage = 'du.png'
+                    if (match === hGap) arrowImage = 'ds.png'
+                }
+                else if (vGap >= match && vGap >= hGap) {
+                    cellMax = vGap
+                    arrowImage = 'u.png'
+                    if (vGap === match && vGap === hGap) arrowImage = 'dsu.png'
+                    if (vGap === match) arrowImage = 'du.png'
+                    if (vGap === hGap) arrowImage = 'su.png'
+                }
+                else if (hGap >= match && hGap >= vGap) {
+                    cellMax = hGap
+                    arrowImage = 's.png'
+                    if (hGap === match && hGap === vGap) arrowImage = 'dsu.png'
+                    if (hGap === match) arrowImage = 'ds.png'
+                    if (hGap === vGap) arrowImage = 'su.png'
+                }
+
+                matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
+            }
+        }
+
+        console.log(matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)])
+
+        return {
+            score: matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)],
+            trace: this.makeTable(matrix) 
+        }
+    }
+
+    offsetPenalty(event1, event2, MAX_OFFSET_PENALTY, datumSelector) {
+        if (event1 === undefined || event2 === undefined) {
+            return MAX_OFFSET_PENALTY
+        }
+
+        event1 = datumSelector(event1)
+        event2 = datumSelector(event2)
+        return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
+    }
+
+    makeTable (data) {
+        let table = document.querySelector("table")
+        for (let element in data) {
+            let row = table.insertRow();
+            for (let key in data[element]) {
+                let cell = row.insertCell();
+                let roundedNum = data[element][key].cellMax.toFixed(2)  
+                let text = document.createTextNode(roundedNum);
+                cell.appendChild(text);
+                cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].arrowImage}); 
+                                            background-repeat: no-repeat; 
+                                            background-size: 100% 20px;
+                                            background-color: aqua;`)
+                cell.setAttribute("id", `${element},${key}`)
+
+            }
+        }
+        return this.backtrace(data)
+    }
+    
+   backtrace(data) {
+        let trace = []
+
+        let j = data[data.length -1].length - 1
+        let i = data.length - 1
+
+        while (data[i][j].arrowImage !== null) {
+            // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+            if (data[i][j].arrowImage === 'd.png' || 
+                data[i][j].arrowImage === 'du.png' || 
+                data[i][j].arrowImage === 'ds.png' || 
+                data[i][j].arrowImage === 'dsu.png') {
+                    i--
+                    j--
+                    trace.push({ a: i, b: j })
+
+                } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
+                else i--
+        }
+        // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+        return trace
+    } 
+
+    clearTable() {
+        let table = document.querySelector("table")
+        for (const child of table.children) {
+            table.removeChild(child)
+        }
+    }
+
+    getMaxInArray(arr) {
+        let max = Number.MIN_VALUE;
         arr.forEach(num => {
             if (num < min) {
                 min = num;

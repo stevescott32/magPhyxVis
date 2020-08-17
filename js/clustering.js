@@ -492,9 +492,8 @@ function spectralClustering(points, k, distFunc) {
     }
   }
 
-  // MST = MST.kruskalsMST();
-
-  MST = MST.kNeighbors(3);
+  MST = MST.kruskalsMST();
+  // MST = MST.kNeighbors(3);
 
   let adjMat = MST.genAdjacencyMatrix();
 

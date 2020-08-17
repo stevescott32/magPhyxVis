@@ -496,39 +496,44 @@ class EventTypeVis {
             return Number.MAX_SAFE_INTEGER;
           }
 
-          return getDTWDistance(a.events, b.events, d => d[' t']).distance;
-          // return -simulationDistances.getTNWScore(a.events, b.events);
+          // return getDTWDistance(a.events, b.events, d => d[' t']).distance;
+          return simulationDistances.getTNWScore(a.events, b.events);
         };
 
-        // let mstClusters = spectralClustering(data.simulations, 5, distFunc);
-        let kMeansClusters = kMeansClustering(data.simulations, 5, 5, distFunc);
+        let kMeansClusters = kMeansClustering(data.simulations, 15, 3, distFunc);
+        // kMeansClusters.clusters = spectralClustering(data.simulations, 5, distFunc);
 
-        data.simulations = []
+        data.simulations = [];
         for (var i = 0; i < kMeansClusters.clusters.length; ++i)
         {
           // intra cluster ordering
-          var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
+          // var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
 
-          let indicies = simulationDistances.minimizeTravel(kMeansClusters.clusters[i], null,10);
+          // let indicies = simulationDistances.minimizeTravel(kMeansClusters.clusters[i], null,10);
 
-          let reorderedArray = Array(indicies.length);
-          let counter = 0;
-          for (var index of indicies[0])
-          {
-            reorderedArray[counter] = kMeansClusters.clusters[i][index];
-            ++counter;
-          }
+          // let reorderedArray = Array(indicies.length);
+          // let counter = 0;
+          // for (var index of indicies[0])
+          // {
+          //   reorderedArray[counter] = kMeansClusters.clusters[i][index];
+          //   ++counter;
+          // }
 
-          kMeansClusters.clusters[i] = reorderedArray;
+          // kMeansClusters.clusters[i] = reorderedArray;
           // kMeansClusters.clusters[i] = simulationDistances.reorder(
           //     kMeansClusters.clusters[i], clusterOriginIdx,
           //     "dtw", self.state.maxDeaths);
+          //
+          // === spectralClustering index fix ==================================
+          // for (var index = 0; index < kMeansClusters.clusters.length; ++i) {
+          //   kMeansClusters.clusters[i][index] = data.simulations[kMeansClusters.clusters[i][index]];
+          // }
+          // ======================================================================
 
-          kMeansClusters.clusters[i].forEach(function(d) {
-            d.color = i;
-          })
+          kMeansClusters.clusters[i].forEach(function(d) { d.color = i; })
 
-          data.simulations = data.simulations.concat(kMeansClusters.clusters[i]);
+          data.simulations =
+              data.simulations.concat(kMeansClusters.clusters[i]);
         }
         // ============================================
 
@@ -557,7 +562,7 @@ class EventTypeVis {
                 for (let a = 0; a < d.events.length; a++) {
                     d.events[a].simulationIndex = i;
                     if (kMeansClusters.clusterOrigins.some(
-                            o => o.meta.simulationIndex == d.events[a].simulationIndex)) {
+                            o => o.meta.simulationIndex == d.index)) {
                       d.events[a].color = 9;
                     } else {
                       d.events[a].color = d.color;
@@ -967,7 +972,7 @@ class SimulationDistance {
     }
 
     getTNWScore(simulation1, simulation2) {
-        console.log(simulation1, simulation2);
+        // console.log(simulation1, simulation2);
 
         // first sequence is vertical
         // second sequence is horizontal
@@ -1013,7 +1018,7 @@ class SimulationDistance {
                 matrix[i][j] = cellMax
             }
         }
-        console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
+        // console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
 
         return matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1
     }
