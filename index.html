@@ -4,20 +4,38 @@
 <head>
   <meta charset="UTF-8">
   <title>Simulation Data Vis</title>
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="styles.css" />
+  <!-- Third party includes -->
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="d3.js"></script>
-  <script type="application/javascript" src="js/utils.js"></script>
-  <script type="application/javascript" src="js/src/quadTree/quadtree.js"></script>
+  <!-- Data includes -->
+  <script type="application/javascript" src="js/dataSets.js"></script>
   <script type="application/javascript" src="js/dataStructure.js"></script>
-  <script type="application/javascript" src="js/src/ktree/dataActions.js"></script>
-  <script type="application/javascript" src="js/eventTypeVis.js"></script>
-  <script type="application/javascript" src="js/paramsVis.js"></script>
-  <script type="application/javascript" src="js/scatter.js"></script>
+  <script type="application/javascript" src="js/utils.js"></script>
+  <!-- Reordering simulations -->
+  <script type="application/javascript" src="js/reorder/reorderSims.js"></script>
+  <script type="application/javascript" src="js/reorder/orderOnParams/quadTree/quadtree.js"></script>
+  <script type="application/javascript" src="js/reorder/orderOnParams/ktree/dataActions.js"></script>
+  <!-- -- Reordering simulations - distance methods -->
+  <script type="application/javascript" src="js/reorder/distanceFunctions/dtw.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/tnw.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/hausdorff.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/distances.js"></script>
+  <script src="js/union_find.js"></script>
+  <!-- Visualization files -->
+  <script type="application/javascript" src="js/visualizations/eventTypeVis.js"></script>
+  <script type="application/javascript" src="js/visualizations/paramsVis.js"></script>
+  <script type="application/javascript" src="js/visualizations/scatter.js"></script>
+  <script type="application/javascript" defer src="js/keyboard.js"></script>
   <script type="application/javascript" defer src="js/script.js"></script>
 </head>
 
 <body>
   <div id="debug"></div>
+  <div id="settings"></div>
   <div id="param-vis"></div>
   <div id='event-groups'></div>
   <div id='event-type-vis'>
@@ -41,15 +59,39 @@
         </div>
         <div class="slider time-range">
           <div>Time Range</div>
-          <input type="range" />
+          <div class="wrap-time-range-2">
+            <div class="time-range-2"></div>
+            <div class="amount"></div>
+          </div>
         </div>
       </div>
-      <div>
+      <div class="match-actions">
         <button class="match-a-to-b">Match Event A to B</button>
         <label>
           <input class="match-exact" type="checkbox">
           Match exact
         </label>
+        <div class="ordering-methods">
+          Ordering / Matching Method
+          <label>
+            <input checked value="hausdorff" name="ordering-method" type="radio" />
+            Hausdorff distance
+          </label>
+          <label>
+            <input value="temporal-needleman-wunsch" name="ordering-method" type="radio" />
+            Temporal Needleman-Wunsch
+          </label>
+          <label>
+            <input value="dtw" name="ordering-method" type="radio" />
+            DTW distance
+            <br />
+            <label style="margin-left: 40px;">
+                Max deaths
+              <input class='max-deaths' disabled value=0 min=0 max=20 type="range" />
+              <span class="death-count">0</span>
+            </label>
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -59,7 +101,33 @@
   <br />
   <br />
   <br />
+  <script>
+    $( function() {
+      $(".time-range-2").slider({
+        range: true,
+        min: 0,
+        max: 500,
+      });
+    } );
+  </script>
+  <table></table>
 </body>
 
-
+<style>
+   table {
+  /* table-layout: fixed ; */
+  width: 40% ;
+  border-collapse: collapse;
+  align-items: center;
+}
+td {
+  border: solid rgb(0, 0, 0);
+  padding: 0px;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  width: 0px;
+  height: 15px
+}
+</style>
 </html>
