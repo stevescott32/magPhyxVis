@@ -20,6 +20,7 @@ function reorder_hausdorff(data) {
     return data;
 }
 
+let reorderLogs = 2;
 function reorder_dist_from_first(data, distFunction) {
     console.log('Reordering by distance from first', data, distFunction);
     let firstSim = data.simulations[0];
@@ -27,8 +28,11 @@ function reorder_dist_from_first(data, distFunction) {
     data.simulations.sort(function(a, b) {
         let distA = distFunction.calculate(firstSim, a)
         let distB = distFunction.calculate(firstSim, b)
-        // a.meta.distance = distA;
-        // b.meta.distance = distB;
+        if(reorderLogs-- > 0) {
+            console.log(`Calculating another distance as ${distA} - ${distB} = ${distA - distB}`);
+        }
+        a.meta.distance = distA;
+        b.meta.distance = distB;
         return distA - distB;
     });
     console.log('Reordered data: ', data);

@@ -8,6 +8,11 @@
     width: 100%;
 }
 
+.selected-sim {
+    stroke: silver; 
+    stroke-width: 2;
+}
+
 .header button {
     padding: 20px 40px;
 }

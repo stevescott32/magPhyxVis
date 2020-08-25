@@ -4,28 +4,46 @@
 <head>
   <meta charset="UTF-8">
   <title>Simulation Data Vis</title>
+<<<<<<< HEAD
   <a href="TNW.html">TNW</a>
   <a href="DTW.html">DTW</a>
+=======
+  <!-- Stylesheets -->
+>>>>>>> origin/dev
   <link rel="stylesheet" href="styles.css" />
+  <!-- Third party includes -->
   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="d3.js"></script>
+<<<<<<< HEAD
   <script src="math.js"></script>
+=======
+  <!-- Data includes -->
+>>>>>>> origin/dev
   <script type="application/javascript" src="js/dataSets.js"></script>
+  <script type="application/javascript" src="js/dataStructure.js"></script>
   <script type="application/javascript" src="js/utils.js"></script>
+  <!-- Reordering simulations -->
   <script type="application/javascript" src="js/reorder/reorderSims.js"></script>
   <script type="application/javascript" src="js/reorder/orderOnParams/quadTree/quadtree.js"></script>
   <script type="application/javascript" src="js/reorder/orderOnParams/ktree/dataActions.js"></script>
-  <script type="application/javascript" src="js/reorder/distanceFunctions/distances.js"></script>
+  <!-- -- Reordering simulations - distance methods -->
   <script type="application/javascript" src="js/reorder/distanceFunctions/dtw.js"></script>
-  <script type="application/javascript" src="js/dataStructure.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/tnw.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/hausdorff.js"></script>
+  <script type="application/javascript" src="js/reorder/distanceFunctions/distances.js"></script>
   <script src="js/union_find.js"></script>
+  <!-- Visualization files -->
   <script type="application/javascript" src="js/visualizations/eventTypeVis.js"></script>
   <script type="application/javascript" src="js/visualizations/paramsVis.js"></script>
   <script type="application/javascript" src="js/visualizations/scatter.js"></script>
+<<<<<<< HEAD
   <script type="application/javascript" src="js/priorityQueue.js"></script>
   <script type="application/javascript" src="js/clustering.js"></script>
+=======
+  <script type="application/javascript" defer src="js/keyboard.js"></script>
+>>>>>>> origin/dev
   <script type="application/javascript" defer src="js/script.js"></script>
 </head>
 
@@ -71,7 +89,7 @@
           Ordering / Matching Method
           <label>
             <input checked value="hausdorff" name="ordering-method" type="radio" />
-            Haursdorff distance
+            Hausdorff distance
           </label>
           <label>
             <input value="temporal-needleman-wunsch" name="ordering-method" type="radio" />

@@ -9,6 +9,7 @@ let dataSet = data_sets[0];
 let reorderer = ways_to_reorder[0];
 let distance_func = distance_functions[0];
 
+<<<<<<< HEAD
 // TODO define an array of data possibilities that has a similar
 // structure to these settings but can be switched at runtime
 let settings = {
@@ -22,10 +23,14 @@ let settings = {
   hilbert: false, // false = use z order, true = use hilbert order
 }
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
+=======
+let keyboard = new Keyboard();
+
+let eventTypeVis = new EventTypeVis(keyboard);
+>>>>>>> origin/dev
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
 let allData = {};
-
 
 // let each vis know about the other event vis
 scatter.setParamVis(paramVis);
@@ -42,7 +47,6 @@ addReorderSelector();
 
 // kick off the vis by loading the data
 loadDataAndVis(dataSet);
-
 
 function loadDataAndVis(selectedDataSet) {
   // get how many digits are required to represent the number
@@ -78,7 +82,6 @@ function loadDataAndVis(selectedDataSet) {
 
       let data = selectedDataSet.parse(eventData, paramData);
       console.log('Parsed data: ', data);
-      // allData = JSON.parse(JSON.stringify(data));
       allData = data;
 
       loadVis(data, reorderer);
@@ -96,10 +99,6 @@ function loadVis(data, reorderer) {
   // initialize the param and the scatter vis
   paramVis.init(orderedData);
   scatter.init(orderedData);
-
-  // TODO this should be more dynamic - switched to an array of 
-  // distance calculation functions
-  // let distances = calcDistances(orderedParamData);
 
   eventTypeVis.setNumSimulations(orderedData.simulations.length);
   eventTypeVis.setEventCols(orderedData.eventTypes);
@@ -143,7 +142,6 @@ function addDataInput() {
   d3.selectAll('.data-options')
     .append('br')
     ;
-
 }
 
 function addReorderSelector() {
@@ -174,12 +172,15 @@ function addReorderSelector() {
       for (let i = 0; i < ways_to_reorder.length; i++) {
         let oneWayToReorder = ways_to_reorder[i];
         if (oneWayToReorder.name == selectedOrder.name) {
+          reorderer = oneWayToReorder;
           if(selectedOrder.name.toLowerCase().includes('distance')) {
+            // add the distance selector, but do not load the vis until the user
+            // has selected a distance method
             addDistanceSelector();
           } else {
             removeDistanceSelector();
+            loadVis(allData, reorderer);
           }
-          loadVis(allData, oneWayToReorder);
         }
       }
     })
@@ -235,7 +236,7 @@ function addDistanceSelector() {
     .on('click', (selectedDistance) => {
       console.log('Selected Distance', selectedDistance);
       distance_func = selectedDistance;
-      loadVis(allData, reorderer);
+      // loadVis(allData, reorderer);
     })
     ;
 
@@ -253,7 +254,7 @@ function addDistanceSelector() {
     ;
 }
 
-
+// create buttons so the user can select which event type to display
 function addEventTypeSelector(data) {
   console.log('Adding event type selector', data);
 
@@ -279,14 +280,22 @@ function addEventTypeSelector(data) {
     .attr('value', (d) => { return d; })
     .text(d => { return `${d}`; })
     .on('click', (type) => {
-      data.simulations = allData.simulations.map(simulation => {
-        simulation.events = simulation.events.filter(event => {
-          return event['event_type'] == type;
-        })
-        return simulation;
-      })
-      console.log("filtered data: ", data);
+      console.log(`Select all events of type ${type}`);
+      for(let sim = 0; sim < data.simulations.length; sim++) {
+        for(let e = 0; e < data.simulations[sim].events.length; e++) {
+          let event = data.simulations[sim].events[e];
+          if(event['event_type'] == type) {
+            event.on = true;
+            event.eventTypeOn = true;
+          } else {
+            event.on = false;
+            event.eventTypeOn = false;
+          }
+        }
+      }
       eventTypeVis.removeEventsMatch()
+      // data = reorderer.reorder(data, distance_func);
+      loadVis(allData, reorderer);
       eventTypeVis.update(data);
     })
     ;
@@ -300,4 +309,3 @@ function addEventTypeSelector(data) {
     .append('br')
     ;
 }
-

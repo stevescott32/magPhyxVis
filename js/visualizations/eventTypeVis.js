@@ -1,9 +1,13 @@
+let eventTypeVisInstance = null;
+
 /**
  * Class for the vis containing a timeline chart for the selected
  * event type
  */
 class EventTypeVis {
-    constructor(/*numEvents*/) {
+    constructor(keyboard) {
+        console.log('This in the constructor ', this);
+        eventTypeVisInstance = this;
         this.circleSize = 2;
         this.highlightScale = 2;
 
@@ -25,12 +29,59 @@ class EventTypeVis {
         this.state = {
             match: null,
             ordering: 'hausdorff',
-            maxDeaths: 0
+            maxDeaths: 0,
+            selectedSimIndex: 0,
+            data: null
         }
 
         this.divId = 'event-type-vis';
 
         this.registerHeaderEvents();
+
+        // store the index of the most recently selected simulation
+        this.selectedSimIndex = 0;
+        // pressing the arrow up key moves the selected simulation up
+        keyboard.registerHandler('ArrowUp', this.shiftSimUp);
+        // pressing the arrow down key moves the selected simulation down
+        keyboard.registerHandler('ArrowDown', this.shiftSimDown);
+    }
+
+    /**
+     * Shift the selected simulation up one index
+     * Side effects: changes the order of simulations in state.data
+     *   and changes the selectedSimIndex
+     */
+    shiftSimUp() {
+        let self = eventTypeVisInstance;
+        let index = self.state.selectedSimIndex;
+        let data = self.state.data;
+
+        if(index > 0 && data != null) {
+            let swap = data.simulations[index];
+            data.simulations[index] = data.simulations[index - 1];
+            data.simulations[index - 1] = swap;
+            self.state.selectedSimIndex = index - 1;
+            self.update(data);
+        }
+    }
+
+    /**
+     * Shift the selected simulation down one index
+     * Side effects: changes the order of simulations in state.data
+     *   and changes the selectedSimIndex
+     */
+    shiftSimDown() {
+        let self = eventTypeVisInstance;
+        let index = self.state.selectedSimIndex;
+        let data = self.state.data;
+
+        if(data != null && index < data.simulations.length) {
+            let swap = data.simulations[index];
+            data.simulations[index] = data.simulations[index + 1];
+            data.simulations[index + 1] = swap;
+            self.state.selectedSimIndex = index + 1;
+            self.update(data);
+        }
     }
 
     setNumSimulations(numSims) {
@@ -81,18 +132,55 @@ class EventTypeVis {
         this.eventCols = eventCols;
     }
 
-    highlightSimulation(simulation) {
+    selectedSimClass = 'selected-sim';
+    /**
+     * This method should be called when the user clicks on a simulation
+     * @param {Number} simIndex the index of the simulation to select
+     */
+    selectSim(simIndex) {
+        this.state.selectedSimIndex = simIndex;
+        this.state.data.simulations[simIndex].selected = true;
         d3.select(`#${this.divId}`)
-            .selectAll(`.group${simulation}`)
+            .selectAll(`.group${simIndex}`)
+            .selectAll('circle')
+            .classed(this.selectedSimClass, true)
+            ;
+    }
+
+    /**
+     * Unselect a simulation 
+     * @param {Number} simIndex the index of the simulation to select
+     */
+    unselectSim(simIndex) {
+        this.state.data.simulations[simIndex].selected = false;
+        d3.select(`#${this.divId}`)
+            .selectAll(`.group${simIndex}`)
+            .selectAll('circle')
+            .classed(this.selectedSimClass, false)
+            ;
+    }
+
+    /**
+     * Unselect all the selected simulations
+     */
+    unselectAllSims() {
+        d3.selectAll(`.${this.selectedSimClass}`)
+            .classed(this.selectedSimClass, false)
+            ;
+    }
+
+    highlightSimulation(simIndex) {
+        d3.select(`#${this.divId}`)
+            .selectAll(`.group${simIndex}`)
             .selectAll('circle')
             // .attr('r', () => { return this.circleSize * this.highlightScale; })
             .classed('event-highlighted', true)
             ;
     }
 
-    unhighlightSimulation(simulation) {
+    unhighlightSimulation(simIndex) {
         d3.select(`#${this.divId}`)
-            .selectAll(`.group${simulation}`)
+            .selectAll(`.group${simIndex}`)
             .selectAll('circle')
             .attr('r', () => { return this.circleSize; })
             .classed('event-highlighted', false)
@@ -112,12 +200,11 @@ class EventTypeVis {
         console.log('Updating event type vis', data);
         try {
             const self = this;
+            self.state.data = data;
 
             this.diffMin = 0; // d3.min(distances);
             this.diffMax = 20; // d3.max(distances) + this.config.tolerance;
             this.originalData = JSON.parse(JSON.stringify(data));
-            // this.originalParamData = [...paramData];
-            // this.originalDistances = [...distances];
 
             const root = d3.select(`#${this.divId}`)
 
@@ -213,6 +300,7 @@ class EventTypeVis {
             const range = this.getTimeRange(this.originalData);
             self.config.timeRange = range;
 
+            // have a time slider to filter events outside of the time range
             $(".time-range-2").slider({
                 min: range[0],
                 max: range[1],
@@ -220,6 +308,7 @@ class EventTypeVis {
                 slide: function (event, ui) {
                     $(".amount").html("From " + ui.values[0] + " to " + ui.values[1]);
                     self.config.timeRange = ui.values;
+                    data = self.getTimeFilteredData(data);
                     self.updateHelper(data);
                 }
             });
@@ -243,15 +332,15 @@ class EventTypeVis {
         const eventB = eventBIdx !== -1 ? data[eventBIdx].events : []
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
-            const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d[' t'], this.state.maxDeaths)
-            arrowInfo = buildMatchingEvents(dtw, eventA, eventB, this.state.maxDeaths, d => d[' t'])
+            const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d.t, this.state.maxDeaths)
+            arrowInfo = buildMatchingEvents(dtw, eventA, eventB, this.state.maxDeaths, d => d.t)
                 .pairs
                 .map(d => [d.a, d.b])
         } else if (this.state.ordering === 'hausdorff') {
             if (this.state.matchExact) {
                 arrowInfo = simulationDistance.getHausdorffDistances(eventA, eventB)[1]
             } else {
-                arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d[' t']).map((d, i) => [i, d])
+                arrowInfo = simulationDistance.getEventsDistance(eventA, eventB, d => d.t).map((d, i) => [i, d])
             }
         }
 
@@ -271,9 +360,9 @@ class EventTypeVis {
             .attr('marker-mid', this.state.ordering === 'dtw' || this.state.matchExact ? 'none' : 'url(#arrow)')
             .attr('d', d => {
                 // Coordinates of mid point on line to add new vertex.
-                const sourceX = timeScale(eventA[d[0]][' t']);
+                const sourceX = timeScale(eventA[d[0]].t);
                 const sourceY = eventCountScale(eventAIdx)
-                const targetX = timeScale(eventB[d[1]][' t'])
+                const targetX = timeScale(eventB[d[1]].t)
                 const targetY = eventCountScale(eventBIdx)
                 const midX = (targetX - sourceX) / 2 + sourceX;
                 const midY = (targetY - sourceY) / 2 + sourceY;
@@ -305,12 +394,12 @@ class EventTypeVis {
             // TODO i think this should be min(sim.events)
             return d3.min(sim.events, (event) => {
                 // console.log('debug event', event);
-                return event[' t'];
+                return event.t;
             })
         })
         const max = d3.max(data.simulations, (sim) => {
             return d3.max(sim.events, (event) => {
-                return event[' t'];
+                return event.t;
             })
         })
         // console.log('Time range result', [parseFloat(min), parseFloat(max)]);
@@ -323,22 +412,13 @@ class EventTypeVis {
             .range([this.config.padding.left, this.config.width + this.config.padding.left])
     }
 
-    filterEventByTimeThreshold(event) {
-        return event.filter(d => {
-            return d[' t'] > this.config.timeRange[0] && d[' t'] < this.config.timeRange[1];
-        })
-    }
-
     getTimeFilteredData(data) {
-        // data = [...data]
-        /*
-        for (let i = 0; i < data.simulations.length; i++) {
-            data.simulations[i] = {
-                event: this.filterEventByTimeThreshold(data[i].event),
-                simulationIndex: data[i].simulationIndex
+        for (let s = 0; s < data.simulations.length; s++) {
+            for (let e = 0; e < data.simulations[s].events.length; e++) {
+                let event = data.simulations[s].events[e];
+                event.on = event.eventTypeOn && event.t > this.config.timeRange[0] && event.t < this.config.timeRange[1];
             }
         }
-        */
         return data;
     }
 
@@ -598,26 +678,39 @@ class EventTypeVis {
             .enter()
             .append('circle')
             .merge(circleSel)
-            .attr('time', d => { return d[' t']; })
+            .attr('time', d => { return d.t; })
             .attr('simulationIndex', d => { return d.simulationIndex; })
             .attr('class', 'eventTimelinePoint')
-            .attr('cx', d => { return timeScale(+d[' t']); })
+            .attr('cx', d => { return timeScale(+d.t); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
+<<<<<<< HEAD
             .attr('r', d => { return this.circleSize; })
             .style('fill', d => {
                 let color = getColor(d['color']);
                 return color;
             })
-            .on('mouseover', function (d) {
-                console.log('Mouseovered the event', d);
-                if (self.state.match) {
-                    self.state.match.hover = d.simulationIndex
-                    self.highlightSimulation(d.simulationIndex)
+=======
+            .attr('r', d => { 
+                if(d.on) {
+                    return this.circleSize; 
                 }
-                scatter.highlightSimulation(d.index);
-                paramVis.highlightSimulation(d.index);
-                d3.select(this)
-                    .attr('r', () => { return self.circleSize * self.highlightScale; });
+                return 0; // events that are turned off should not display
+            })
+            .style('fill', d => { return data.getColor(d); })
+            .classed('selected-sim', (d) => { return d.selected; })
+>>>>>>> origin/dev
+            .on('mouseover', function (d) {
+                if (d.on) {
+                    // console.log('Mouseovered the event', d);
+                    if (self.state.match) {
+                        self.state.match.hover = d.simulationIndex
+                        self.highlightSimulation(d.simulationIndex)
+                    }
+                    scatter.highlightSimulation(d.index);
+                    paramVis.highlightSimulation(d.index);
+                    d3.select(this)
+                        .attr('r', () => { return self.circleSize * self.highlightScale; });
+                }
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {
@@ -637,6 +730,11 @@ class EventTypeVis {
                 paramVis.unhighlightSimulation(d.index);
             })
             .on('click', function (d, i) {
+                console.log('Clicked event', d);
+                // self.unselectAllSims();
+                self.selectSim(d.simulationIndex);
+
+                /*
                 if (self.state.match) {
                     if (self.state.match.eventA && self.state.match.eventB) {
                         // there was an old match
@@ -666,6 +764,7 @@ class EventTypeVis {
 
                     self.updateHelper(self.originalData, self.originalParamData, self.originalDistances);
                 }
+                */
             })
             ;
         console.log('Finished updating, reordering');
@@ -697,7 +796,6 @@ class EventTypeVis {
         }
         let colorScale = d3.scaleLinear()
             .range(["#ffffff", "#000000"])
-            // .range(["#000000", "#ffffff"])
             .domain([0, d3.max(distances)])
             ;
 
@@ -957,7 +1055,11 @@ class SimulationDistance {
         for (let i = 0; i < data.length; i++) {
             let metric;
             if (ordering === 'dtw') {
+<<<<<<< HEAD
                 metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d[' t'], maxDeaths)
+=======
+                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d.t, maxDeaths)
+>>>>>>> origin/dev
             } else if (ordering === 'hausdorff') {
                 metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.events, data[i].events)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
@@ -1041,8 +1143,16 @@ class SimulationDistance {
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
         if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
 
+<<<<<<< HEAD
         event1 = event1[' t']
         event2 = event2[' t']
+=======
+        event1 = event1.t
+        event2 = event2.t
+
+        return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
+    }
+>>>>>>> origin/dev
 
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
@@ -1070,7 +1180,7 @@ class SimulationDistance {
     getHausdorffDistances(events1, events2) {
         let smallEvents = events1
         let largeEvents = events2
-        const valueSelector = d => d[' t']
+        const valueSelector = d => d.t
         let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents, valueSelector);
         let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents, valueSelector);
 
@@ -1079,7 +1189,7 @@ class SimulationDistance {
         for (let i = 0; i < largeEventsDistances.length; i++) {
             let possibleCorrelatingPoint = largeEventsDistances[i];
             if (smallEventsDistances[possibleCorrelatingPoint] == i) {
-                let distance = Math.abs(smallEvents[possibleCorrelatingPoint][' t'] - largeEvents[i][' t']);
+                let distance = Math.abs(smallEvents[possibleCorrelatingPoint].t - largeEvents[i].t);
                 correlatingPointsDistances.push(distance);
                 pairs.push([possibleCorrelatingPoint, i])
             }

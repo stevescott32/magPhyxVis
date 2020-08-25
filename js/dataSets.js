@@ -60,6 +60,10 @@ function parseStockMarketData(eventData) {
         )
         for (let j = 0; j < oneSim.length; j++) {
             simulations[i].events.push(oneSim[j]);
+            simulations[i].events[j].t = +oneSim[j][" t"];
+            simulations[i].events[j].on = false;
+            simulations[i].events[j].selected = false;
+            simulations[i].events[j].eventTypeOn = false;
         }
     }
 
@@ -133,17 +137,19 @@ function parseMagPhyxData(eventData, paramData) {
         for (let j = 0; j < oneSim.length; j++) {
             let oneEvent = oneSim[j];
             simulations[i].events.push({
-                n: oneEvent.n,
+                n: +oneEvent.n,
                 event_type: oneEvent[' event_type'],
-                beta: oneEvent[' beta'],
-                phi: oneEvent[' phi'],
-                pphi: oneEvent[' pphi'],
-                ptheta: oneEvent[' ptheta'],
-                theta: oneEvent[' theta'],
-                r: oneEvent[' r'],
-                ' t': oneEvent[' t']
+                beta: +oneEvent[' beta'],
+                phi: +oneEvent[' phi'],
+                pphi: +oneEvent[' pphi'],
+                ptheta: +oneEvent[' ptheta'],
+                theta: +oneEvent[' theta'],
+                r: +oneEvent[' r'],
+                t: +oneEvent[' t'],
+                on: false,
+                selected: false,
+                eventTypeOn: false
             });
-            simulations[i].events[j][' t'] = oneEvent[' t'];
         }
     }
 
