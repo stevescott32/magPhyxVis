@@ -9,25 +9,9 @@ let dataSet = data_sets[0];
 let reorderer = ways_to_reorder[0];
 let distance_func = distance_functions[0];
 
-<<<<<<< HEAD
-// TODO define an array of data possibilities that has a similar
-// structure to these settings but can be switched at runtime
-let settings = {
-  NUM_FILES: 2, // change this to vary how many files of events/commands will be used
-  reorderData: false, // change this to false to turn off z-ordering
-  dataset: 'momentumTradingData', // change this to use a different data set
-    // data4 - grid data
-    // data6 - random data
-    // data7 - random data
-    // 
-  hilbert: false, // false = use z order, true = use hilbert order
-}
-let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
-=======
 let keyboard = new Keyboard();
 
 let eventTypeVis = new EventTypeVis(keyboard);
->>>>>>> origin/dev
 let paramVis = new ParamsVis();
 let scatter = new Scatter();
 let allData = {};

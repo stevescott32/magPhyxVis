@@ -577,7 +577,7 @@ class EventTypeVis {
             return 0;
           }
 
-          // let dist = getDTWDistance(a.events, b.events, d => d[' t']).distance;
+          // let dist = getDTWDistance(a.events, b.events, d => d.t).distance;
           let dist = simulationDistances.getTNWScore(a.events, b.events);
           if (dist == 0)
           {
@@ -683,22 +683,22 @@ class EventTypeVis {
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d.t); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
-<<<<<<< HEAD
-            .attr('r', d => { return this.circleSize; })
-            .style('fill', d => {
-                let color = getColor(d['color']);
-                return color;
-            })
-=======
             .attr('r', d => { 
                 if(d.on) {
                     return this.circleSize; 
                 }
                 return 0; // events that are turned off should not display
             })
-            .style('fill', d => { return data.getColor(d); })
+// TODO: Figure out color choice clustering vs ordering
+// <<<<<<< HEAD
+            .style('fill', d => {
+                let color = getColor(d['color']);
+                return color;
+            })
+// =======
+//             .style('fill', d => { return data.getColor(d); })
+// >>>>>>> origin/dev
             .classed('selected-sim', (d) => { return d.selected; })
->>>>>>> origin/dev
             .on('mouseover', function (d) {
                 if (d.on) {
                     // console.log('Mouseovered the event', d);
@@ -1055,11 +1055,7 @@ class SimulationDistance {
         for (let i = 0; i < data.length; i++) {
             let metric;
             if (ordering === 'dtw') {
-<<<<<<< HEAD
-                metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d[' t'], maxDeaths)
-=======
-                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d.t, maxDeaths)
->>>>>>> origin/dev
+                metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d.t, maxDeaths)
             } else if (ordering === 'hausdorff') {
                 metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.events, data[i].events)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
@@ -1143,20 +1139,11 @@ class SimulationDistance {
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
         if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
 
-<<<<<<< HEAD
-        event1 = event1[' t']
-        event2 = event2[' t']
-=======
         event1 = event1.t
         event2 = event2.t
 
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
->>>>>>> origin/dev
-
-        return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
-    }
-    
 
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;
