@@ -491,19 +491,28 @@ class EventTypeVis {
 
         // cluster data ===============================
         var distFunc = function(a, b) {
-          if (a == undefined || b == undefined)
-          {
+          if (a == undefined || b == undefined) {
             return Number.MAX_SAFE_INTEGER;
+          } else if (a.events == undefined || b.events == undefined) {
+            return 0;
           }
 
-          // return getDTWDistance(a.events, b.events, d => d[' t']).distance;
-          return simulationDistances.getTNWScore(a.events, b.events);
+          // let dist = getDTWDistance(a.events, b.events, d => d[' t']).distance;
+          let dist = simulationDistances.getTNWScore(a.events, b.events);
+          if (dist == 0)
+          {
+            dist = 1;
+          }
+
+          return dist;
         };
 
-        let kMeansClusters = kMeansClustering(data.simulations, 15, 3, distFunc);
-        // kMeansClusters.clusters = spectralClustering(data.simulations, 5, distFunc);
+        // let kMeansClusters = kMeansClustering(data.simulations, 5, 5, distFunc);
+        var kMeansClusters = {};
+        kMeansClusters.clusters = spectralClustering(data.simulations, 5, distFunc);
 
         data.simulations = [];
+        let order = [];
         for (var i = 0; i < kMeansClusters.clusters.length; ++i)
         {
           // intra cluster ordering
@@ -530,11 +539,16 @@ class EventTypeVis {
           // }
           // ======================================================================
 
-          kMeansClusters.clusters[i].forEach(function(d) { d.color = i; })
+          kMeansClusters.clusters[i].forEach(function(d) {
+            order.push(d.index);
+            d.color = i;
+          })
 
           data.simulations =
               data.simulations.concat(kMeansClusters.clusters[i]);
         }
+
+        console.log(order);
         // ============================================
 
         const simsSel = simulationGroup.selectAll('.oneSimulation')
@@ -555,6 +569,11 @@ class EventTypeVis {
 
         let paramVis = this.paramVis;
         let scatter = this.scatter;
+        var customColorScale = [
+          'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green', 'pink',
+          'yellow', 'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
+          'pink', 'yellow', 'black'
+        ];
 
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
@@ -563,7 +582,7 @@ class EventTypeVis {
                     d.events[a].simulationIndex = i;
                     if (kMeansClusters.clusterOrigins.some(
                             o => o.meta.simulationIndex == d.index)) {
-                      d.events[a].color = 9;
+                      d.events[a].color = customColorScale.length - 1;
                     } else {
                       d.events[a].color = d.color;
                     }
@@ -573,10 +592,6 @@ class EventTypeVis {
 
         circleSel.exit().remove();
 
-        var customColorScale = [
-          'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
-          'pink', 'yellow', 'black'
-        ];
         var getColor = (index) => { return customColorScale[index]; };
 
         circleSel
