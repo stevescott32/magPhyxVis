@@ -304,7 +304,7 @@ class Graph {
         let destIndex = -1;
         clusterOrigins.forEach(function(origin, index, clusterOrigins){
           let distToOrigin = distFunc(node, origin);
-          console.log("distance: ", distToOrigin, " index: ", index);
+          // console.log("distance: ", distToOrigin, " index: ", index);
           if (distToOrigin < minDist)
           {
             minDist = distToOrigin;
@@ -548,11 +548,10 @@ function cleanData(data)
   let cleanData = [];
   for (let sample of data)
   {
-    if (sample.events.length == 0)
+    if (sample.events.some(e => e.on == true))
     {
-      continue;
+      cleanData.push(sample);
     }
-    cleanData.push(sample);
   }
 
   return cleanData;
@@ -574,7 +573,7 @@ function defineOrder(data, order)
 
 function reorderFromVector(orders, data)
 {
-  let vec = orders.vectors[106];
+  let vec = orders.vectors[1];
   let taggedVec = Array(vec.length);
 
   let counter =0;
@@ -630,7 +629,7 @@ function clearNan(matrix)
  * comparable value. Closer values with be clustered
  * */
 function spectralClustering(points, k, distFunc) {
-  points = cleanData(points);
+  // points = cleanData(points);
   // let orderArray = [
   //   1,   2,   4,   6,   8,   27,  28,  42,  43,  44,  45,  48,  50,  52,
   //   61,  62,  83,  88,  99,  100, 110, 3,   9,   10,  12,  13,  14,  16,
@@ -642,18 +641,18 @@ function spectralClustering(points, k, distFunc) {
   //   11,  34,  51,  53,  54,  55,  60,  63,  64,
   // ];
 
-  // let orderArray = [
-  //   12, 16,  20,  21,  29,  31,  41,  59,  130, 131, 142, 143, 3,   8,
-  //   10, 13,  14,  18,  22,  23,  24,  25,  26,  32,  35,  38,  49,  56,
-  //   58, 126, 127, 128, 129, 133, 134, 135, 136, 138, 141, 1,   4,   5,
-  //   42, 43,  44,  45,  50,  52,  62,  67,  69,  74,  76,  80,  82,  83,
-  //   88, 91,  92,  95,  98,  99,  100, 102, 103, 104, 110, 116, 119, 140,
-  //   47, 79,  89,  90,  93,  115, 125, 0,   2,   6,   7,   9,   11,  17,
-  //   27, 28,  30,  33,  34,  36,  37,  39,  40,  46,  48,  51,  53,  54,
-  //   55, 57,  60,  61,  63,  64,  132, 137, 139,
-  // ];
+  let orderArray = [
+    12, 16,  20,  21,  29,  31,  41,  59,  130, 131, 142, 143, 3,   8,
+    10, 13,  14,  18,  22,  23,  24,  25,  26,  32,  35,  38,  49,  56,
+    58, 126, 127, 128, 129, 133, 134, 135, 136, 138, 141, 1,   4,   5,
+    42, 43,  44,  45,  50,  52,  62,  67,  69,  74,  76,  80,  82,  83,
+    88, 91,  92,  95,  98,  99,  100, 102, 103, 104, 110, 116, 119, 140,
+    47, 79,  89,  90,  93,  115, 125, 0,   2,   6,   7,   9,   11,  17,
+    27, 28,  30,  33,  34,  36,  37,  39,  40,  46,  48,  51,  53,  54,
+    55, 57,  60,  61,  63,  64,  132, 137, 139,
+  ];
 
-  // points = defineOrder(points, orderArray);
+  points = defineOrder(points, orderArray);
   let indicies = [...Array(points.length).keys() ];
 
   // init graph
@@ -796,16 +795,15 @@ function spectralClustering(points, k, distFunc) {
   // const H = [[5, 2.3], [2.3, 1]];
   // const ans = math.eigs(H);
 
-  console.log(math.sqrt(-4).toString());
+  // for (let i = 0; i < k - 1; ++i) {
+  //   let maxEdge = MST.findLargestEdge();
+  //   MST.deleteEdge(maxEdge);
+  // }
 
-  for (let i = 0; i < k - 1; ++i) {
-    let maxEdge = MST.findLargestEdge();
-    MST.deleteEdge(maxEdge);
-    }
+  // let clusters = MST.cluster(k);
 
-    let clusters = MST.cluster(k);
-
-    return clusters;
+  // return clusters;
+  return [];
 }
 
 /* Function utilizes kMeans algorithm to find clusters

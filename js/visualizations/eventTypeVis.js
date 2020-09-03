@@ -569,68 +569,6 @@ class EventTypeVis {
                 .attr('class', 'simulations')
         }
 
-        // cluster data ===============================
-        var distFunc = function(a, b) {
-          if (a == undefined || b == undefined) {
-            return Number.MAX_SAFE_INTEGER;
-          } else if (a.events == undefined || b.events == undefined) {
-            return 0;
-          }
-
-          // let dist = getDTWDistance(a.events, b.events, d => d.t).distance;
-          let dist = simulationDistances.getTNWScore(a.events, b.events);
-          if (dist == 0)
-          {
-            dist = 1;
-          }
-
-          return dist;
-        };
-
-        // let kMeansClusters = kMeansClustering(data.simulations, 5, 5, distFunc);
-        var kMeansClusters = {};
-        kMeansClusters.clusters = spectralClustering(data.simulations, 5, distFunc);
-
-        data.simulations = [];
-        let order = [];
-        for (var i = 0; i < kMeansClusters.clusters.length; ++i)
-        {
-          // intra cluster ordering
-          // var clusterOriginIdx = kMeansClusters.clusterOrigins[i].simulationIndex;
-
-          // let indicies = simulationDistances.minimizeTravel(kMeansClusters.clusters[i], null,10);
-
-          // let reorderedArray = Array(indicies.length);
-          // let counter = 0;
-          // for (var index of indicies[0])
-          // {
-          //   reorderedArray[counter] = kMeansClusters.clusters[i][index];
-          //   ++counter;
-          // }
-
-          // kMeansClusters.clusters[i] = reorderedArray;
-          // kMeansClusters.clusters[i] = simulationDistances.reorder(
-          //     kMeansClusters.clusters[i], clusterOriginIdx,
-          //     "dtw", self.state.maxDeaths);
-          //
-          // === spectralClustering index fix ==================================
-          // for (var index = 0; index < kMeansClusters.clusters.length; ++i) {
-          //   kMeansClusters.clusters[i][index] = data.simulations[kMeansClusters.clusters[i][index]];
-          // }
-          // ======================================================================
-
-          kMeansClusters.clusters[i].forEach(function(d) {
-            order.push(d.index);
-            d.color = i;
-          })
-
-          data.simulations =
-              data.simulations.concat(kMeansClusters.clusters[i]);
-        }
-
-        console.log(order);
-        // ============================================
-
         const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data.simulations)
             // .data(data.simulations.map(d => d.event))
@@ -649,30 +587,17 @@ class EventTypeVis {
 
         let paramVis = this.paramVis;
         let scatter = this.scatter;
-        var customColorScale = [
-          'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green', 'pink',
-          'yellow', 'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
-          'pink', 'yellow', 'black'
-        ];
 
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
             .data((d, i) => {
                 for (let a = 0; a < d.events.length; a++) {
                     d.events[a].simulationIndex = i;
-                    if (kMeansClusters.clusterOrigins.some(
-                            o => o.meta.simulationIndex == d.index)) {
-                      d.events[a].color = customColorScale.length - 1;
-                    } else {
-                      d.events[a].color = d.color;
-                    }
                 }
                 return d.events;
             });
 
         circleSel.exit().remove();
-
-        var getColor = (index) => { return customColorScale[index]; };
 
         circleSel
             .enter()
@@ -689,15 +614,7 @@ class EventTypeVis {
                 }
                 return 0; // events that are turned off should not display
             })
-// TODO: Figure out color choice clustering vs ordering
-// <<<<<<< HEAD
-            .style('fill', d => {
-                let color = getColor(d['color']);
-                return color;
-            })
-// =======
-//             .style('fill', d => { return data.getColor(d); })
-// >>>>>>> origin/dev
+            .style('fill', d => { return data.getColor(d); })
             .classed('selected-sim', (d) => { return d.selected; })
             .on('mouseover', function (d) {
                 if (d.on) {
