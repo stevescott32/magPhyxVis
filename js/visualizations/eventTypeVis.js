@@ -40,6 +40,8 @@ class EventTypeVis {
 
         // store the index of the most recently selected simulation
         this.selectedSimIndex = 0;
+        // store the the selected event
+        this.selectedEvent = null;
         // pressing the arrow up key moves the selected simulation up
         keyboard.registerHandler('ArrowUp', this.shiftSimUp);
         // pressing the arrow down key moves the selected simulation down
@@ -130,6 +132,35 @@ class EventTypeVis {
 
     setEventCols(eventCols) {
         this.eventCols = eventCols;
+    }
+
+    getSelectedEvent() {
+        return this.selectedEvent;
+    }
+
+    // WIP
+    selectEvent(event, eventIndex) {
+        console.log('Selected event', event);
+        const selectedEventClass = 'selected-event';
+        this.selectedEvent = event;
+
+        const dataEvent = this.state.data.simulations[event.simulationIndex].events[eventIndex];
+        dataEvent.eventSelected = true;
+        console.log('Data Event', dataEvent);
+
+        d3.select(`#${this.divId}`)
+            .selectAll(`.${selectedEventClass}`)
+            .classed(selectedEventClass, false);
+
+        d3.select(`#${this.divId}`)
+            .selectAll(`.group${event.simulationIndex}`)
+            //.selectAll('circle')
+            .selectAll(`.event-index-${eventIndex}`)
+            .classed(selectedEventClass, true)
+            ;
+
+        // d3.select(event)
+        //     .classed(selectedEventClass, true);
     }
 
     selectedSimClass = 'selected-sim';
@@ -604,7 +635,7 @@ class EventTypeVis {
             .merge(circleSel)
             .attr('time', d => { return d.t; })
             .attr('simulationIndex', d => { return d.simulationIndex; })
-            .attr('class', 'eventTimelinePoint')
+            .attr('class', (d, i) => `eventTimelinePoint event-index-${i}`)
             .attr('cx', d => { return timeScale(+d.t); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
             .attr('r', d => { 
@@ -648,45 +679,13 @@ class EventTypeVis {
             .on('click', function (d, i) {
                 console.log('Clicked event', d);
                 // self.unselectAllSims();
+                // WIP 
                 self.selectSim(d.simulationIndex);
-
-                /*
-                if (self.state.match) {
-                    if (self.state.match.eventA && self.state.match.eventB) {
-                        // there was an old match
-                        self.removeEventsMatch()
-                        self.state.match = {}
-                    }
-                    if (!self.state.match.eventA) {
-                        const simulationGroup = this.parentNode;
-                        self.state.match.eventA = { simulationIndex: d.simulationIndex }
-                        self.highlightSimulation(d.simulationIndex);
-                    } else if (!self.state.match.eventB) {
-                        if (d.simulationIndex !== self.state.match.eventA) {
-                            const simulationGroup = this.parentNode;
-                            self.state.match.eventB = { simulationIndex: d.simulationIndex }
-                            self.highlightSimulation(d.simulationIndex);
-                            self.correlateEvents(data, self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
-                        } else {
-                            self.removeEventsMatch()
-                            self.state.match = {}
-                        }
-                    }
-                } else {
-                    // eventVis.updateDimensionComparison(d, paramData);
-                    self.colorDimsByDistance(d['parentIndex'], paramData);
-
-                    self.state.reorderSimulationIndex = +d3.select(this).attr("simulationIndex")
-
-                    self.updateHelper(self.originalData, self.originalParamData, self.originalDistances);
-                }
-                */
+                self.selectEvent(d, i);
             })
             ;
         console.log('Finished updating, reordering');
     }
-
-
 
     getDataFilteredByDistance(data, value) {
         let filteredData = [];

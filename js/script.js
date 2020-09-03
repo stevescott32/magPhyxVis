@@ -164,6 +164,7 @@ function addReorderSelector() {
           } else {
             removeDistanceSelector();
             loadVis(allData, reorderer);
+            eventTypeVis.update(allData);
           }
         }
       }
