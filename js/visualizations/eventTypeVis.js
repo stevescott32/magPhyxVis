@@ -1029,8 +1029,8 @@ class SimulationDistance {
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
-                
-                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
+
+                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY)
                 // if (simulation1[i-1] === simulation2[j-1]) {
                 //     cellMax = matrix[i-1][j-1] + MATCH_REWARD
                 // } else {
