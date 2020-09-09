@@ -328,8 +328,8 @@ class EventTypeVis {
         const eventAIdx = data.findIndex(d => d.simulationIndex === infoA.simulationIndex)
         const eventBIdx = data.findIndex(d => d.simulationIndex === infoB.simulationIndex)
 
-        const eventA = eventAIdx !== -1 ? data[eventAIdx].event : []
-        const eventB = eventBIdx !== -1 ? data[eventBIdx].event : []
+        const eventA = eventAIdx !== -1 ? data[eventAIdx].events : []
+        const eventB = eventBIdx !== -1 ? data[eventBIdx].events : []
         let arrowInfo = []
         if (this.state.ordering === 'dtw') {
             const dtw = getDTWDistanceWithDeaths(eventA, eventB, d => d.t, this.state.maxDeaths)
@@ -568,6 +568,7 @@ class EventTypeVis {
             simulationGroup = this.svg.append('g')
                 .attr('class', 'simulations')
         }
+
         const simsSel = simulationGroup.selectAll('.oneSimulation')
             .data(data.simulations)
             // .data(data.simulations.map(d => d.event))
@@ -579,7 +580,7 @@ class EventTypeVis {
             .merge(simsSel)
             .attr('class', (d, i) => {
                 // return `oneSimulation group${d[0].simulationIndex}`;
-                return `oneSimulation group${i}`;
+                return `oneSimulation group${d.meta.simulationIndex}`;
             })
 
         simsSel.exit().remove();
@@ -590,8 +591,8 @@ class EventTypeVis {
         // append a circle for every event in the vis
         const circleSel = sims.selectAll('circle')
             .data((d, i) => {
-                for (let a = 0; a < d.length; a++) {
-                    d[a]['parentIndex'] = i;
+                for (let a = 0; a < d.events.length; a++) {
+                    d.events[a].simulationIndex = i;
                 }
                 return d.events;
             });
@@ -844,6 +845,117 @@ class SimulationDistance {
         return dist;
     }
 
+    crossOver(orderings, numOfNewOffspring)
+    {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find Parents(random)
+        var parentA = Math.floor(Math.random() * orderings.length);
+        var parentB = Math.floor(Math.random() * orderings.length);
+        parentB = parentB == parentA ? (parentB + 1) % orderings.length : parentB;
+
+        // Find places to cut(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut = Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+        secondCut += firstCut;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentB];
+        for (var cutIndex = firstCut; cutIndex <= secondCut; ++cutIndex) {
+          // Swap elements in the 'cut zone'
+          let aElement = orderings[parentA][cutIndex];
+          let bElement = offspring[cutIndex];
+          let indexA = offspring.findIndex(e => e == aElement);
+          let indexB = offspring.findIndex(e => e == bElement);
+          [offspring[indexA],offspring[indexB]] = [offspring[indexB],offspring[indexA]];
+        }
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    mutation(orderings, numOfNewOffspring) {
+      for (var i = 0; i < numOfNewOffspring; ++i) {
+        // Find parent to mutate from(random)
+        let parentA = Math.floor(Math.random() * orderings.length);
+
+        // Find section to mutate(random)
+        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
+        var secondCut =
+            Math.floor(Math.random() * (orderings[parentA].length - firstCut));
+
+        secondCut += firstCut + 1;
+        if (secondCut == 0)
+          continue;
+
+        // Make new offspring
+        let offspring = orderings[parentA];
+
+        // Mutate 'mutation zone'
+        let subarray = offspring.slice(firstCut, secondCut);
+        subarray.reverse()
+        offspring.splice(firstCut, (secondCut - firstCut), ...subarray);
+
+        // Add new offspring
+        orderings.push(offspring);
+      }
+
+      return orderings;
+    }
+
+    fitness(data, order) {
+      let totalDist = 0.0;
+      for (var i = 1; i < order.length; ++i) {
+        totalDist += this.getDTWWithDeaths(
+            data[order[i - 1]].events, data[order[i]].events, d => d[' t'], 0);
+      }
+
+      return totalDist;
+    }
+
+    selection(data, orderings, baseNumberOfOffspring) {
+      // Sort offspring based off fitness
+      orderings.sort((a,b) => this.fitness(data, a) < this.fitness(data, b));
+
+      // Only take the top offspring
+      orderings.splice(baseNumberOfOffspring,
+                       orderings.length - baseNumberOfOffspring);
+
+      return orderings;
+    }
+
+    minimizeTravel(data, startPoint, numIters)
+    {
+      var numStrains = 5;
+      var baseNumberOfOffspring = 5
+      let indicies = Array(numStrains);
+
+      for (var i = 0; i < numStrains; ++i)
+      {
+        indicies[i] = [...Array(data.length).keys() ];
+
+        for (let j = indicies[i].length - 1; j > 0; --j) {
+          var r = Math.floor(Math.random() * j); 
+          var temp = indicies[i][i];
+          indicies[i][i] = indicies[i][r];
+          indicies[i][r] = temp;
+        }
+      }
+
+      for (var i = 0; i < numIters; ++i)
+      {
+        indicies = this.crossOver(indicies, 3);
+        indicies = this.mutation(indicies, 3);
+        indicies = this.selection(data, indicies, baseNumberOfOffspring)
+      }
+
+      return indicies;
+    }
+
     // data is an array of { data: [event time series data], simulationIndex }
     reorder(data, simulationIndex, ordering, maxDeaths) {
         console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
@@ -860,11 +972,11 @@ class SimulationDistance {
         for (let i = 0; i < data.length; i++) {
             let metric;
             if (ordering === 'dtw') {
-                metric = this.getDTWWithDeaths(orderingParent.event, data[i].event, d => d.t, maxDeaths)
+                metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d.t, maxDeaths)
             } else if (ordering === 'hausdorff') {
-                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.event, data[i].event)[0]);
+                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.events, data[i].events)[0]);
             } else if (ordering === 'temporal-needleman-wunsch') {
-                metric = this.getTNWScore(orderingParent.event, data[i].event)
+                metric = this.getTNWScore(orderingParent.events, data[i].events)
             }
             if (data[i].simulationIndex !== simulationIndex) {
                 data_sum.push({
@@ -890,99 +1002,65 @@ class SimulationDistance {
     }
 
     getTNWScore(simulation1, simulation2) {
-        console.log(simulation1, simulation2);
+        // console.log(simulation1, simulation2);
 
         // first sequence is vertical
         // second sequence is horizontal
         var matrix = []
-        const GAP_SCORE = -1
-        const MATCH_SCORE = 1
-        const MAX_OFFSET_PENALTY = -1
+        const GAP_PENALTY = -4
+        const MISMATCH_PENALTY = -1
+        const MATCH_REWARD = 1
+        const MAX_OFFSET_PENALTY = -3
 
         // initialize first row
         let firstRow = []
         for (let i=0; i<simulation2.length+1; i++) {
-            // firstRow[i] = i * GAP_SCORE
-            firstRow[i] = { cellMax: i*GAP_SCORE, arrowImage: null}
+            firstRow[i] = i * GAP_PENALTY
         }
         matrix.push(firstRow)
 
         // initialize first column
         for (let i=1; i<simulation1.length+1; i++){
             let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
-            // row[0] = i * GAP_SCORE
-            row[0] = { cellMax: i*GAP_SCORE, arrowImage: null }
+            row[0] = i * GAP_PENALTY
             matrix.push(row)
         }
 
         // fill in the rest of the table
         for (let i=1; i<simulation1.length+1; i++){
             for (let j=1; j<simulation2.length+1; j++){
-                let arrowImage = 'd.png'
-                let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + this.offsetPenalty(simulation1[i], simulation2[j], MAX_OFFSET_PENALTY)
-                let vGap = matrix[i-1][j].cellMax + GAP_SCORE 
-                let hGap = matrix[i][j-1].cellMax + GAP_SCORE
-                let cellMax
-                if (match >= vGap && match >= hGap) {
-                    cellMax = match
-                    arrowImage = 'd.png'
-                    if (match === vGap && match === hGap) arrowImage = 'dsu.png'
-                    if (match === vGap) arrowImage = 'du.png'
-                    if (match === hGap) arrowImage = 'ds.png'
-                }
-                else if (vGap >= match && vGap >= hGap) {
-                    cellMax = vGap
-                    arrowImage = 'u.png'
-                    if (vGap === match && vGap === hGap) arrowImage = 'dsu.png'
-                    if (vGap === match) arrowImage = 'du.png'
-                    if (vGap === hGap) arrowImage = 'su.png'
-                }
-                else if (hGap >= match && hGap >= vGap) {
-                    cellMax = hGap
-                    arrowImage = 's.png'
-                    if (hGap === match && hGap === vGap) arrowImage = 'dsu.png'
-                    if (hGap === match) arrowImage = 'ds.png'
-                    if (hGap === vGap) arrowImage = 'su.png'
+
+                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY)
+                // if (simulation1[i-1] === simulation2[j-1]) {
+                //     cellMax = matrix[i-1][j-1] + MATCH_REWARD
+                // } else {
+                //     cellMax = matrix[i-1][j-1] + MISMATCH_PENALTY
+                // }
+
+                if (matrix[i-1][j] + GAP_PENALTY > cellMax) {
+                    cellMax = matrix[i-1][j] + GAP_PENALTY
                 }
 
-                matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage}
+                if (matrix[i][j-1] + GAP_PENALTY > cellMax) {
+                    cellMax = matrix[i][j-1] + GAP_PENALTY
+                }
+
+                matrix[i][j] = cellMax
             }
         }
+        // console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
 
-        console.log(matrix)
-        if (simulation1.length != simulation2.length) this.makeTable(matrix)
-        return matrix[matrix.length - 1][(matrix[matrix.length - 1].length -1)]
+        return matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1
     }
 
     offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
-        if (event1 === undefined || event2 === undefined) {
-            return MAX_OFFSET_PENALTY
-        }
+        if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
 
         event1 = event1.t
         event2 = event2.t
 
         return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
     }
-
-    makeTable (data) {
-        console.log('making table')
-        let table = document.querySelector("table")
-        for (let element of data) {
-            let row = table.insertRow();
-            for (let key in element) {
-                let cell = row.insertCell();
-                let roundedNum = element[key].cellMax.toFixed(2)  
-                let text = document.createTextNode(roundedNum);
-                cell.appendChild(text);
-                cell.setAttribute("style", `background-image: url(../assets/images/${element[key].arrowImage}); background-repeat: no-repeat; background-size: 100% 20px`)
-            }
-        }
-        
-        
-    }
-    
-    
 
     getMaxInArray(arr) {
         let max = Number.MIN_VALUE;
