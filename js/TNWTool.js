@@ -25,6 +25,51 @@ const clearTable = function () {
      }
 }
 
+const backtrace = function (data) {
+    console.log(data)
+    let trace = []
+
+    let j = data[data.length -1].length - 1
+    let i = data.length - 1
+
+    while (data[i][j].arrowImage !== null) {
+        // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+        if (data[i][j].arrowImage === 'd.png' || 
+            data[i][j].arrowImage === 'du.png' || 
+            data[i][j].arrowImage === 'ds.png' || 
+            data[i][j].arrowImage === 'dsu.png') {
+                i--
+                j--
+                trace.push({ a: i, b: j })
+
+            } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
+            else i--
+    }
+    // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+    return trace
+} 
+
+
+const makeTable = function (data) {
+    let table = document.querySelector("table")
+    for (let element in data) {
+        let row = table.insertRow();
+        for (let key in data[element]) {
+            let cell = row.insertCell();
+            let roundedNum = data[element][key].cellMax.toFixed(2)  
+            let text = document.createTextNode(roundedNum);
+            cell.appendChild(text);
+            cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].arrowImage}); 
+                                        background-repeat: no-repeat; 
+                                        background-size: 100% 20px;
+                                        background-color: aqua;`)
+            cell.setAttribute("id", `${element},${key}`)
+
+        }
+    }
+    return backtrace(data)
+}
+
 const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
     console.log(dataA, dataB)
     let indices = getTNWScore(
@@ -34,8 +79,11 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
         parseInt(match.node().value), 
         parseInt(maxOffsetPenalty.node().value),
         d => d,
-        d => d
+        d => d,
+        matrix => matrix
         )
+    
+    let table = makeTable(indices)
 
     console.log(indices)
 
@@ -51,6 +99,9 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
 
     const arrowSel = arrows.selectAll('line')
         .data(indices);
+
+
+    console.log(dataA)
 
     for (const correlation of indices) {
         arrowSel.enter()

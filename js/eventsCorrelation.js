@@ -241,6 +241,8 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
 
     console.log(indices)
 
+    console.log(indices)
+
     const distanceScale = d3.scaleLinear()
         .domain([0, bounds.width])
         .range([0, bounds.width])
