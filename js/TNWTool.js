@@ -18,6 +18,7 @@ const maxOffsetPenalty = root.select('.max-offset-penalty')
 const match = root.select('.match')
 const gap = root.select('.gap')
 
+
 const clearTable = function () {
      let table = document.querySelector("table")
      for (const child of table.children) {
@@ -46,6 +47,7 @@ const backtrace = function (data) {
             else i--
     }
     // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
+    console.log(trace)
     return trace
 } 
 
@@ -72,7 +74,7 @@ const makeTable = function (data) {
 
 const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
     console.log(dataA, dataB)
-    let indices = getTNWScore(
+    let indices = makeTable(getTNWScore(
         dataA,
         dataB,
         parseInt(gap.node().value),
@@ -81,12 +83,8 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
         d => d,
         d => d,
         matrix => matrix
-        )
-    
-    let table = makeTable(indices)
-
-    console.log(indices)
-
+        ))
+   
     const distanceScale = d3.scaleLinear()
         .domain([0, bounds.width])
         .range([0, bounds.width])
@@ -99,9 +97,6 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
 
     const arrowSel = arrows.selectAll('line')
         .data(indices);
-
-
-    console.log(dataA)
 
     for (const correlation of indices) {
         arrowSel.enter()
@@ -119,15 +114,6 @@ const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
 }
 
 const register_button_handlers = () => {
-    root.select('.match-a-to-b').on('click', function() {
-        drawCorrelation(dataA, dataB, 0, 1, 'green')
-    })
-    root.select('.match-b-to-a').on('click', function() {
-        drawCorrelation(dataB, dataA, 1, 0, 'red')
-    })
-    root.select('.match-both').on('click', function() {
-        drawCorrelation(dataB, dataA, 1, 0, 'red', 'dist_basic')
-    })
     range.attr('value', 0)
 
     root.select('.match-tnw').on('click', function() {
@@ -138,29 +124,6 @@ const register_button_handlers = () => {
     range.on('click', function() {
         root.select('.death-count').html(this.value)
         drawCorrelation(dataA, dataB, 0, 1, 'red', 'dtw')
-    })
-
-    root.select('.add-event-a').on('click', function() {
-        chartsData.push(dataA.map(d => ({ time: d})))
-        generateEventsChart(d => d.time)
-    })
-
-    root.select('.add-event-b').on('click', function() {
-        chartsData.push(dataB.map(d => ({ time: d})))
-        generateEventsChart(d => d.time)
-    })
-    root.select('.clear-event-a').on('click', function() {
-        dataA = []
-        generateChart('event1', dataA, { color: 'green' });
-        drawCorrelation([], [], 0, 1, 'green', 'dist_basic')
-        sd.clearTable()
-    })
-
-    root.select('.clear-event-b').on('click', function() {
-        dataB = []
-        generateChart('event2', dataB, { color: 'red' });
-        drawCorrelation([], [], 0, 1, 'green', 'dist_basic')
-        sd.clearTable()
     })
 }
 
