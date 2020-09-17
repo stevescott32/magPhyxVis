@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>test TNW</title>
+    <title>TNW Tool</title>
     <style>
         .root {
             display: grid
@@ -44,14 +44,7 @@
 <body>
 <div id="root">
     <header class="header">
-        <button class="match-a-to-b">MATCH A TO B</button>
-        <button class="match-b-to-a">MATCH B TO A</button>
-        <button class="match-both">MATCH BOTH</button>
         <button class="match-tnw">MATCH TNW</button>
-        <button class="clear-event-a">Clear event A</button>
-        <button class="clear-event-b">Clear event B</button>
-        <button class="add-event-a">Add eventA to set</button>
-        <button class="add-event-b">Add eventB to set</button>
         <br>
         <label for="max-offset-penalty">Max Offset Score</label>
         <input class="max-offset-penalty" name="max-offset-penalty" value="-1"/>
@@ -73,11 +66,8 @@
 </div>
 
 <script src="d3.js"></script>
-<script type="application/javascript" src="js/utils.js"></script>
-<script type="application/javascript" src="js/dtw.js"></script>
-<script src="js/union_find.js"></script>
-<script src="js/eventTypeVis.js"></script>
-<script src="js/eventsCorrelation.js"></script>
+<script src="js/reorder/distanceFunctions/tnw.js"></script>
+<script src="js/TNWTool.js"></script>
 </body>
 </html>
 
