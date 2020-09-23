@@ -33,7 +33,7 @@ const backtrace = function (data) {
     let j = data[data.length -1].length - 1
     let i = data.length - 1
 
-    while (data[i][j].arrowImage !== null) {
+    while (i !== 0 && j !== 0) {
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
         if (data[i][j].arrowImage === 'd.png' || 
             data[i][j].arrowImage === 'du.png' || 

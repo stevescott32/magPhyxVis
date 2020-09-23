@@ -9,6 +9,12 @@ function getTNWScore(sim1, sim2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY
     let simulation1 = dataFilter(sim1)
     let simulation2 = dataFilter(sim2)
 
+    for (const event in simulation1) {
+        simulation1[event] = dataSelector(simulation1[event])
+    }
+    for (const event in simulation2) {
+        simulation2[event] = dataSelector(simulation2[event])
+    }
 
     // first sequence is vertical
     // second sequence is horizontal
@@ -16,16 +22,16 @@ function getTNWScore(sim1, sim2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY
 
     // initialize first row
     let firstRow = []
-    for (let i = 0; i < simulation2.length + 1; i++) {
-        firstRow[i] = { cellMax: i * GAP_SCORE, arrowImage: null }
+    firstRow[0] = { cellMax: 0, arrowImage: 'd.png'}
+    for (let i = 1; i < simulation2.length + 1; i++) {
+        firstRow[i] = { cellMax: i * GAP_SCORE, arrowImage: 's.png' }
     }
     matrix.push(firstRow)
 
     // initialize first column
     for (let i = 1; i < simulation1.length + 1; i++) {
         let row = Array(simulation2.length + 1).fill(null, 1, simulation2.length + 1)
-        // row[0] = i * GAP_SCORE
-        row[0] = { cellMax: i * GAP_SCORE, arrowImage: null }
+        row[0] = { cellMax: i * GAP_SCORE, arrowImage: 'u.png' }
         matrix.push(row)
     }
 
@@ -66,13 +72,11 @@ function getTNWScore(sim1, sim2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY
     return resultSelector(matrix)
 }
 
-function offsetPenalty(event1, event2, MAX_OFFSET_PENALTY, dataSelector) {
+function offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
     if (event1 === undefined || event2 === undefined) {
+        console.log('undefined event')
         return MAX_OFFSET_PENALTY
     }
-
-    event1 = dataSelector(event1)
-    event2 = dataSelector(event2)
 
     return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
 }
