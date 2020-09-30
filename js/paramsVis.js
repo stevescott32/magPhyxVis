@@ -115,27 +115,27 @@ class ParamsVis {
 
 
     // add a rectangle around each boundary
-    displaySvg.selectAll('.boundaries')
-      .data(boundaries)
-      .enter()
-      .append('rect')
-      .attr('x', d => {
-        return xscale(d.dimensionMins[0]);
-      })
-      .attr('y', d => {
-        return yscale(d.dimensionMins[1]);
-      })
-      .attr('width', d => {
-        return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
-      })
-      .attr('height', d => {
-        return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
-      })
-      .style('fill', 'white')
-      .style('stroke-width', 3)
-      .style('stroke', 'lightgrey')
-      .attr('class', 'boundaries')
-      ;
+    // displaySvg.selectAll('.boundaries')
+    //   .data(boundaries)
+    //   .enter()
+    //   .append('rect')
+    //   .attr('x', d => {
+    //     return xscale(d.dimensionMins[0]);
+    //   })
+    //   .attr('y', d => {
+    //     return yscale(d.dimensionMins[1]);
+    //   })
+    //   .attr('width', d => {
+    //     return xscale(d.dimensionMaxs[0]) - xscale(d.dimensionMins[0]);
+    //   })
+    //   .attr('height', d => {
+    //     return yscale(d.dimensionMaxs[1]) - yscale(d.dimensionMins[1]);
+    //   })
+    //   .style('fill', 'white')
+    //   .style('stroke-width', 3)
+    //   .style('stroke', 'lightgrey')
+    //   .attr('class', 'boundaries')
+    //   ;
 
     // draw a line from each point to its parent
     let links = displaySvg.selectAll('.link')

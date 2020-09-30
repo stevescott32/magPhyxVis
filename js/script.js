@@ -8,12 +8,12 @@ console.log('Starting script');
 let settings = {
   NUM_FILES: 100, // change this to vary how many files of events/commands will be used
   reorderData: true, // change this to false to turn off z-ordering
-  dataset: 'data7', // change this to use a different data set
+  dataset: 'data4', // change this to use a different data set
     // data4 - grid data
     // data6 - random data
     // data7 - random data
     // 
-  hilbert: true, // false = use z order, true = use hilbert order
+  hilbert: false, // false = use z order, true = use hilbert order
 }
 let eventTypeVis = new EventTypeVis(settings.NUM_FILES);
 let paramVis = new ParamsVis();
