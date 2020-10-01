@@ -27,7 +27,7 @@ const clearTable = function () {
 }
 
 const backtrace = function (data) {
-    console.log(data)
+    // console.log(data)
     let trace = []
 
     let j = data[data.length -1].length - 1
@@ -35,19 +35,16 @@ const backtrace = function (data) {
 
     while (i !== 0 && j !== 0) {
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
-        if (data[i][j].arrowImage === 'd.png' || 
-            data[i][j].arrowImage === 'du.png' || 
-            data[i][j].arrowImage === 'ds.png' || 
-            data[i][j].arrowImage === 'dsu.png') {
+        if (data[i][j].arrowImage === directions.DIAGONAL) {
                 i--
                 j--
                 trace.push({ a: i, b: j })
 
-            } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
+            } else if (data[i][j].arrowImage === directions.SIDE ) j--
             else i--
     }
     // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
-    console.log(trace)
+    // console.log(trace)
     return trace
 } 
 
@@ -73,7 +70,7 @@ const makeTable = function (data) {
 }
 
 const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
-    console.log(dataA, dataB)
+    // console.log(dataA, dataB)
     let indices = makeTable(getTNWScore(
         dataA,
         dataB,
