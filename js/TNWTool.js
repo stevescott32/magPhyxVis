@@ -35,12 +35,12 @@ const backtrace = function (data) {
 
     while (i !== 0 && j !== 0) {
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
-        if (data[i][j].arrowImage === directions.DIAGONAL) {
+        if (data[i][j].direction === directions.DIAGONAL) {
                 i--
                 j--
                 trace.push({ a: i, b: j })
 
-            } else if (data[i][j].arrowImage === directions.SIDE ) j--
+            } else if (data[i][j].direction === directions.SIDE ) j--
             else i--
     }
     // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
@@ -58,7 +58,7 @@ const makeTable = function (data) {
             let roundedNum = data[element][key].cellMax.toFixed(2)  
             let text = document.createTextNode(roundedNum);
             cell.appendChild(text);
-            cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].arrowImage}); 
+            cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].direction}); 
                                         background-repeat: no-repeat; 
                                         background-size: 100% 20px;
                                         background-color: aqua;`)

@@ -43,23 +43,23 @@ function getTNWScore(
 
     // initialize first row
     let firstRow = []
-    firstRow[0] = { cellMax: 0, arrowImage: directions.DIAGONAL}
+    firstRow[0] = { cellMax: 0, direction: directions.DIAGONAL}
     for (let i = 1; i < simulation2.length + 1; i++) {
-        firstRow[i] = { cellMax: i * GAP_SCORE, arrowImage: directions.SIDE }
+        firstRow[i] = { cellMax: i * GAP_SCORE, direction: directions.SIDE }
     }
     matrix.push(firstRow)
 
     // initialize first column
     for (let i = 1; i < simulation1.length + 1; i++) {
         let row = Array(simulation2.length + 1).fill(null, 1, simulation2.length + 1)
-        row[0] = { cellMax: i * GAP_SCORE, arrowImage: directions.UP }
+        row[0] = { cellMax: i * GAP_SCORE, direction: directions.UP }
         matrix.push(row)
     }
 
     // fill in the rest of the table
     for (let i = 1; i < simulation1.length + 1; i++) {
         for (let j = 1; j < simulation2.length + 1; j++) {
-            let arrowImage = directions.DIAGONAL
+            let direction = directions.DIAGONAL
             let pd = findPreviousDiagonal(matrix, i-1, j-1)
             // let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
             let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i,pd.ci,tempSimulation1), getSummation(j,pd.cj,tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
@@ -68,20 +68,26 @@ function getTNWScore(
             let cellMax
             if (match >= vGap && match >= hGap) {
                 cellMax = match
-                arrowImage = directions.DIAGONAL
+                direction = directions.DIAGONAL
             }
             else if (vGap >= match && vGap >= hGap) {
                 cellMax = vGap
-                arrowImage = directions.UP
+                direction = directions.UP
             }
             else if (hGap >= match && hGap >= vGap) {
                 cellMax = hGap
-                arrowImage = directions.SIDE
+                direction = directions.SIDE
             }
 
-            matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage }
+            matrix[i][j] = { 'cellMax': cellMax, 'direction': direction }
         }
     }
+    // for (const row of matrix) {
+    //     for (const cell of row) {
+    //         console.log(cell)
+    //     }
+    //     console.log('')
+    // }
     return resultSelector(matrix)
 }
 
@@ -90,7 +96,9 @@ function getSummation(start,end,array) {
     sum = 0
     for (let i=end; i<=start; i++) {
         sum += array[i]
+        console.log(array, array[i], i)
     }
+    // console.log(typeof sum)
     return sum
 }
 
@@ -99,12 +107,14 @@ function findPreviousDiagonal(matrix, i, j) {
     originali = i
     originalj = j
 
-    while (matrix[i][j].arrowImage !== directions.DIAGONAL) {
-        if (matrix[i][j].arrowImage === directions.SIDE){
+    if (matrix[i][j].direction === directions.SIDE) j--
+    if (matrix[i][j].direction === directions.UP) i--
+
+    while (matrix[i][j].direction !== directions.DIAGONAL) {
+        if (matrix[i][j].direction === directions.SIDE){
             j--
         } 
-
-        else if (matrix[i][j].arrowImage === directions.UP){
+        else if (matrix[i][j].direction === directions.UP){
              i--
         }
     }
@@ -117,8 +127,8 @@ function findPreviousDiagonal(matrix, i, j) {
 
 function getTempArray(array) {
     let tempArray = []
-    tempArray[0] = 0
-    tempArray[1] = array[0]
+    // tempArray[0] = 0
+    tempArray[0] = array[0]
     for (let i=1; i<array.length; i++) {
         tempArray.push(array[i] - array[i-1])
     }
