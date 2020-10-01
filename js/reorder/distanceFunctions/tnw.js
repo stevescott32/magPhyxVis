@@ -6,7 +6,6 @@ const directions = {
 
 function calculateTNWDistance(sim1, sim2) {
     let tndDist = getTNWScore(sim1, sim2).cellMax;
-    // console.log('TNW Distance: ', result);
     return tndDist * -1;
 }
 
@@ -15,7 +14,7 @@ function getTNWScore(
                      simulation2,
                      GAP_SCORE=-1,
                      MATCH_SCORE=1,
-                     MAX_OFFSET_PENALTY=-1,
+                     MAX_OFFSET_PENALTY=-4,
                      dataFilter = (simulation) => simulation.events.filter((d) => { return d.on; }),
                      dataSelector = d => d.t,
                      resultSelector = (matrix) => matrix[matrix.length - 1][(matrix[matrix.length - 1].length - 1)]
@@ -34,8 +33,6 @@ function getTNWScore(
 
     let tempSimulation1 = getTempArray(simulation1)
     let tempSimulation2 = getTempArray(simulation2)
-    console.log(tempSimulation1)
-    console.log(simulation1)
 
     // first sequence is vertical
     // second sequence is horizontal
@@ -60,9 +57,9 @@ function getTNWScore(
     for (let i = 1; i < simulation1.length + 1; i++) {
         for (let j = 1; j < simulation2.length + 1; j++) {
             let direction = directions.DIAGONAL
-            let pd = findPreviousDiagonal(matrix, i-1, j-1)
-            // let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
-            let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i,pd.ci,tempSimulation1), getSummation(j,pd.cj,tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
+            let pd = findPreviousDiagonal(matrix, i-1, j-1, tempSimulation1, tempSimulation2)
+            let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
+            // let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i-1,pd.finalPosi,tempSimulation1), getSummation(j-1,pd.finalPosj,tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
             let vGap = matrix[i - 1][j].cellMax + GAP_SCORE
             let hGap = matrix[i][j - 1].cellMax + GAP_SCORE
             let cellMax
@@ -82,28 +79,21 @@ function getTNWScore(
             matrix[i][j] = { 'cellMax': cellMax, 'direction': direction }
         }
     }
-    // for (const row of matrix) {
-    //     for (const cell of row) {
-    //         console.log(cell)
-    //     }
-    //     console.log('')
-    // }
     return resultSelector(matrix)
 }
 
 
 function getSummation(start,end,array) {
     sum = 0
-    for (let i=end; i<=start; i++) {
+    for (let i=end; i<start; i++) {
         sum += array[i]
-        console.log(array, array[i], i)
     }
-    // console.log(typeof sum)
+    
     return sum
 }
 
 // find x component and y component to last diagonal
-function findPreviousDiagonal(matrix, i, j) {
+function findPreviousDiagonal(matrix, i, j, tarray1, tarray2) {
     originali = i
     originalj = j
 
@@ -118,17 +108,15 @@ function findPreviousDiagonal(matrix, i, j) {
              i--
         }
     }
-    // console.log(`processed: (${Math.abs(originali-i)},${Math.abs(originalj-j)}) previous:(${originali},${originalj}) after: ${i},${j}`)
     return {
-        ci: Math.abs(originali-i),
-        cj: Math.abs(originalj-j)
+        finalPosi: i,
+        finalPosj: j
     }
+
 }
 
 function getTempArray(array) {
     let tempArray = []
-    // tempArray[0] = 0
-    tempArray[0] = array[0]
     for (let i=1; i<array.length; i++) {
         tempArray.push(array[i] - array[i-1])
     }
@@ -140,7 +128,9 @@ function offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
         console.error('undefined event')
         return MAX_OFFSET_PENALTY
     }
+    let penalty = MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
 
-    return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
+    if (isNaN(penalty) || penalty === undefined) console.error('error in computing offset penalty', 'event1:', event1, 'event2:', event2)
+    return penalty
 }
 
