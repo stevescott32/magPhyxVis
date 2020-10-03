@@ -14,7 +14,7 @@ function getTNWScore(
                      simulation2,
                      GAP_SCORE=-1,
                      MATCH_SCORE=1,
-                     MAX_OFFSET_PENALTY=-4,
+                     MAX_OFFSET_PENALTY=-1,
                      dataFilter = (simulation) => simulation.events.filter((d) => { return d.on; }),
                      dataSelector = d => d.t,
                      resultSelector = (matrix) => matrix[matrix.length - 1][(matrix[matrix.length - 1].length - 1)]
@@ -58,8 +58,9 @@ function getTNWScore(
         for (let j = 1; j < simulation2.length + 1; j++) {
             let direction = directions.DIAGONAL
             let pd = findPreviousDiagonal(matrix, i-1, j-1, tempSimulation1, tempSimulation2)
-            let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
-            // let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i-1,pd.finalPosi,tempSimulation1), getSummation(j-1,pd.finalPosj,tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
+            // let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
+            getSummation(i-1, pd.ci, tempSimulation1)
+            let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i-1, pd.ci, tempSimulation1), getSummation(j-1, pd.cj, tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
             let vGap = matrix[i - 1][j].cellMax + GAP_SCORE
             let hGap = matrix[i][j - 1].cellMax + GAP_SCORE
             let cellMax
@@ -83,10 +84,10 @@ function getTNWScore(
 }
 
 
-function getSummation(start,end,array) {
+function getSummation(i,ci,array) {
     sum = 0
-    for (let i=end; i<start; i++) {
-        sum += array[i]
+    for (let q=0; q<=ci; q++) {
+        sum += array[i-q]
     }
     
     return sum
@@ -94,29 +95,35 @@ function getSummation(start,end,array) {
 
 // find x component and y component to last diagonal
 function findPreviousDiagonal(matrix, i, j, tarray1, tarray2) {
-    originali = i
-    originalj = j
 
-    if (matrix[i][j].direction === directions.SIDE) j--
-    if (matrix[i][j].direction === directions.UP) i--
+    ci = 0
+    cj = 0
+
+    if (matrix[i][j].direction === directions.SIDE) {
+        cj += 1
+    }
+    if (matrix[i][j].direction === directions.UP) {
+        ci+=1
+    }
 
     while (matrix[i][j].direction !== directions.DIAGONAL) {
         if (matrix[i][j].direction === directions.SIDE){
-            j--
+            cj+=1
         } 
         else if (matrix[i][j].direction === directions.UP){
-             i--
+             ci+=1
         }
     }
     return {
-        finalPosi: i,
-        finalPosj: j
+        ci: ci,
+        cj: cj
     }
 
 }
 
 function getTempArray(array) {
     let tempArray = []
+    tempArray[0] = array[0]
     for (let i=1; i<array.length; i++) {
         tempArray.push(array[i] - array[i-1])
     }

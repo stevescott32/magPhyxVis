@@ -32,8 +32,8 @@ const backtrace = function (data) {
 
     let j = data[data.length -1].length - 1
     let i = data.length - 1
-
     while (i !== 0 && j !== 0) {
+        // let cell = document.getElementById(`${i},${j}`)
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
         if (data[i][j].direction === directions.DIAGONAL) {
                 i--
@@ -43,6 +43,7 @@ const backtrace = function (data) {
             } else if (data[i][j].direction === directions.SIDE ) j--
             else i--
     }
+    // cell = document.getElementById(`0,0`)
     // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
     // console.log(trace)
     return trace
