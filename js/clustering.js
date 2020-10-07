@@ -1,3 +1,71 @@
+    function plotData(data, selectTag = null, title = 'default', xAxis = 'default', yAxis = 'default') {
+      let svgWidth = 1000;
+      let svgHeight = 800;
+      let margin = 100;
+      let width = svgWidth - 2 * margin;
+      let height = svgHeight - 2 * margin;
+      let xAxisLabel = xAxis;
+      let yAxisLabel = yAxis;
+      let titleLabel = title;
+      if (selectTag == null)
+      {
+        selectTag = 'svg#scatter_area';
+      }
+
+      let svg = d3.select(selectTag)
+          .attr('width', svgWidth)
+          .attr('height', svgHeight);
+      let barChart = svg.append('g')
+        .attr('transform', `translate(${margin}, ${margin})`);
+      let yScale = d3.scaleLinear().range([ height, 0 ]).domain([
+        Math.floor(Math.min(...data.map(d => d.y))),
+        Math.ceil(Math.max(...data.map(d => d.y)))
+      ]);
+      let xScale = d3.scaleLinear()
+        .range([0, width])
+        .domain([0, Math.ceil(Math.max(...data.map(d => d.x)))]);
+
+      barChart.append('g')
+        .style('font-size', '10px')
+        .call(d3.axisLeft(yScale));
+
+      barChart.append('g')
+        .attr('transform', `translate(0, ${height})`)
+        .style('font-size', '12px')
+        .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+
+      svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append('circle')
+        .attr("cx", d => xScale(d.x) + margin)
+        .attr("cy", d => yScale(d.y) + margin)
+        .attr("r", 5)
+        .attr("fill", d => d.color);
+
+      svg.append('text')
+        .attr('x', -(height / 2) - margin)
+        .attr('y', margin / 2.8)
+        .attr('transform', 'rotate(-90)')
+        .attr('text-anchor', 'middle')
+        .style('font-size', '20px')
+        .text(yAxisLabel)
+
+      svg.append('text')
+        .attr('x', width / 2 + margin)
+        .attr('y', height + margin + 40)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '20px')
+        .text(xAxisLabel)
+
+      svg.append('text')
+        .attr('x', width / 2 + margin)
+        .attr('y', 40)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '30px')
+        .text(titleLabel)
+    }
+
 class Graph {
   constructor() {
     this.edges = {};
@@ -5,9 +73,9 @@ class Graph {
   }
 
   addNode(node) {
-    if (this.nodes.includes(node)) {
-      return;
-    }
+    // if (this.nodes.includes(node)) {
+    //   return;
+    // }
     this.nodes.push(node);
     this.edges[node] = [];
   }
@@ -286,8 +354,15 @@ class Graph {
     let clusterOrigins = [];
     let clusters = [];
     for (let j = 0; j < k; ++j) {
-      clusterOrigins.push(
-          this.nodes[Math.floor(Math.random() * this.nodes.length)]);
+      let candidate = this.nodes[Math.floor(Math.random() * this.nodes.length)];
+      if (clusterOrigins.includes(candidate))
+      {
+        --j;
+      }
+      else{
+        clusterOrigins.push(candidate);
+      }
+
     }
 
     for (let i = 0; i < numIters; ++i)
@@ -354,7 +429,6 @@ class Graph {
         if (edge.weight != 0)
         {
           degMat[key][key] += 1;
-          degMat[edge.node][edge.node] += 1;
         }
       }
     }
@@ -457,7 +531,7 @@ function minMats(aMat, bMat)
   let N = aMat[0].length;
   let lapMat = new Array(N);
   for (let i = 0; i < N; ++i) {
-    lapMat[i] = new Array(N);
+    lapMat[i] = new Array(N).fill(0);
   }
 
   for (let i = 0; i < N; ++i)
@@ -490,7 +564,6 @@ function mstClustering(points, k, distFunc) {
       if (p1 == (p2)) {
         continue;
       }
-      MST.addNode(p2);
       MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
     }
   }
@@ -598,11 +671,9 @@ function reorderFromVector(orders, data)
   return orderedVec;
 }
 
-function clearNan(matrix)
-{
+function clearNan(matrix) {
   let rows = matrix.length;
-  if (rows == 0)
-  {
+  if (rows == 0) {
     return matrix;
   }
 
@@ -617,6 +688,169 @@ function clearNan(matrix)
   }
 
   return matrix;
+}
+
+function genDegreeMatrix(matrix) {
+  let N = matrix[0].length;
+  let degMat = new Array(N);
+  for (let i = 0; i < N; ++i) {
+    degMat[i] = new Array(N).fill(0);
+  }
+
+  for (var rowIdx = 0; rowIdx < N; ++rowIdx) {
+    degMat[rowIdx][rowIdx] =
+        matrix[rowIdx].reduce(function(t, v) { return t + v; }, 0);
+  }
+
+  return degMat;
+}
+
+function genAdjacencyMatrix(matrix, threshold = 0)
+{
+  let N = matrix[0].length;
+  let adjMat = new Array(N);
+  for (let i = 0; i < N; ++i) {
+    adjMat[i] = new Array(N).fill(0);
+  }
+
+  for (var rowIdx = 0; rowIdx < N; ++rowIdx) {
+    for (var colIdx = 0; colIdx < N; ++colIdx) {
+      let element = matrix[rowIdx][colIdx];
+      if (element < threshold && element != 0) {
+        adjMat[rowIdx][colIdx] += 1;
+      }
+    }
+  }
+
+  return adjMat;
+
+}
+
+function createTable(data, tableID = 'Default Table ID') {
+
+  // CREATE DYNAMIC TABLE.
+  var table = document.createElement('table');
+
+  // SET THE TABLE ID.
+  // WE WOULD NEED THE ID TO TRAVERSE AND EXTRACT DATA FROM THE TABLE.
+  table.setAttribute('id', tableID);
+  table.setAttribute('class', 'table');
+
+  for (var rowIdx = 0; rowIdx <= data.length - 1; rowIdx++) {
+    tr = table.insertRow(-1);
+
+    for (var colIdx = 0; colIdx < data[0].length; colIdx++) {
+      var td = document.createElement('td'); // TABLE DEFINITION.
+      td = tr.insertCell(-1);
+      cellValue = 100 * data[rowIdx][colIdx].toFixed(2); // ADD VALUES TO EACH CELL.
+      td.setAttribute('class', 'v' + cellValue);
+      td.style.backgroundColor = 'hsl(' + (300 * (cellValue/100)) + ', 100%, 50%)';
+      td.innerHTML = cellValue; // ADD VALUES TO EACH CELL.
+    }
+  }
+
+  document.body.appendChild(table);
+}
+
+function createMatrixImage(matrix) {
+  var canvas = document.createElement("canvas");
+  let width = matrix[0].length;
+  let height = matrix[0].length;
+  canvas.width = width;
+  canvas.height = height;
+  // getting the context will allow to manipulate the image
+  var context = canvas.getContext("2d");
+  context.scale(10, 10);
+
+  // We create a new imageData.
+  var imageData = context.createImageData(width, height);
+  // The property data will contain an array of int8
+  var data = imageData.data;
+  for (var i = 0; i < height; i++) {
+    for (var j = 0; j < width; j++) {
+      data[((i * width) + j) * 4 + 0] = (1 - matrix[j][i]) * 256 | 0; // Red
+      data[((i * width) + j) * 4 + 1] = (1 - matrix[j][i]) * 256 | 0; // Green
+      data[((i * width) + j) * 4 + 2] = (1 - matrix[j][i]) * 256 | 0; // Blue
+      data[((i * width) + j) * 4 + 3] = 90; // alpha (transparency)
+    }
+  }
+
+  // we put this random image in the context
+  context.putImageData(imageData, 0, 0); // at coords 0,0
+
+  var img = document.createElement("img");
+  img.src = canvas.toDataURL("image/png");
+  document.body.appendChild(img);
+}
+
+function vectorToCoords(vector)
+{
+  let coords = [];
+  for (var i = 0; i < vector.length; ++i)
+  {
+    coords.push({"x": i, "y": vector[i]});
+  }
+
+  return coords;
+}
+
+function tieIndexToArray(inputArray)
+{
+  let data = [];
+
+  for (var i = 0; i < inputArray.length; ++i)
+  {
+    sample = {
+      'index': i,
+      'value': inputArray[i]
+    };
+    data.push(sample);
+  }
+
+  return data;
+}
+
+function normValues(matrix, max) {
+  let N = matrix[0].length;
+
+  for (let i = 0; i < N; ++i) {
+    for (let j = 0; j < N; ++j) {
+      matrix[i][j] = matrix[i][j] / max;
+    }
+  }
+
+  return matrix;
+}
+
+function genAffinityMatrix(data, distFunc)
+{
+  let N = data.length;
+  let adjMat = new Array(N);
+  for (let i = 0; i < N; ++i)
+  {
+    adjMat[i] = new Array(N).fill(0);
+  }
+
+  let max = 0;
+
+  for (var i = 0 ; i < N; ++i)
+  {
+    for (var j = i ; j < N; ++j)
+    {
+      let dist = distFunc(data[i],data[j]);
+
+      if (dist > max)
+      {
+        max = dist;
+      }
+      adjMat[i][j] = dist;
+      adjMat[j][i] = dist;
+    }
+  }
+
+  adjMat = normValues(adjMat, max);
+
+  return adjMat;
 }
 
 /* Function utilizes minimum spanning tree algorithm and spectral clustering to
@@ -641,19 +875,27 @@ function spectralClustering(points, k, distFunc) {
   //   11,  34,  51,  53,  54,  55,  60,  63,  64,
   // ];
 
-  let orderArray = [
-    12, 16,  20,  21,  29,  31,  41,  59,  130, 131, 142, 143, 3,   8,
-    10, 13,  14,  18,  22,  23,  24,  25,  26,  32,  35,  38,  49,  56,
-    58, 126, 127, 128, 129, 133, 134, 135, 136, 138, 141, 1,   4,   5,
-    42, 43,  44,  45,  50,  52,  62,  67,  69,  74,  76,  80,  82,  83,
-    88, 91,  92,  95,  98,  99,  100, 102, 103, 104, 110, 116, 119, 140,
-    47, 79,  89,  90,  93,  115, 125, 0,   2,   6,   7,   9,   11,  17,
-    27, 28,  30,  33,  34,  36,  37,  39,  40,  46,  48,  51,  53,  54,
-    55, 57,  60,  61,  63,  64,  132, 137, 139,
-  ];
+  // let orderArray = [
+  //   12, 16,  20,  21,  29,  31,  41,  59,  130, 131, 142, 143, 3,   8,
+  //   10, 13,  14,  18,  22,  23,  24,  25,  26,  32,  35,  38,  49,  56,
+  //   58, 126, 127, 128, 129, 133, 134, 135, 136, 138, 141, 1,   4,   5,
+  //   42, 43,  44,  45,  50,  52,  62,  67,  69,  74,  76,  80,  82,  83,
+  //   88, 91,  92,  95,  98,  99,  100, 102, 103, 104, 110, 116, 119, 140,
+  //   47, 79,  89,  90,  93,  115, 125, 0,   2,   6,   7,   9,   11,  17,
+  //   27, 28,  30,  33,  34,  36,  37,  39,  40,  46,  48,  51,  53,  54,
+  //   55, 57,  60,  61,  63,  64,  132, 137, 139,
+  // ];
 
-  points = defineOrder(points, orderArray);
+  // points = defineOrder(points, orderArray);
   let indicies = [...Array(points.length).keys() ];
+
+  //shuffle
+  for (let i = points.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * i);
+    const temp = points[i];
+    points[i] = points[j];
+    points[j] = temp;
+  }
 
   // init graph
   MST = new Graph();
@@ -663,30 +905,36 @@ function spectralClustering(points, k, distFunc) {
       if (p1 == (p2)) {
         continue;
       }
-      MST.addNode(p2);
       MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
     }
   }
 
   // MST = MST.kruskalsMST();
-  // MST = MST.kNeighbors(3);
-
-  // let adjMat = MST.genAdjacencyMatrix();
-
-  // let degMat = MST.genDegreeMatrix();
+  // MST = MST.kNeighbors(6);
 
   let affMat = MST.genAffinityMatrix(distFunc);
+
+  createTable(affMat, "AffMat");
+
+  let adjMat = genAdjacencyMatrix(affMat, 0.5);
+
+  let degMat = genDegreeMatrix(adjMat);
+
+  let lapMat = minMats(degMat, adjMat);
+
+  let ans = math.eigs(lapMat);
 
   // ====================================================================
   // we create a canvas element
   {
     var canvas = document.createElement("canvas");
-    let width = 100;
-    let height = 100;
-    canvas.width = 100;
-    canvas.height = 100;
+    let width = affMat[0].length;
+    let height = affMat[0].length;
+    canvas.width = width;
+    canvas.height = height;
     // getting the context will allow to manipulate the image
     var context = canvas.getContext("2d");
+    context.scale(10,10);
 
     // We create a new imageData.
     var imageData = context.createImageData(width, height);
@@ -710,19 +958,19 @@ function spectralClustering(points, k, distFunc) {
   }
   // ====================================================================
 
-  let rowLapMat = sumRowMat(affMat);
+  // let rowLapMat = sumRowMat(affMat);
 
-  let sqrtLapMat = math.sqrt(rowLapMat);
+  // let sqrtLapMat = math.sqrt(rowLapMat);
 
-  let invSqrtLapMat = invertLapMat(sqrtLapMat);
+  // let invSqrtLapMat = invertLapMat(sqrtLapMat);
 
-  let LA = math.multiply(invSqrtLapMat, affMat);
+  // let LA = math.multiply(invSqrtLapMat, affMat);
 
-  let LAL = math.multiply(LA, invSqrtLapMat);
+  // let LAL = math.multiply(LA, invSqrtLapMat);
 
-  LAL = clearNan(LAL);
+  // LAL = clearNan(LAL);
 
-  let ans = math.eigs(LAL);
+  // ans = math.eigs(LAL);
 
   // ====================================================================
   {
@@ -736,7 +984,6 @@ function spectralClustering(points, k, distFunc) {
         if (p1 == (p2)) {
           continue;
         }
-        MST.addNode(p2);
         MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
       }
     }
@@ -746,10 +993,10 @@ function spectralClustering(points, k, distFunc) {
 
     // we create a canvas element
     var canvas = document.createElement("canvas");
-    let width = 100;
-    let height = 100;
-    canvas.width = 100;
-    canvas.height = 100;
+    let width = affMat[0].length;
+    let height = affMat[0].length;
+    canvas.width = width;
+    canvas.height = height;
     // getting the context will allow to manipulate the image
     var context = canvas.getContext("2d");
 
@@ -773,11 +1020,9 @@ function spectralClustering(points, k, distFunc) {
     img.src = canvas.toDataURL("image/png");
     document.body.appendChild(img);
   }
+
+  return;
   // ====================================================================
-
-  // let lapMat = minMats(degMat, adjMat);
-
-  // let ans = math.eigs(lapMat);
 
   let testMat = [
     [ 4, -1, -1, 0, 0, -1, 0, 0, -1, -1 ],
@@ -806,6 +1051,123 @@ function spectralClustering(points, k, distFunc) {
   return [];
 }
 
+function newSpectralClustering(points, k, distFunc) {
+  let indicies = [...Array(points.length).keys() ];
+
+  // plotData(points, "svg#scatter_points", "Initial Points");
+
+  //shuffle
+  for (let i = points.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * i);
+    const temp = points[i];
+    points[i] = points[j];
+    points[j] = temp;
+  }
+
+  // init graph
+  MST = new Graph();
+  for (p1 of indicies) {
+    MST.addNode(p1);
+    for (let p2 of indicies) {
+      if (p1 == (p2)) {
+        continue;
+      }
+      MST.addEdge(p1, p2, distFunc(points[p1], points[p2]))
+    }
+  }
+
+  // Kmeans Clustering =========================================
+  // let clusters = kMeansClustering(points, k, 10, distFunc);
+  // let orderedData = [];
+  // let colorScale = ['red', 'blue', 'green', 'black', 'cyan'];
+  // for (var i = 0; i < clusters.clusters.length; ++i)
+  // {
+  //   let tempData = clusters.clusters[i];
+
+  //   for (let data of tempData)
+  //   {
+  //     data['color'] = colorScale[i];
+  //   }
+
+  //   orderedData = orderedData.concat(tempData);
+
+  // }
+  // END Kmeans Clustering =========================================
+
+  // Spectral Clustering ==========================================
+  // MST = MST.kruskalsMST();
+  // MST = MST.kNeighbors(6);
+
+  let affMat = MST.genAffinityMatrix(distFunc);
+
+  createMatrixImage(affMat);
+
+  createTable(affMat, "AffMat");
+
+  let adjMat = genAdjacencyMatrix(affMat, 0.45);
+  // let adjMat = [
+  //   [0,1,0,0,0,0,0,0,0,0],
+  //   [1,0,1,0,1,0,1,1,0,1],
+  //   [0,1,0,0,0,1,1,0,1,1],
+  //   [0,0,0,0,1,1,0,0,1,0],
+  //   [0,1,0,1,0,1,1,1,0,1],
+  //   [0,0,1,1,1,0,1,0,1,0],
+  //   [0,1,1,0,1,1,0,1,1,0],
+  //   [0,1,0,0,1,0,1,0,0,0],
+  //   [0,0,1,1,0,1,1,0,0,1],
+  //   [0,1,1,0,1,0,0,0,1,0],
+  // ]
+
+  createTable(adjMat);
+
+  let degMat = genDegreeMatrix(adjMat);
+
+  createTable(degMat);
+
+  let lapMat = minMats(degMat, adjMat);
+
+  createTable(lapMat);
+
+  let ans = math.eigs(lapMat);
+
+  let vect1 = ans.vectors.map(d => d[2]);
+
+  let eigenVector = tieIndexToArray(vect1);
+
+  // let vectorCoords = vectorToCoords(ans.vectors[1].sort((a,b) => a - b));
+  let vectorCoords = vectorToCoords(vect1.sort((a,b) => a - b));
+
+  plotData(vectorToCoords(ans.values),"svg#scatter_values", "Eigen Values");
+  plotData(vectorCoords,"svg#scatter_area", "Eigen Vector");
+
+  let clusters = kMeansClustering(eigenVector, k, 50,
+                                  function(a, b) { return Math.abs(a.value - b.value); });
+
+  let orderedData = [];
+  let colorScale = ['red', 'blue', 'green', 'black', 'cyan'];
+  for (var i = 0; i < clusters.clusters.length; ++i)
+  {
+    let tempData = defineOrder(points, clusters.clusters[i].map(d => d.index));
+
+    for (let data of tempData)
+    {
+      data['color'] = colorScale[i];
+    }
+
+    orderedData = orderedData.concat(tempData);
+
+  }
+  // END Spectral Clustering ==========================================
+
+  // plotData(orderedData, "svg#clusters", "Clusters");
+
+  let resMat = genAffinityMatrix(orderedData, distFunc);
+
+  createMatrixImage(resMat);
+
+  return orderedData;
+}
+
 /* Function utilizes kMeans algorithm to find clusters
  *
  * @param[in] points -- array of points to form clusters from
@@ -815,20 +1177,20 @@ function spectralClustering(points, k, distFunc) {
  * parameter list must follow: (pointA, pointB) and must return a single
  * comparable value. Closer values with be clustered
  * */
-function kMeansClustering(points, k, numIters, distFunc)
-{
-  points = cleanData(points);
+function kMeansClustering(points, k, numIters, distFunc) {
+  // points = cleanData(points);
 
   // init graph
   MST = new Graph();
-  for (p1 of points) {
+  for (var i = 0; i < points.length; ++i) {
+    let p1 = points[i];
     MST.addNode(p1);
-    for (let p2 of points) {
-      if (p1 == (p2)) {
+    for (var j = 0; j < points.length; ++j) {
+      if (i == j) {
         continue;
       }
-      MST.addNode(p2);
-      MST.addEdge(p1, p2, distFunc(p1, p2))
+      let p2 = points[j];
+      MST.addEdge(p1, p2, distFunc(p1, p2));
     }
   }
 
