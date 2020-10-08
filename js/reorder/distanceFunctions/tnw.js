@@ -1,5 +1,10 @@
 function calculateTNWDistance(sim1, sim2) {
-    let tndDist = getTNWScore(sim1, sim2).cellMax;
+    const gap = parseInt(document.getElementById('gap').value);
+    const matchScore = parseInt(document.getElementById('match').value);
+    const maxOffsetPenalty = parseInt(document.getElementById('max-offset-penalty').value);
+
+
+    let tndDist = getTNWScore(sim1, sim2, gap, matchScore, maxOffsetPenalty).cellMax;
     // console.log('TNW Distance: ', result);
     return tndDist * -1;
 }
@@ -62,6 +67,7 @@ function getTNWScore(sim1, sim2, GAP_SCORE=-1, MATCH_SCORE=1, MAX_OFFSET_PENALTY
             matrix[i][j] = { 'cellMax': cellMax, 'arrowImage': arrowImage }
         }
     }
+
 
     return resultSelector(matrix)
 }

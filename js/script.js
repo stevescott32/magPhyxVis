@@ -218,14 +218,16 @@ function addDistanceSelector() {
     .attr('value', (d) => { return d; })
     .text(d => { return `${d.name}`; })
     .on('click', (selectedDistance) => {
-      console.log('Selected Distance', selectedDistance);
       distance_func = selectedDistance;
+      if (selectedDistance.name === 'Temporal Needleman Wunsch') addTNWParameters();
+      else removeTNWParameters();
       // loadVis(allData, reorderer);
     })
     ;
 
   d3.selectAll(`.${distClassTag}`)
     .append('label')
+    .attr('id', d =>{ return `${d.name}`})
     .text(d => { return `${d.name}`; })
     ;
 
@@ -236,7 +238,20 @@ function addDistanceSelector() {
   d3.select('#settings')
     .append('br')
     ;
+
 }
+
+function addTNWParameters() {
+  d3.select('.tnw-parameters')
+    .style('display', 'inline')
+    ;
+}
+
+function removeTNWParameters() {
+  d3.select('.tnw-parameters')
+  .style('display', 'none')
+}
+
 
 // create buttons so the user can select which event type to display
 function addEventTypeSelector(data) {

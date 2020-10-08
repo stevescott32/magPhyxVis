@@ -13,7 +13,7 @@ let distance_functions = [
     calculate: calculateHausdorffDistance
   },
   {
-    name: 'Temporal Needleman Wunch',
+    name: 'Temporal Needleman Wunsch',
     calculate: calculateTNWDistance
   },
 ]
