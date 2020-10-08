@@ -60,3 +60,11 @@
 .wrap-time-range-2 {
     width: 200px;
 }
+
+.tnw-parameters {
+    display: none;
+}
+
+.tnw-parameter {
+    max-width: 50px;
+}
