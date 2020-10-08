@@ -27,27 +27,25 @@ const clearTable = function () {
 }
 
 const backtrace = function (data) {
-    console.log(data)
+    // console.log(data)
     let trace = []
 
     let j = data[data.length -1].length - 1
     let i = data.length - 1
-
-    while (data[i][j].arrowImage !== null) {
+    while (i !== 0 && j !== 0) {
+        // let cell = document.getElementById(`${i},${j}`)
         // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
-        if (data[i][j].arrowImage === 'd.png' || 
-            data[i][j].arrowImage === 'du.png' || 
-            data[i][j].arrowImage === 'ds.png' || 
-            data[i][j].arrowImage === 'dsu.png') {
+        if (data[i][j].direction === directions.DIAGONAL) {
                 i--
                 j--
                 trace.push({ a: i, b: j })
 
-            } else if (data[i][j].arrowImage === 's.png' || data[i][j].arrowImage === 'su.png' ) j--
+            } else if (data[i][j].direction === directions.SIDE ) j--
             else i--
     }
+    // cell = document.getElementById(`0,0`)
     // cell.setAttribute("style", "background-color: rgba(255,0,0,0.2);")
-    console.log(trace)
+    // console.log(trace)
     return trace
 } 
 
@@ -61,7 +59,7 @@ const makeTable = function (data) {
             let roundedNum = data[element][key].cellMax.toFixed(2)  
             let text = document.createTextNode(roundedNum);
             cell.appendChild(text);
-            cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].arrowImage}); 
+            cell.setAttribute("style", `background-image: url(../assets/images/${data[element][key].direction}); 
                                         background-repeat: no-repeat; 
                                         background-size: 100% 20px;
                                         background-color: aqua;`)
@@ -73,7 +71,7 @@ const makeTable = function (data) {
 }
 
 const drawTNWCorrelation = (dataA, dataB, index1, index2, color) => {
-    console.log(dataA, dataB)
+    // console.log(dataA, dataB)
     let indices = makeTable(getTNWScore(
         dataA,
         dataB,
