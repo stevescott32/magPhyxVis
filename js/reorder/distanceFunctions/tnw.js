@@ -26,7 +26,6 @@ function getTNWScore(
                      resultSelector = (matrix) => matrix[matrix.length - 1][(matrix[matrix.length - 1].length - 1)]
                      ) 
 {
-
     simulation1 = dataFilter(simulation1)
     simulation2 = dataFilter(simulation2)
 
@@ -65,7 +64,6 @@ function getTNWScore(
             let direction = directions.DIAGONAL
             let pd = findPreviousDiagonal(matrix, i-1, j-1, tempSimulation1, tempSimulation2)
             // let match = matrix[i - 1][j - 1].cellMax + MATCH_SCORE + offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY, dataSelector)
-            getSummation(i-1, pd.ci, tempSimulation1)
             let match = matrix[i-1][j-1].cellMax + MATCH_SCORE + offsetPenalty(getSummation(i-1, pd.ci, tempSimulation1), getSummation(j-1, pd.cj, tempSimulation2), MAX_OFFSET_PENALTY, dataSelector)
             let vGap = matrix[i - 1][j].cellMax + GAP_SCORE
             let hGap = matrix[i][j - 1].cellMax + GAP_SCORE
@@ -100,24 +98,28 @@ function getSummation(i,ci,array) {
 }
 
 // find x component and y component to last diagonal
-function findPreviousDiagonal(matrix, i, j, tarray1, tarray2) {
+function findPreviousDiagonal(matrix, i, j) {
 
     ci = 0
     cj = 0
 
+
     if (matrix[i][j].direction === directions.SIDE) {
         cj += 1
+        j--
     }
     if (matrix[i][j].direction === directions.UP) {
         ci+=1
+        i--
     }
-
     while (matrix[i][j].direction !== directions.DIAGONAL) {
         if (matrix[i][j].direction === directions.SIDE){
             cj+=1
+            j--
         } 
         else if (matrix[i][j].direction === directions.UP){
              ci+=1
+             i--
         }
     }
     return {
