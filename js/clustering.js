@@ -1,70 +1,68 @@
-    function plotData(data, selectTag = null, title = 'default', xAxis = 'default', yAxis = 'default') {
-      let svgWidth = 1000;
-      let svgHeight = 800;
-      let margin = 100;
-      let width = svgWidth - 2 * margin;
-      let height = svgHeight - 2 * margin;
-      let xAxisLabel = xAxis;
-      let yAxisLabel = yAxis;
-      let titleLabel = title;
-      if (selectTag == null)
-      {
-        selectTag = 'svg#scatter_area';
-      }
+function plotData(data, selectTag = null, title = 'default', xAxis = 'default',
+                  yAxis = 'default') 
+{
+  let svgWidth = 1000;
+  let svgHeight = 800;
+  let margin = 100;
+  let width = svgWidth - 2 * margin;
+  let height = svgHeight - 2 * margin;
+  let xAxisLabel = xAxis;
+  let yAxisLabel = yAxis;
+  let titleLabel = title;
+  if (selectTag == null) {
+    selectTag = 'svg#scatter_area';
+  }
 
-      let svg = d3.select(selectTag)
-          .attr('width', svgWidth)
-          .attr('height', svgHeight);
-      let barChart = svg.append('g')
-        .attr('transform', `translate(${margin}, ${margin})`);
-      let yScale = d3.scaleLinear().range([ height, 0 ]).domain([
-        Math.floor(Math.min(...data.map(d => d.y))),
-        Math.ceil(Math.max(...data.map(d => d.y)))
-      ]);
-      let xScale = d3.scaleLinear()
-        .range([0, width])
-        .domain([0, Math.ceil(Math.max(...data.map(d => d.x)))]);
+  let svg =
+      d3.select(selectTag).attr('width', svgWidth).attr('height', svgHeight);
+  let barChart =
+      svg.html('').append('g').attr('transform', `translate(${margin}, ${margin})`);
+  let yScale = d3.scaleLinear().range([ height, 0 ]).domain([
+    Math.floor(Math.min(...data.map(d => d.y))),
+    Math.ceil(Math.max(...data.map(d => d.y)))
+  ]);
+  let xScale = d3.scaleLinear().range([ 0, width ]).domain([
+    0, Math.ceil(Math.max(...data.map(d => d.x)))
+  ]);
 
-      barChart.append('g')
-        .style('font-size', '10px')
-        .call(d3.axisLeft(yScale));
+  barChart.append('g').style('font-size', '10px').call(d3.axisLeft(yScale));
 
-      barChart.append('g')
-        .attr('transform', `translate(0, ${height})`)
-        .style('font-size', '12px')
-        .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
+  barChart.append('g')
+      .attr('transform', `translate(0, ${height})`)
+      .style('font-size', '12px')
+      .call(d3.axisBottom(xScale).tickFormat(d3.format("d")));
 
-      svg.selectAll("circle")
-        .data(data)
-        .enter()
-        .append('circle')
-        .attr("cx", d => xScale(d.x) + margin)
-        .attr("cy", d => yScale(d.y) + margin)
-        .attr("r", 5)
-        .attr("fill", d => d.color);
+  svg.selectAll("circle")
+      .data(data)
+      .enter()
+      .append('circle')
+      .attr("cx", d => xScale(d.x) + margin)
+      .attr("cy", d => yScale(d.y) + margin)
+      .attr("r", 5)
+      .attr("fill", d => d.color);
 
-      svg.append('text')
-        .attr('x', -(height / 2) - margin)
-        .attr('y', margin / 2.8)
-        .attr('transform', 'rotate(-90)')
-        .attr('text-anchor', 'middle')
-        .style('font-size', '20px')
-        .text(yAxisLabel)
+  svg.append('text')
+      .attr('x', -(height / 2) - margin)
+      .attr('y', margin / 2.8)
+      .attr('transform', 'rotate(-90)')
+      .attr('text-anchor', 'middle')
+      .style('font-size', '20px')
+      .text(yAxisLabel)
 
-      svg.append('text')
-        .attr('x', width / 2 + margin)
-        .attr('y', height + margin + 40)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '20px')
-        .text(xAxisLabel)
+  svg.append('text')
+      .attr('x', width / 2 + margin)
+      .attr('y', height + margin + 40)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '20px')
+      .text(xAxisLabel)
 
-      svg.append('text')
-        .attr('x', width / 2 + margin)
-        .attr('y', 40)
-        .attr('text-anchor', 'middle')
-        .style('font-size', '30px')
-        .text(titleLabel)
-    }
+  svg.append('text')
+      .attr('x', width / 2 + margin)
+      .attr('y', 40)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '30px')
+      .text(titleLabel)
+}
 
 class Graph {
   constructor() {
@@ -1052,6 +1050,7 @@ function spectralClustering(points, k, distFunc) {
 }
 
 function newSpectralClustering(points, k, distFunc) {
+  // points = cleanData(points);
   let indicies = [...Array(points.length).keys() ];
 
   // plotData(points, "svg#scatter_points", "Initial Points");
@@ -1102,9 +1101,9 @@ function newSpectralClustering(points, k, distFunc) {
 
   createMatrixImage(affMat);
 
-  createTable(affMat, "AffMat");
+  // createTable(affMat, "AffMat");
 
-  let adjMat = genAdjacencyMatrix(affMat, 0.45);
+  let adjMat = genAdjacencyMatrix(affMat, 0.56);
   // let adjMat = [
   //   [0,1,0,0,0,0,0,0,0,0],
   //   [1,0,1,0,1,0,1,1,0,1],
@@ -1118,19 +1117,19 @@ function newSpectralClustering(points, k, distFunc) {
   //   [0,1,1,0,1,0,0,0,1,0],
   // ]
 
-  createTable(adjMat);
+  // createTable(adjMat);
 
   let degMat = genDegreeMatrix(adjMat);
 
-  createTable(degMat);
+  // createTable(degMat);
 
   let lapMat = minMats(degMat, adjMat);
 
-  createTable(lapMat);
+  // createTable(lapMat);
 
   let ans = math.eigs(lapMat);
 
-  let vect1 = ans.vectors.map(d => d[2]);
+  let vect1 = ans.vectors.map(d => d[k]);
 
   let eigenVector = tieIndexToArray(vect1);
 
@@ -1140,11 +1139,16 @@ function newSpectralClustering(points, k, distFunc) {
   plotData(vectorToCoords(ans.values),"svg#scatter_values", "Eigen Values");
   plotData(vectorCoords,"svg#scatter_area", "Eigen Vector");
 
-  let clusters = kMeansClustering(eigenVector, k, 50,
-                                  function(a, b) { return Math.abs(a.value - b.value); });
+  let clusters = kMeansClusteringVector(eigenVector, k, 50, function(a, b) {
+    return Math.abs(a.value - b);
+  });
 
   let orderedData = [];
-  let colorScale = ['red', 'blue', 'green', 'black', 'cyan'];
+  var colorScale = [
+    'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green', 'pink',
+    'yellow', 'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
+    'pink', 'yellow', 'black'
+  ];
   for (var i = 0; i < clusters.clusters.length; ++i)
   {
     let tempData = defineOrder(points, clusters.clusters[i].map(d => d.index));
@@ -1166,6 +1170,59 @@ function newSpectralClustering(points, k, distFunc) {
   createMatrixImage(resMat);
 
   return orderedData;
+}
+
+function kMeansClusteringVector(points, k, numIters, distFunc) {
+  // Init cluster origins
+  let clusterOrigins = [];
+  let clusters = [];
+  let step = 2/k;
+
+  for (let j = 0; j < k; ++j) {
+      clusterOrigins.push(-1 + (j * step));
+  }
+
+  for (let i = 0; i < numIters; ++i) {
+    clusters = [];
+    for (let origin of clusterOrigins) {
+      clusters.push([]);
+    }
+    // add points to appropriate cluster
+    for (let point of points) {
+      let minDist = Number.MAX_VALUE;
+      let destIndex = -1;
+      clusterOrigins.forEach(function(origin, index, clusterOrigins) {
+        let distToOrigin = distFunc(point, origin);
+        if (distToOrigin < minDist) {
+          minDist = distToOrigin;
+          destIndex = index;
+        }
+      });
+      clusters[destIndex].push(point);
+    }
+
+
+    // Find new clusterOrigins
+    clusterOrigins = [];
+    for (let cluster of clusters) {
+      let minDist = Number.MAX_VALUE;
+      var clusterOrigin;
+      let mean = 0;
+
+      for (let point of cluster) {
+        mean += point.value;
+      }
+
+      if (mean != 0)
+      {
+        mean = mean/cluster.length;
+      }
+
+      clusterOrigins.push(mean);
+    }
+  }
+
+  return {"clusters" : clusters, "clusterOrigins" : clusterOrigins};
 }
 
 /* Function utilizes kMeans algorithm to find clusters
@@ -1195,6 +1252,16 @@ function kMeansClustering(points, k, numIters, distFunc) {
   }
 
   let clusters = MST.kMeansCluster(k, numIters, distFunc);
+
+  let orderedData = [];
+  for (let cluster of clusters.clusters)
+  {
+    orderedData = orderedData.concat(cluster);
+  }
+
+  let resMat = genAffinityMatrix(orderedData, distFunc);
+
+  createMatrixImage(resMat);
 
   return clusters;
 }
