@@ -37,6 +37,7 @@
 </head>
 
 <body>
+  <a href="TNWTool.html">TNW Tool</a>
   <div id="debug"></div>
   <div id="settings"></div>
   <div id="param-vis"></div>
@@ -68,34 +69,22 @@
           </div>
         </div>
       </div>
-      <div class="match-actions">
-        <button class="match-a-to-b">Match Event A to B</button>
-        <label>
-          <input class="match-exact" type="checkbox">
-          Match exact
-        </label>
-        <div class="ordering-methods">
-          Ordering / Matching Method
+        <div class="tnw-parameters">
+          <h2>TNW Parameters:</h2>
           <label>
-            <input checked value="hausdorff" name="ordering-method" type="radio" />
-            Hausdorff distance
+          gap score:
+          <input type="number" class="tnw-parameter" id="gap" value="-1"/>
           </label>
           <label>
-            <input value="temporal-needleman-wunsch" name="ordering-method" type="radio" />
-            Temporal Needleman-Wunsch
+          max offset score:
+          <input type="number" class="tnw-parameter" id="max-offset-penalty" value="-1"/>
           </label>
           <label>
-            <input value="dtw" name="ordering-method" type="radio" />
-            DTW distance
-            <br />
-            <label style="margin-left: 40px;">
-                Max deaths
-              <input class='max-deaths' disabled value=0 min=0 max=20 type="range" />
-              <span class="death-count">0</span>
-            </label>
+          match score:
+          <input type="number" class="tnw-parameter" id="match" value="1"/>
           </label>
+
         </div>
-      </div>
     </div>
   </div>
   <div id="scatter"></div>
