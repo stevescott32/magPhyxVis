@@ -49,8 +49,8 @@ function spectral_cluster_dist(data, distFunc)
   for (var i = 0; i < kMeansClusters.clusters.length; ++i) {
     var customColorScale = [
       'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green', 'pink',
-      'yellow', 'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
-      'pink', 'yellow', 'black'
+      'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
+      'pink', 'black'
     ];
 
     kMeansClusters.clusters.forEach(function(d) {

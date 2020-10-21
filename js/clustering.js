@@ -678,7 +678,7 @@ function clearNan(matrix) {
   let cols = matrix[0].length;
 
   for (let i = 0; i < rows; ++i) {
-    for (let j = 0; j < rows; ++j) {
+    for (let j = 0; j < cols; ++j) {
       if (isNaN(matrix[i][j])) {
         matrix[i][j] = 0;
       }
@@ -688,7 +688,28 @@ function clearNan(matrix) {
   return matrix;
 }
 
-function genDegreeMatrix(matrix) {
+function normLapMat(mat)
+{
+  let rows = mat.length;
+  if (rows == 0) {
+    return mat;
+  }
+
+  let cols = mat[0].length;
+
+  for (let i = 0; i < rows; ++i) {
+    let degValue = mat[i][i];
+    mat[i][i] = 1;
+    for (let j = i; j < cols; ++j) {
+      mat[i][j] = -1 * (mat[i][j] / degValue);
+      mat[j][i] = mat[i][j];
+    }
+  }
+
+  return mat;
+}
+
+function genDegreeMatrix(matrix, setToOne = false) {
   let N = matrix[0].length;
   let degMat = new Array(N);
   for (let i = 0; i < N; ++i) {
@@ -696,14 +717,26 @@ function genDegreeMatrix(matrix) {
   }
 
   for (var rowIdx = 0; rowIdx < N; ++rowIdx) {
-    degMat[rowIdx][rowIdx] =
-        matrix[rowIdx].reduce(function(t, v) { return t + v; }, 0);
+    if (setToOne)
+    {
+      degMat[rowIdx][rowIdx] = matrix[rowIdx].reduce(function(t, v) {
+        if (v != 0)
+          return t + 1;
+        else
+          return t;
+      }, 0);
+    }
+    else
+    {
+      degMat[rowIdx][rowIdx] =
+          matrix[rowIdx].reduce(function(t, v) { return t + v; }, 0);
+    }
   }
 
   return degMat;
 }
 
-function genAdjacencyMatrix(matrix, threshold = 0)
+function genAdjacencyMatrix(matrix, threshold = 0, setToOne = false)
 {
   let N = matrix[0].length;
   let adjMat = new Array(N);
@@ -715,7 +748,11 @@ function genAdjacencyMatrix(matrix, threshold = 0)
     for (var colIdx = 0; colIdx < N; ++colIdx) {
       let element = matrix[rowIdx][colIdx];
       if (element < threshold && element != 0) {
-        adjMat[rowIdx][colIdx] += 1;
+        if (setToOne) {
+          adjMat[rowIdx][colIdx] = 1;
+        } else {
+          adjMat[rowIdx][colIdx] += element;
+        }
       }
     }
   }
@@ -1049,8 +1086,19 @@ function spectralClustering(points, k, distFunc) {
   return [];
 }
 
+function multiDimensionalEuclidsDist(a,b)
+{
+  let sum = 0;
+  for (var i = 0; i < a.length; ++i)
+  {
+    sum += (a[i] - b[i]) * (a[i] - b[i]);
+  }
+
+  return Math.sqrt(sum);
+}
+
 function newSpectralClustering(points, k, distFunc) {
-  // points = cleanData(points);
+  points = cleanData(points);
   let indicies = [...Array(points.length).keys() ];
 
   // plotData(points, "svg#scatter_points", "Initial Points");
@@ -1103,7 +1151,7 @@ function newSpectralClustering(points, k, distFunc) {
 
   // createTable(affMat, "AffMat");
 
-  let adjMat = genAdjacencyMatrix(affMat, 0.56);
+  let adjMat = genAdjacencyMatrix(affMat, 0.50);
   // let adjMat = [
   //   [0,1,0,0,0,0,0,0,0,0],
   //   [1,0,1,0,1,0,1,1,0,1],
@@ -1124,6 +1172,8 @@ function newSpectralClustering(points, k, distFunc) {
   // createTable(degMat);
 
   let lapMat = minMats(degMat, adjMat);
+
+  // lapMat = normLapMat(lapMat);
 
   // createTable(lapMat);
 
@@ -1146,8 +1196,8 @@ function newSpectralClustering(points, k, distFunc) {
   let orderedData = [];
   var colorScale = [
     'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green', 'pink',
-    'yellow', 'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
-    'pink', 'yellow', 'black'
+    'grey', 'orange', 'red', 'brown', 'blue', 'purple', 'green',
+    'pink', 'black'
   ];
   for (var i = 0; i < clusters.clusters.length; ++i)
   {
@@ -1170,6 +1220,61 @@ function newSpectralClustering(points, k, distFunc) {
   createMatrixImage(resMat);
 
   return orderedData;
+}
+
+function kMeansClusteringNVector(points, k, numIters, distFunc) {
+  // Init cluster origins
+  let clusterOrigins = [];
+  let clusters = [];
+  let step = 2/k;
+
+  for (let j = 0; j < k; ++j) {
+      clusterOrigins.push(-1 + (j * step));
+  }
+
+  for (let i = 0; i < numIters; ++i) {
+    clusters = [];
+    for (let origin of clusterOrigins) {
+      clusters.push([]);
+    }
+    // add points to appropriate cluster
+    for (let point of points) {
+      let minDist = Number.MAX_VALUE;
+      let destIndex = -1;
+      clusterOrigins.forEach(function(origin, index, clusterOrigins) {
+        let distToOrigin = distFunc(point, origin);
+        if (distToOrigin < minDist) {
+          minDist = distToOrigin;
+          destIndex = index;
+        }
+      });
+      clusters[destIndex].push(point);
+    }
+
+
+    // Find new clusterOrigins
+    clusterOrigins = [];
+    for (let cluster of clusters) {
+      let minDist = Number.MAX_VALUE;
+      var clusterOrigin;
+      let mean = Array(cluster[0].value.length);
+
+      for (let point of cluster) {
+        for(let i = 0; i < point.value.length; ++i)
+          mean[i] += point.value[i];
+      }
+
+      if (mean != 0)
+      {
+        for(let i = 0; i < mean.length; ++i)
+          mean[i] = mean[i] / cluster.length;
+      }
+
+      clusterOrigins.push(mean);
+    }
+  }
+
+  return {"clusters" : clusters, "clusterOrigins" : clusterOrigins};
 }
 
 function kMeansClusteringVector(points, k, numIters, distFunc) {
