@@ -1180,8 +1180,13 @@ function newSpectralClustering(points, k, distFunc) {
   let ans = math.eigs(lapMat);
 
   let vect1 = ans.vectors.map(d => d[k]);
+  let nVect = [];
+  for (var i = 0; i < ans.vectors.length; ++i)
+  {
+    nVect.push(ans.vectors[i].slice(0, k));
+  }
 
-  let eigenVector = tieIndexToArray(vect1);
+  let eigenVector = tieIndexToArray(nVect);
 
   // let vectorCoords = vectorToCoords(ans.vectors[1].sort((a,b) => a - b));
   let vectorCoords = vectorToCoords(vect1.sort((a,b) => a - b));
@@ -1189,8 +1194,8 @@ function newSpectralClustering(points, k, distFunc) {
   plotData(vectorToCoords(ans.values),"svg#scatter_values", "Eigen Values");
   plotData(vectorCoords,"svg#scatter_area", "Eigen Vector");
 
-  let clusters = kMeansClusteringVector(eigenVector, k, 50, function(a, b) {
-    return Math.abs(a.value - b);
+  let clusters = kMeansClusteringNVector(eigenVector, k, 50, function(a, b) {
+    return multiDimensionalEuclidsDist(a.value, b.value);
   });
 
   let orderedData = [];
@@ -1228,8 +1233,23 @@ function kMeansClusteringNVector(points, k, numIters, distFunc) {
   let clusters = [];
   let step = 2/k;
 
-  for (let j = 0; j < k; ++j) {
-      clusterOrigins.push(-1 + (j * step));
+  // for (let j = 0; j < k; ++j) {
+  //   let candidate = points[Math.floor(Math.random() * points.length)];
+  //   if (clusterOrigins.includes(candidate)) {
+  //     --j;
+  //   } else {
+  //     clusterOrigins.push(candidate);
+  //   }
+  // }
+
+  for (let i = 0; i < k; ++i) {
+    let valArr = [];
+    let val = (-1 + (i * step));
+    for (let j = 0; j < k; ++j)
+    {
+      valArr.push(val)
+    }
+    clusterOrigins.push({value: valArr});
   }
 
   for (let i = 0; i < numIters; ++i) {
@@ -1257,20 +1277,20 @@ function kMeansClusteringNVector(points, k, numIters, distFunc) {
     for (let cluster of clusters) {
       let minDist = Number.MAX_VALUE;
       var clusterOrigin;
-      let mean = Array(cluster[0].value.length);
+      let mean = Array(k).fill(0);
 
       for (let point of cluster) {
         for(let i = 0; i < point.value.length; ++i)
           mean[i] += point.value[i];
       }
 
-      if (mean != 0)
+      if (mean.reduce((t, v) => t + v) != 0) 
       {
         for(let i = 0; i < mean.length; ++i)
           mean[i] = mean[i] / cluster.length;
       }
 
-      clusterOrigins.push(mean);
+      clusterOrigins.push({value: mean});
     }
   }
 

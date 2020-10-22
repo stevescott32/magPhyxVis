@@ -608,9 +608,9 @@ class EventTypeVis {
             .attr('class', 'eventTimelinePoint')
             .attr('cx', d => { return timeScale(+d.t); })
             .attr('cy', d => { return eventCountScale(d.simulationIndex); })
-            .attr('r', d => { 
+            .attr('r', d => {
                 if(d.on) {
-                    return this.circleSize; 
+                    return this.circleSize;
                 }
                 return 0; // events that are turned off should not display
             })

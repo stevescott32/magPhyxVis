@@ -42,7 +42,7 @@ function reorder_dist_from_first(data, distFunction) {
 function spectral_cluster_dist(data, distFunc)
 {
   var kMeansClusters = {};
-  kMeansClusters.clusters = newSpectralClustering(data.simulations, 8, distFunc.calculate);
+  kMeansClusters.clusters = newSpectralClustering(data.simulations, 18, distFunc.calculate);
 
   data.simulations = [];
   let order = [];
