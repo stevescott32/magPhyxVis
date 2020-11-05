@@ -69,6 +69,14 @@ function loadDataAndVis(selectedDataSet) {
       allData = data;
 
       loadVis(data, reorderer);
+      
+      // setup reorder button
+      d3.selectAll('.reorder-button')
+        .on('click', () => {
+          console.log(allData)
+          loadVis(data, reorderer);
+          eventTypeVis.update(data)
+        })
 
     }).catch(function (err) {
       console.log('Error in main script: ', err);
