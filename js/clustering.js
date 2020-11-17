@@ -524,6 +524,8 @@ class Cluster {
   points = [];
 }
 
+
+// Coeff matrix subtraction
 function minMats(aMat, bMat)
 {
   let N = aMat[0].length;
@@ -578,6 +580,7 @@ function mstClustering(points, k, distFunc) {
   return clusters;
 }
 
+// Inverts a given matrix
 function invertLapMat(srcMat)
 {
   let N = srcMat[0].length;
@@ -594,6 +597,7 @@ function invertLapMat(srcMat)
   return rowLapMat;
 }
 
+// Sumates a given matrix by row and assigns result to identity diagonal
 function sumRowMat(srcMat)
 {
   let N = srcMat[0].length;
@@ -614,6 +618,7 @@ function sumRowMat(srcMat)
   return rowLapMat;
 }
 
+// Removes samples with no events
 function cleanData(data)
 {
   let cleanData = [];
@@ -628,6 +633,7 @@ function cleanData(data)
   return cleanData;
 }
 
+// Reorders data on given order
 function defineOrder(data, order)
 {
   let orderedData = Array(order.length);
@@ -642,6 +648,7 @@ function defineOrder(data, order)
   return orderedData;
 }
 
+// Reorders data on given order (deprecated)
 function reorderFromVector(orders, data)
 {
   let vec = orders.vectors[1];
@@ -669,6 +676,7 @@ function reorderFromVector(orders, data)
   return orderedVec;
 }
 
+// Removes nan values from matrix and populates with 0
 function clearNan(matrix) {
   let rows = matrix.length;
   if (rows == 0) {
@@ -688,6 +696,7 @@ function clearNan(matrix) {
   return matrix;
 }
 
+// Normalizes given matrix
 function normLapMat(mat)
 {
   let rows = mat.length;
@@ -709,6 +718,8 @@ function normLapMat(mat)
   return mat;
 }
 
+// Generates degree matrix from given matrix. If 'setToOne' is true degree
+// will be simplified to 1
 function genDegreeMatrix(matrix, setToOne = false) {
   let N = matrix[0].length;
   let degMat = new Array(N);
@@ -736,6 +747,9 @@ function genDegreeMatrix(matrix, setToOne = false) {
   return degMat;
 }
 
+// Generates adjacency matrix from given matrix. If 'setToOne' is true affinity
+// score will be simplified to 1, Threshold is the limit at which an affinity
+// score is simplified to 0. 
 function genAdjacencyMatrix(matrix, threshold = 0, setToOne = false)
 {
   let N = matrix[0].length;
@@ -761,6 +775,7 @@ function genAdjacencyMatrix(matrix, threshold = 0, setToOne = false)
 
 }
 
+// Generates vis table for given table
 function createTable(data, tableID = 'Default Table ID') {
 
   // CREATE DYNAMIC TABLE.
@@ -787,6 +802,7 @@ function createTable(data, tableID = 'Default Table ID') {
   document.body.appendChild(table);
 }
 
+// Generates vis image for given data
 function createMatrixImage(matrix) {
   var canvas = document.createElement("canvas");
   let width = matrix[0].length;
@@ -818,6 +834,8 @@ function createMatrixImage(matrix) {
   document.body.appendChild(img);
 }
 
+// Generates coordinates with given data, using data for y value and
+// increments x value by 1 for each coordinate.
 function vectorToCoords(vector)
 {
   let coords = [];
@@ -829,6 +847,7 @@ function vectorToCoords(vector)
   return coords;
 }
 
+// Takes an array and associates an index with the value
 function tieIndexToArray(inputArray)
 {
   let data = [];
@@ -845,6 +864,7 @@ function tieIndexToArray(inputArray)
   return data;
 }
 
+// Normalizes values for given matrix with given max
 function normValues(matrix, max) {
   let N = matrix[0].length;
 
@@ -857,6 +877,7 @@ function normValues(matrix, max) {
   return matrix;
 }
 
+// Generates affinity matrix for given matrix with given distFunc
 function genAffinityMatrix(data, distFunc)
 {
   let N = data.length;
@@ -897,29 +918,8 @@ function genAffinityMatrix(data, distFunc)
  * parameter list must follow: (pointA, pointB) and must return a single
  * comparable value. Closer values with be clustered
  * */
-function spectralClustering(points, k, distFunc) {
+function oldSpectralClustering(points, k, distFunc) {
   // points = cleanData(points);
-  // let orderArray = [
-  //   1,   2,   4,   6,   8,   27,  28,  42,  43,  44,  45,  48,  50,  52,
-  //   61,  62,  83,  88,  99,  100, 110, 3,   9,   10,  12,  13,  14,  16,
-  //   17,  18,  20,  21,  22,  23,  24,  25,  26,  29,  31,  32,  33,  35,
-  //   36,  37,  38,  39,  40,  41,  46,  47,  49,  56,  58,  59,  79,  89,
-  //   90,  93,  115, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135,
-  //   136, 137, 138, 139, 141, 142, 143, 5,   30,  57,  67,  69,  74,  76,
-  //   80,  82,  91,  92,  95,  98,  102, 103, 104, 116, 119, 140, 0,   7,
-  //   11,  34,  51,  53,  54,  55,  60,  63,  64,
-  // ];
-
-  // let orderArray = [
-  //   12, 16,  20,  21,  29,  31,  41,  59,  130, 131, 142, 143, 3,   8,
-  //   10, 13,  14,  18,  22,  23,  24,  25,  26,  32,  35,  38,  49,  56,
-  //   58, 126, 127, 128, 129, 133, 134, 135, 136, 138, 141, 1,   4,   5,
-  //   42, 43,  44,  45,  50,  52,  62,  67,  69,  74,  76,  80,  82,  83,
-  //   88, 91,  92,  95,  98,  99,  100, 102, 103, 104, 110, 116, 119, 140,
-  //   47, 79,  89,  90,  93,  115, 125, 0,   2,   6,   7,   9,   11,  17,
-  //   27, 28,  30,  33,  34,  36,  37,  39,  40,  46,  48,  51,  53,  54,
-  //   55, 57,  60,  61,  63,  64,  132, 137, 139,
-  // ];
 
   // points = defineOrder(points, orderArray);
   let indicies = [...Array(points.length).keys() ];
@@ -991,23 +991,6 @@ function spectralClustering(points, k, distFunc) {
     img.src = canvas.toDataURL("image/png");
     document.body.appendChild(img);
   }
-  // ====================================================================
-
-  // let rowLapMat = sumRowMat(affMat);
-
-  // let sqrtLapMat = math.sqrt(rowLapMat);
-
-  // let invSqrtLapMat = invertLapMat(sqrtLapMat);
-
-  // let LA = math.multiply(invSqrtLapMat, affMat);
-
-  // let LAL = math.multiply(LA, invSqrtLapMat);
-
-  // LAL = clearNan(LAL);
-
-  // ans = math.eigs(LAL);
-
-  // ====================================================================
   {
     let orderArray = reorderFromVector(ans, points);
     points = defineOrder(points, orderArray);
@@ -1057,33 +1040,6 @@ function spectralClustering(points, k, distFunc) {
   }
 
   return;
-  // ====================================================================
-
-  let testMat = [
-    [ 4, -1, -1, 0, 0, -1, 0, 0, -1, -1 ],
-    [ -1, 2, -1, 0, 0, 0, 0, 0, 0, 0 ],
-    [ -1, -1, 2, 0, 0, 0, 0, 0, 0, 0 ],
-    [ 0, 0, 0, 2, -1, -1, 0, 0, 0, 0 ],
-    [ 0, 0, 0, -1, 2, -1, 0, 0, 0, 0 ],
-    [ -1, 0, 0, -1, -1, 4, -1, -1, 0, 0 ],
-    [ 0, 0, 0, 0, 0, -1, 2, -1, 0, 0 ],
-    [ 0, 0, 0, 0, 0, -1, -1, 2, 0, 0 ],
-    [ -1, 0, 0, 0, 0, 0, 0, 0, 2, -1 ],
-    [ -1, 0, 0, 0, 0, 0, 0, 0, -1, 2 ],
-  ];
-  let testAns = math.eigs(testMat);
-  // const H = [[5, 2.3], [2.3, 1]];
-  // const ans = math.eigs(H);
-
-  // for (let i = 0; i < k - 1; ++i) {
-  //   let maxEdge = MST.findLargestEdge();
-  //   MST.deleteEdge(maxEdge);
-  // }
-
-  // let clusters = MST.cluster(k);
-
-  // return clusters;
-  return [];
 }
 
 function multiDimensionalEuclidsDist(a,b)
@@ -1123,28 +1079,6 @@ function newSpectralClustering(points, k, distFunc) {
     }
   }
 
-  // Kmeans Clustering =========================================
-  // let clusters = kMeansClustering(points, k, 10, distFunc);
-  // let orderedData = [];
-  // let colorScale = ['red', 'blue', 'green', 'black', 'cyan'];
-  // for (var i = 0; i < clusters.clusters.length; ++i)
-  // {
-  //   let tempData = clusters.clusters[i];
-
-  //   for (let data of tempData)
-  //   {
-  //     data['color'] = colorScale[i];
-  //   }
-
-  //   orderedData = orderedData.concat(tempData);
-
-  // }
-  // END Kmeans Clustering =========================================
-
-  // Spectral Clustering ==========================================
-  // MST = MST.kruskalsMST();
-  // MST = MST.kNeighbors(6);
-
   let affMat = MST.genAffinityMatrix(distFunc);
 
   createMatrixImage(affMat);
@@ -1152,18 +1086,6 @@ function newSpectralClustering(points, k, distFunc) {
   // createTable(affMat, "AffMat");
 
   let adjMat = genAdjacencyMatrix(affMat, 0.50);
-  // let adjMat = [
-  //   [0,1,0,0,0,0,0,0,0,0],
-  //   [1,0,1,0,1,0,1,1,0,1],
-  //   [0,1,0,0,0,1,1,0,1,1],
-  //   [0,0,0,0,1,1,0,0,1,0],
-  //   [0,1,0,1,0,1,1,1,0,1],
-  //   [0,0,1,1,1,0,1,0,1,0],
-  //   [0,1,1,0,1,1,0,1,1,0],
-  //   [0,1,0,0,1,0,1,0,0,0],
-  //   [0,0,1,1,0,1,1,0,0,1],
-  //   [0,1,1,0,1,0,0,0,1,0],
-  // ]
 
   // createTable(adjMat);
 
@@ -1216,7 +1138,6 @@ function newSpectralClustering(points, k, distFunc) {
     orderedData = orderedData.concat(tempData);
 
   }
-  // END Spectral Clustering ==========================================
 
   // plotData(orderedData, "svg#clusters", "Clusters");
 
@@ -1227,20 +1148,12 @@ function newSpectralClustering(points, k, distFunc) {
   return orderedData;
 }
 
+// Cluster N dimensional data
 function kMeansClusteringNVector(points, k, numIters, distFunc) {
   // Init cluster origins
   let clusterOrigins = [];
   let clusters = [];
   let step = 2/k;
-
-  // for (let j = 0; j < k; ++j) {
-  //   let candidate = points[Math.floor(Math.random() * points.length)];
-  //   if (clusterOrigins.includes(candidate)) {
-  //     --j;
-  //   } else {
-  //     clusterOrigins.push(candidate);
-  //   }
-  // }
 
   for (let i = 0; i < k; ++i) {
     let valArr = [];
@@ -1330,8 +1243,6 @@ function kMeansClusteringVector(points, k, numIters, distFunc) {
     // Find new clusterOrigins
     clusterOrigins = [];
     for (let cluster of clusters) {
-      let minDist = Number.MAX_VALUE;
-      var clusterOrigin;
       let mean = 0;
 
       for (let point of cluster) {
