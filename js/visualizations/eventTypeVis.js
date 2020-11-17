@@ -307,6 +307,7 @@ class EventTypeVis {
                 values: range,
                 slide: function (event, ui) {
                     $(".amount").html("From " + ui.values[0] + " to " + ui.values[1]);
+                    console.log('sliding')
                     self.config.timeRange = ui.values;
                     data = self.getTimeFilteredData(data);
                     self.updateHelper(data);
@@ -386,14 +387,10 @@ class EventTypeVis {
     }
 
     getTimeRange(data) {
-        // console.log('getting time range from data', data);
         let sims = data.simulations;
-        // console.log('debug sims', sims);
         const min = d3.min(sims, (sim) => {
-            // console.log('debug sim', d);
             // TODO i think this should be min(sim.events)
             return d3.min(sim.events, (event) => {
-                // console.log('debug event', event);
                 return event.t;
             })
         })
@@ -402,7 +399,6 @@ class EventTypeVis {
                 return event.t;
             })
         })
-        // console.log('Time range result', [parseFloat(min), parseFloat(max)]);
         return [parseFloat(min), parseFloat(max)]
     }
 
@@ -439,20 +435,7 @@ class EventTypeVis {
             }
         }
 
-        const simulationDistances = new SimulationDistance();
-        // data = this.getTimeFilteredData(data).filter(d => d.event.length > 0)
-
-        // const result = this.getDataFilteredByDistance(data, this.config.distanceThreshold)
-        // data = result[0];
-        // paramData = result[1];
-        // distances = result[2];
-
-        /*
-        if (self.state.reorderSimulationIndex != null) {
-            data = simulationDistances.reorder(data, self.state.reorderSimulationIndex, self.state.ordering, self.state.maxDeaths);
-        }
-        */
-
+    
         const timeScale = this.getTimeScale(data)
 
         const eventCountScale = this.getEventCountScale(data);
@@ -486,44 +469,6 @@ class EventTypeVis {
 
         this.svg.attr('width', () => { return this.config.width + this.config.padding.left + this.config.padding.right; })
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
-
-            /*
-        let distanceScale = d3.scaleLinear()
-            .domain([d3.min(distances), d3.max(distances)])
-            .range([0, 20])
-            ;
-
-        d3.selectAll('.distance-svg').remove();
-        this.dimComparisonSvg = d3.select(`#${this.divId}`)
-            .append('svg')
-            .attr('class', 'distance-svg')
-            .attr('x', 0)
-            .attr('y', 0)
-            .attr('width', 500)
-            .attr('height', 500)
-            .append('g')
-            .attr('class', 'dimSvg')
-            ;
-
-        const distanceBarsSel = this.svg.selectAll('.distanceBars')
-            .data(distances)
-
-        distanceBarsSel.exit().remove();
-
-        distanceBarsSel
-            .enter()
-            .append('rect')
-            .merge(distanceBarsSel)
-            .attr('x', (d, i) => {
-                return 20 - distanceScale(d);
-            })
-            .attr('y', (d, i) => { return eventCountScale(i) })
-            .attr('width', (d) => {
-                return distanceScale(d)
-            })
-            .attr('height', 1)
-            .attr('class', 'distanceBars')
-            */
 
         this.svg.selectAll('g.axis').remove();
         let xaxis = this.svg.append('g').attr('class', 'axis')
@@ -651,37 +596,6 @@ class EventTypeVis {
                 // self.unselectAllSims();
                 self.selectSim(d.simulationIndex);
 
-                /*
-                if (self.state.match) {
-                    if (self.state.match.eventA && self.state.match.eventB) {
-                        // there was an old match
-                        self.removeEventsMatch()
-                        self.state.match = {}
-                    }
-                    if (!self.state.match.eventA) {
-                        const simulationGroup = this.parentNode;
-                        self.state.match.eventA = { simulationIndex: d.simulationIndex }
-                        self.highlightSimulation(d.simulationIndex);
-                    } else if (!self.state.match.eventB) {
-                        if (d.simulationIndex !== self.state.match.eventA) {
-                            const simulationGroup = this.parentNode;
-                            self.state.match.eventB = { simulationIndex: d.simulationIndex }
-                            self.highlightSimulation(d.simulationIndex);
-                            self.correlateEvents(data, self.state.match.eventA, self.state.match.eventB, timeScale, eventCountScale)
-                        } else {
-                            self.removeEventsMatch()
-                            self.state.match = {}
-                        }
-                    }
-                } else {
-                    // eventVis.updateDimensionComparison(d, paramData);
-                    self.colorDimsByDistance(d['parentIndex'], paramData);
-
-                    self.state.reorderSimulationIndex = +d3.select(this).attr("simulationIndex")
-
-                    self.updateHelper(self.originalData, self.originalParamData, self.originalDistances);
-                }
-                */
             })
             ;
         console.log('Finished updating, reordering');
@@ -786,9 +700,6 @@ class EventTypeVis {
             .style('fill', 'blue')
             ;
 
-        // let xaxis = this.dimComparisonSvg.append('g')
-        //     .attr('transform', `translate(0 ${myConfig.padding.top * (3 / 4)})`)
-        //     ;
         let yaxis = this.dimComparisonSvg.append('g')
             .attr('transform', `translate(130 0)`)
             ;
@@ -802,12 +713,6 @@ class EventTypeVis {
         // xaxis.call(topAxis);
         yaxis.call(leftAxis);
 
-        /* this.dimComparisonSvg.append('text')
-            // .attr('x', xscale(0.0))
-            .attr('x', bar(0))
-            .attr('y', myConfig.padding.top / 2)
-            .text('Theta')
-            ;*/
 
         this.dimComparisonSvg.append('g')
             .attr('transform', `rotate(90)`)
@@ -827,305 +732,3 @@ class EventTypeVis {
 
     TODO: Decouple DTW and Hausdorff Distance
 */
-class SimulationDistance {
-    // data = [];
-    paramData = [];
-    paramDistances = [];
-    constructor() {
-
-    }
-
-    getDTWWithDeaths(eventA, eventB, valueSelector, maxDeaths) {
-        const dtw = getDTWDistanceWithDeaths(eventA, eventB, valueSelector, maxDeaths)
-        let dist = Infinity
-        for (let i = 0; i <= maxDeaths; ++i) {
-            const match = buildMatchingEvents(dtw, eventA, eventB, i, valueSelector)
-            dist = Math.min(dist, match.distance);
-        }
-        return dist;
-    }
-
-    crossOver(orderings, numOfNewOffspring)
-    {
-      for (var i = 0; i < numOfNewOffspring; ++i) {
-        // Find Parents(random)
-        var parentA = Math.floor(Math.random() * orderings.length);
-        var parentB = Math.floor(Math.random() * orderings.length);
-        parentB = parentB == parentA ? (parentB + 1) % orderings.length : parentB;
-
-        // Find places to cut(random)
-        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
-        var secondCut = Math.floor(Math.random() * (orderings[parentA].length - firstCut));
-        secondCut += firstCut;
-        if (secondCut == 0)
-          continue;
-
-        // Make new offspring
-        let offspring = orderings[parentB];
-        for (var cutIndex = firstCut; cutIndex <= secondCut; ++cutIndex) {
-          // Swap elements in the 'cut zone'
-          let aElement = orderings[parentA][cutIndex];
-          let bElement = offspring[cutIndex];
-          let indexA = offspring.findIndex(e => e == aElement);
-          let indexB = offspring.findIndex(e => e == bElement);
-          [offspring[indexA],offspring[indexB]] = [offspring[indexB],offspring[indexA]];
-        }
-
-        // Add new offspring
-        orderings.push(offspring);
-      }
-
-      return orderings;
-    }
-
-    mutation(orderings, numOfNewOffspring) {
-      for (var i = 0; i < numOfNewOffspring; ++i) {
-        // Find parent to mutate from(random)
-        let parentA = Math.floor(Math.random() * orderings.length);
-
-        // Find section to mutate(random)
-        var firstCut = Math.floor(Math.random() * orderings[parentA].length);
-        var secondCut =
-            Math.floor(Math.random() * (orderings[parentA].length - firstCut));
-
-        secondCut += firstCut + 1;
-        if (secondCut == 0)
-          continue;
-
-        // Make new offspring
-        let offspring = orderings[parentA];
-
-        // Mutate 'mutation zone'
-        let subarray = offspring.slice(firstCut, secondCut);
-        subarray.reverse()
-        offspring.splice(firstCut, (secondCut - firstCut), ...subarray);
-
-        // Add new offspring
-        orderings.push(offspring);
-      }
-
-      return orderings;
-    }
-
-    fitness(data, order) {
-      let totalDist = 0.0;
-      for (var i = 1; i < order.length; ++i) {
-        totalDist += this.getDTWWithDeaths(
-            data[order[i - 1]].events, data[order[i]].events, d => d[' t'], 0);
-      }
-
-      return totalDist;
-    }
-
-    selection(data, orderings, baseNumberOfOffspring) {
-      // Sort offspring based off fitness
-      orderings.sort((a,b) => this.fitness(data, a) < this.fitness(data, b));
-
-      // Only take the top offspring
-      orderings.splice(baseNumberOfOffspring,
-                       orderings.length - baseNumberOfOffspring);
-
-      return orderings;
-    }
-
-    minimizeTravel(data, startPoint, numIters)
-    {
-      var numStrains = 5;
-      var baseNumberOfOffspring = 5
-      let indicies = Array(numStrains);
-
-      for (var i = 0; i < numStrains; ++i)
-      {
-        indicies[i] = [...Array(data.length).keys() ];
-
-        for (let j = indicies[i].length - 1; j > 0; --j) {
-          var r = Math.floor(Math.random() * j); 
-          var temp = indicies[i][i];
-          indicies[i][i] = indicies[i][r];
-          indicies[i][r] = temp;
-        }
-      }
-
-      for (var i = 0; i < numIters; ++i)
-      {
-        indicies = this.crossOver(indicies, 3);
-        indicies = this.mutation(indicies, 3);
-        indicies = this.selection(data, indicies, baseNumberOfOffspring)
-      }
-
-      return indicies;
-    }
-
-    // data is an array of { data: [event time series data], simulationIndex }
-    reorder(data, simulationIndex, ordering, maxDeaths) {
-        console.log('reorder data by sim index ', simulationIndex, 'ordering', ordering);
-
-        const orderingParent = data.find(d => d.simulationIndex === simulationIndex)
-        if (!orderingParent) {
-            console.log('Ordering parent filtered out due to time range / distance filters')
-            return data
-        }
-
-        const data_sum = [];
-
-        let main_datum;
-        for (let i = 0; i < data.length; i++) {
-            let metric;
-            if (ordering === 'dtw') {
-                metric = this.getDTWWithDeaths(orderingParent.events, data[i].events, d => d.t, maxDeaths)
-            } else if (ordering === 'hausdorff') {
-                metric = this.getMaxInArray(this.getCorrelatingEventDistances(orderingParent.events, data[i].events)[0]);
-            } else if (ordering === 'temporal-needleman-wunsch') {
-                metric = this.getTNWScore(orderingParent.events, data[i].events)
-            }
-            if (data[i].simulationIndex !== simulationIndex) {
-                data_sum.push({
-                    ...data[i],
-                    "metric": metric,
-                });
-            } else {
-                main_datum = {
-                    ...data[i],
-                    metric: 0
-                };
-            }
-        }
-
-        data_sum.sort((obj1, obj2) => obj1['metric'] - obj2['metric']);
-
-        const reOrderedData = [main_datum];
-        data_sum.forEach(element => {
-            reOrderedData.push(element)
-        });
-
-        return reOrderedData;
-    }
-
-    getTNWScore(simulation1, simulation2) {
-        // console.log(simulation1, simulation2);
-
-        // first sequence is vertical
-        // second sequence is horizontal
-        var matrix = []
-        const GAP_PENALTY = -4
-        const MISMATCH_PENALTY = -1
-        const MATCH_REWARD = 1
-        const MAX_OFFSET_PENALTY = -3
-
-        // initialize first row
-        let firstRow = []
-        for (let i=0; i<simulation2.length+1; i++) {
-            firstRow[i] = i * GAP_PENALTY
-        }
-        matrix.push(firstRow)
-
-        // initialize first column
-        for (let i=1; i<simulation1.length+1; i++){
-            let row = Array(simulation2.length+1).fill(null, 1, simulation2.length+1)
-            row[0] = i * GAP_PENALTY
-            matrix.push(row)
-        }
-
-        // fill in the rest of the table
-        for (let i=1; i<simulation1.length+1; i++){
-            for (let j=1; j<simulation2.length+1; j++){
-
-                let cellMax = matrix[i-1][j-1] + MATCH_REWARD + this.offsetPenalty(simulation1[i-1], simulation2[j-1], MAX_OFFSET_PENALTY)
-                // if (simulation1[i-1] === simulation2[j-1]) {
-                //     cellMax = matrix[i-1][j-1] + MATCH_REWARD
-                // } else {
-                //     cellMax = matrix[i-1][j-1] + MISMATCH_PENALTY
-                // }
-
-                if (matrix[i-1][j] + GAP_PENALTY > cellMax) {
-                    cellMax = matrix[i-1][j] + GAP_PENALTY
-                }
-
-                if (matrix[i][j-1] + GAP_PENALTY > cellMax) {
-                    cellMax = matrix[i][j-1] + GAP_PENALTY
-                }
-
-                matrix[i][j] = cellMax
-            }
-        }
-        // console.log(matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1)
-
-        return matrix[matrix.length-1][matrix[matrix.length-1].length-1] * -1
-    }
-
-    offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
-        if (event1 === undefined || event2 === undefined) return MAX_OFFSET_PENALTY
-
-        event1 = event1.t
-        event2 = event2.t
-
-        return MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
-    }
-
-    getMaxInArray(arr) {
-        let max = Number.MIN_VALUE;
-        arr.forEach(num => {
-            if (num > max) {
-                max = num;
-            }
-        });
-        return max;
-    }
-
-    getSimulationDistanceBySum(correlatingEventDistances) {
-        let sum = 0;
-        correlatingEventDistances.forEach(distance => {
-            sum += distance;
-        });
-        return sum;
-    }
-
-    // returns array of distances of correlating sets of points
-    getHausdorffDistances(events1, events2) {
-        let smallEvents = events1
-        let largeEvents = events2
-        const valueSelector = d => d.t
-        let smallEventsDistances = this.getEventsDistance(smallEvents, largeEvents, valueSelector);
-        let largeEventsDistances = this.getEventsDistance(largeEvents, smallEvents, valueSelector);
-
-        let correlatingPointsDistances = [];
-        const pairs = []
-        for (let i = 0; i < largeEventsDistances.length; i++) {
-            let possibleCorrelatingPoint = largeEventsDistances[i];
-            if (smallEventsDistances[possibleCorrelatingPoint] == i) {
-                let distance = Math.abs(smallEvents[possibleCorrelatingPoint].t - largeEvents[i].t);
-                correlatingPointsDistances.push(distance);
-                pairs.push([possibleCorrelatingPoint, i])
-            }
-        }
-        return [correlatingPointsDistances, pairs];
-    }
-
-    // returns array of indexes from correlating array of closest event
-    getEventsDistance(events1, events2, valueSelector) {
-        let correlatingEventDistances = [];
-        for (let i = 0; i < events1.length; i++) {
-            correlatingEventDistances.push(this.getClosestEventIndex(valueSelector(events1[i]), events2, valueSelector));
-        }
-        return correlatingEventDistances;
-    }
-
-    // returns index of closest event in correlating array
-    getClosestEventIndex(value, arr, valueSelector) {
-        let minIndex = 0;
-        let minValue = Number.MAX_SAFE_INTEGER;
-
-
-
-        for (let i = 0; i < arr.length; i++) {
-            let difference = Math.abs(value - valueSelector(arr[i]));
-            if (difference < minValue) {
-                minValue = difference;
-                minIndex = i;
-            }
-        }
-
-        return minIndex;
-    }
-
-}

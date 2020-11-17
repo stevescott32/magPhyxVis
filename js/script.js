@@ -69,6 +69,14 @@ function loadDataAndVis(selectedDataSet) {
       allData = data;
 
       loadVis(data, reorderer);
+      
+      // setup reorder button
+      d3.selectAll('.reorder-button')
+        .on('click', () => {
+          console.log(allData)
+          loadVis(data, reorderer);
+          eventTypeVis.update(data)
+        })
 
     }).catch(function (err) {
       console.log('Error in main script: ', err);
@@ -89,8 +97,10 @@ function loadVis(data, reorderer) {
   addEventTypeSelector(orderedData);
 }
 
+/**
+ * Add a selector for which data set should be displayed
+ */
 function addDataInput() {
-  // add the event type selection boxes
   d3.select('#settings')
     .append('h4')
     .text('Data Set:')
@@ -128,8 +138,10 @@ function addDataInput() {
     ;
 }
 
+/**
+ * Add a selector for the reordering algorithm
+ */
 function addReorderSelector() {
-  // add the event type selection boxes
   d3.select('#settings')
     .append('h4')
     .text('Order:')
@@ -157,12 +169,12 @@ function addReorderSelector() {
         let oneWayToReorder = ways_to_reorder[i];
         if (oneWayToReorder.name == selectedOrder.name) {
           reorderer = oneWayToReorder;
+          removeDistanceSelector();
           if(selectedOrder.name.toLowerCase().includes('distance')) {
             // add the distance selector, but do not load the vis until the user
             // has selected a distance method
             addDistanceSelector();
           } else {
-            removeDistanceSelector();
             loadVis(allData, reorderer);
           }
         }
@@ -187,18 +199,22 @@ function addReorderSelector() {
 const distClassTag = 'distance-function';
 const distHeadingTag = 'distance-select-heading';
 function removeDistanceSelector() {
-  d3.selectAll(distClassTag)
+  console.log('Removing distance selectors')
+  d3.selectAll(`.${distClassTag}`)
     .remove();
 
   d3.selectAll(`.${distHeadingTag}`)
     .remove();
 }
 
+/**
+ * Add a selector for the distance function
+ */
 function addDistanceSelector() {
-  // add the event type selection boxes
   d3.select('#settings')
     .append('h4')
     .text('Distance Function:')
+    .attr('class', distHeadingTag)
     ;
 
   d3.select('#settings')
@@ -228,17 +244,18 @@ function addDistanceSelector() {
   d3.selectAll(`.${distClassTag}`)
     .append('label')
     .attr('id', d =>{ return `${d.name}`})
-    .text(d => { return `${d.name}`; })
+    .text(d => { return `${d.name} `; })
     ;
 
   d3.selectAll(`.${distClassTag}`)
     .append('br')
+    .attr('class', distClassTag)
     ;
 
   d3.select('#settings')
     .append('br')
+    .attr('class', distClassTag)
     ;
-
 }
 
 function addTNWParameters() {
