@@ -379,7 +379,6 @@ class EventTypeVis {
     }
 
     getEventCountScale(data) {
-        console.log('Event count scale max: ', data.simulations.length);
         return d3.scaleLinear()
             .domain([0, data.simulations.length])
             .range([this.config.padding.top, this.config.height + this.config.padding.top])

@@ -19,6 +19,13 @@ let data_sets = [
         events_folder: 'data7/events',
         param_folder: 'data7/commands',
         parse: parseMagPhyxData,
+    },
+    {
+        name: 'Keystroke',
+        sim_count: 1,
+        events_folder: 'keystroke',
+        param_folder: null,
+        parse: parseKeystrokeData,
     }
 ];
 
@@ -179,4 +186,91 @@ function getMagPhyxColor(event) {
         default:
             return 'black';
     }
+}
+
+function parseKeystrokeData(eventData) {
+    let simulations = [];
+    let eventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
+
+    let onlyFile = eventData[0];
+
+    eventData = eventData.sort((a, b) => {
+        if(a.user_id === b.user_id) {
+            return a.timestamp - b.timestamp;
+        } else {
+            return a.user_id - b.user_id;
+        }
+    })
+
+    let simIndex = 0
+    simulations.push({
+        params: null,
+        meta: {},
+        events: []
+    });
+
+    for(let row = 0; row < onlyFile.length; row++) {
+        let event = onlyFile[row];
+        
+        if(eventTypes.includes(event.change_type)) {
+            simulations[simIndex].events.push({
+                t: +event.timestamp,
+                event_type: event.change_type,
+                userId: +event.user_id,
+                on: false,
+                selected: false,
+                eventTypeOn: false
+
+            });
+
+        } 
+        if(event.change_type === 'RUN') {
+           // set the time of the run event to zero,
+            // then change the previous set of events to be indexed by
+            // its time relative to the run event
+            let events = simulations[simIndex].events;
+            let runEvent = events[events.length - 1];
+            let runEventTime = runEvent.t;
+            for(let i = 0; i < events.length; i++) {
+                let offset = events[i].t - runEventTime
+                // filter so event patterns are visible (scale)
+                if(offset > 10000 || offset < -100000) {
+                    offset = 0
+                }
+ 
+                events[i].t = offset;
+            }
+            runEvent.t = 0;
+
+            simIndex++;
+            simulations.push({
+                    params: null,
+                    meta: {},
+                    events: []
+                }
+            )
+        }
+    }
+
+    // remove the extra simulation that was pushed after the final run event
+    simulations.pop() 
+
+    return {
+        simulations: simulations,
+        eventTypes: eventTypes,
+        getColor: (e) => {
+        switch (e['event_type']) {
+                case '+input':
+                    return 'blue';
+                case '+delete':
+                    return 'red';
+                case 'RUN':
+                    return 'green';
+                case 'paste':
+                    return 'orange';
+                default:
+                    return 'black';
+            }
+        } 
+    };
 }
