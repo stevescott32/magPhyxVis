@@ -139,12 +139,15 @@ function getTempArray(array) {
 }
 
 function offsetPenalty(event1, event2, MAX_OFFSET_PENALTY) {
+    if (event1 === 0 && event2 === 0) {
+        return 0
+    }
     if (event1 === undefined || event2 === undefined) {
         console.error('undefined event')
         return MAX_OFFSET_PENALTY
     }
     let penalty = MAX_OFFSET_PENALTY * (Math.abs(event1 - event2) / Math.max(event1, event2))
-
+    
     if (isNaN(penalty) || penalty === undefined) console.error('error in computing offset penalty', 'event1:', event1, 'event2:', event2)
     return penalty
 }
