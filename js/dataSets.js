@@ -192,7 +192,9 @@ function parseKeystrokeData(eventData) {
     let simulations = [];
     let eventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
 
-    let onlyFile = eventData[0];
+    let startIndex = 50
+    let howManyToInclude = 50000
+    let onlyFile = eventData[0].slice(startIndex, startIndex + howManyToInclude)
 
     eventData = eventData.sort((a, b) => {
         if(a.user_id === b.user_id) {
@@ -217,6 +219,7 @@ function parseKeystrokeData(eventData) {
                 t: +event.timestamp,
                 event_type: event.change_type,
                 userId: +event.user_id,
+                hasError: event.has_error === "True" || event.has_error === "true",
                 on: false,
                 selected: false,
                 eventTypeOn: false
@@ -241,6 +244,9 @@ function parseKeystrokeData(eventData) {
                 events[i].t = offset;
             }
             runEvent.t = 0;
+            simulations[simIndex].events = events.filter((event) => {
+                return event.change_type != 'RUN' || event.t != 0
+            })
 
             simIndex++;
             simulations.push({
@@ -263,11 +269,25 @@ function parseKeystrokeData(eventData) {
                 case '+input':
                     return 'blue';
                 case '+delete':
-                    return 'red';
-                case 'RUN':
-                    return 'green';
-                case 'paste':
+                    return 'grey';
+                case 'cut':
                     return 'orange';
+                case 'RUN':
+                    if(e.hasError) {
+                        return 'red'
+                    } else {
+                        return 'green';
+                    }
+                case 'paste':
+                    return 'purple';
+                case 'TASK':
+                    return 'yellow';
+                case 'SUBMIT':
+                    return 'cyan';
+                case 'undo':
+                    return 'maroon';
+                case 'drag':
+                    return 'brown';
                 default:
                     return 'black';
             }
