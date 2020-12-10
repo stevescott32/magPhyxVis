@@ -273,10 +273,13 @@ function removeTNWParameters() {
 // create buttons so the user can select which event type to display
 function addEventTypeSelector(data) {
   console.log('Adding event type selector', data);
-
   d3.selectAll('.checkboxes')
     .remove()
     ;
+  
+    d3.select('.order-button')
+      .remove()
+      ;
 
   // add the event type selection boxes
   d3.select('#event-groups')
@@ -291,31 +294,42 @@ function addEventTypeSelector(data) {
   // create buttons so the user can select which event type to display
   d3.selectAll('.checkboxes')
     .append('input')
-    .attr('type', 'radio')
+    .attr('type', 'checkbox')
     .attr('name', 'event-type')
     .attr('value', (d) => { return d; })
     .text(d => { return `${d}`; })
-    .on('click', (type) => {
-      console.log(`Select all events of type ${type}`);
-      for(let sim = 0; sim < data.simulations.length; sim++) {
-        for(let e = 0; e < data.simulations[sim].events.length; e++) {
-          let event = data.simulations[sim].events[e];
-          if(event['event_type'] == type) {
-            event.on = true;
-            event.eventTypeOn = true;
-          } else {
-            event.on = false;
-            event.eventTypeOn = false;
-          }
-        }
-      }
-      eventTypeVis.removeEventsMatch()
-      // data = reorderer.reorder(data, distance_func);
-      loadVis(allData, reorderer);
-      eventTypeVis.update(data);
-    })
     ;
 
+    d3.select('#event-groups')
+      .append('button')
+      .attr('class', 'order-button')
+      .text('Sort based on selected event types')
+      .on('click', () => {
+        const eventTypes = document.getElementsByClassName('checkboxes');
+        const selectedEventTypes = new Set();
+        for (const eventType of eventTypes) {
+          if (eventType.children[0].checked) {
+            selectedEventTypes.add(eventType.children[1].innerHTML);
+          }
+        }
+        for(let sim = 0; sim < data.simulations.length; sim++) {
+          for(let e = 0; e < data.simulations[sim].events.length; e++) {
+            let event = data.simulations[sim].events[e];
+              if(selectedEventTypes.has(event['event_type'])) {
+              event.on = true;
+              event.eventTypeOn = true;
+            } else {
+              event.on = false;
+              event.eventTypeOn = false;
+            }
+          }
+        }
+        eventTypeVis.removeEventsMatch()
+        loadVis(allData, reorderer);
+        eventTypeVis.update(data);
+      })
+      ;
+      
   d3.selectAll('.checkboxes')
     .append('label')
     .text(d => { return `${d}`; })
