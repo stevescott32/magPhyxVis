@@ -211,43 +211,31 @@ function parseKeystrokeData(eventData) {
         events: []
     });
 
-    for(let row = 0; row < onlyFile.length; row++) {
-        let event = onlyFile[row];
-        
-        if(eventTypes.includes(event.change_type)) {
+    let row = 0
+    let runEvent = onlyFile[0]
+    let currentEvent = onlyFile[0]
+    const TIME_RANGE = 1000000
+    let timeOffset = +runEvent.timestamp
+    while(row < onlyFile.length) {
+        currentEvent = onlyFile[row]
+
+        if(eventTypes.includes(currentEvent.change_type) 
+            && +currentEvent.timestamp < timeOffset + TIME_RANGE 
+            && +currentEvent.timestamp > timeOffset
+            ) {
             simulations[simIndex].events.push({
-                t: +event.timestamp,
-                event_type: event.change_type,
-                userId: +event.user_id,
-                hasError: event.has_error === "True" || event.has_error === "true",
+                t: +currentEvent.timestamp - timeOffset,
+                event_type: currentEvent.change_type,
+                userId: +currentEvent.user_id,
+                hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
                 on: false,
                 selected: false,
                 eventTypeOn: false
-
-            });
-
-        } 
-        if(event.change_type === 'RUN') {
-           // set the time of the run event to zero,
-            // then change the previous set of events to be indexed by
-            // its time relative to the run event
-            let events = simulations[simIndex].events;
-            let runEvent = events[events.length - 1];
-            let runEventTime = runEvent.t;
-            for(let i = 0; i < events.length; i++) {
-                let offset = events[i].t - runEventTime
-                // filter so event patterns are visible (scale)
-                if(offset > 10000 || offset < -100000) {
-                    offset = 0
-                }
- 
-                events[i].t = offset;
-            }
-            runEvent.t = 0;
-            simulations[simIndex].events = events.filter((event) => {
-                return event.change_type != 'RUN' || event.t != 0
             })
+        } 
 
+        // on a run event, switch to a new simulation and add the run event at time 0, resetting the time offset
+        if(currentEvent.change_type === 'RUN') {
             simIndex++;
             simulations.push({
                     params: null,
@@ -255,7 +243,20 @@ function parseKeystrokeData(eventData) {
                     events: []
                 }
             )
+            runEvent = onlyFile[row]
+            timeOffset = +runEvent.timestamp
+            simulations[simIndex].events.push({
+                t: 0,
+                event_type: runEvent.change_type,
+                userId: +runEvent.user_id,
+                hasError: runEvent.has_error === "True" || runEvent.has_error === "true",
+                on: false,
+                selected: false,
+                eventTypeOn: false
+
+            })
         }
+        row++
     }
 
     // remove the extra simulation that was pushed after the final run event
