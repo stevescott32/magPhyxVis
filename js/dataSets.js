@@ -192,16 +192,12 @@ function parseKeystrokeData(eventData) {
     let simulations = [];
     let eventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
 
-    let startIndex = 50
-    let howManyToInclude = 50000
-    let onlyFile = eventData[0].slice(startIndex, startIndex + howManyToInclude)
+    // filter down to a single user
+    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
 
+    // sort the data on its timestamp
     eventData = eventData.sort((a, b) => {
-        if(a.user_id === b.user_id) {
-            return a.timestamp - b.timestamp;
-        } else {
-            return a.user_id - b.user_id;
-        }
+        return a.timestamp - b.timestamp;
     })
 
     let simIndex = 0
@@ -214,7 +210,7 @@ function parseKeystrokeData(eventData) {
     let row = 0
     let runEvent = onlyFile[0]
     let currentEvent = onlyFile[0]
-    const TIME_RANGE = 1000000
+    const TIME_RANGE = 100000
     let timeOffset = +runEvent.timestamp
     while(row < onlyFile.length) {
         currentEvent = onlyFile[row]
