@@ -197,7 +197,7 @@ function parseKeystrokeData(eventData) {
 
     // sort the data on its timestamp
     eventData = eventData.sort((a, b) => {
-        return a.timestamp - b.timestamp;
+        return +a.timestamp - +b.timestamp;
     })
 
     let simIndex = 0
