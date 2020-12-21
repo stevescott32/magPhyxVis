@@ -12,6 +12,28 @@ class EventTypeVis {
         this.highlightScale = 2;
 
         this.config = {
+            tooltip: d3.select("body")
+                .append("div")
+                .text("")
+                .attr("id", "tooltip")
+                .style("position", "absolute")
+                .style("visibility", "hidden")
+                .style("background-color", "#ededed")
+                .style("padding", "3px")
+                .style("border-radius", "3px")
+                ,
+            tooltipSimIndex: d3.select("#tooltip")
+                .append("p")
+                .text("")
+                .style("margin", "0"),
+            tooltipTime: d3.select("#tooltip")
+                .append("p")
+                .text("")
+                .style("margin", "0"),
+            tooltipSimScore: d3.select("#tooltip")
+                .append("p")
+                .text("")
+                .style("margin", "0"),
             width: 850, // 1200,
             height: 0, // (this.circleSize * 2) * numEvents,
             padding: {
@@ -25,7 +47,7 @@ class EventTypeVis {
             timeRange: [0, Infinity],
             distanceThreshold: null
         };
-
+     
         this.state = {
             match: null,
             ordering: 'hausdorff',
@@ -560,9 +582,9 @@ class EventTypeVis {
             })
             .style('fill', d => { return data.getColor(d); })
             .classed('selected-sim', (d) => { return d.selected; })
-            .on('mouseover', function (d) {
+            .on("mousemove", function(){return self.config.tooltip.style("top", (event.pageY-40)+"px").style("left",(event.pageX+5)+"px");})
+            .on('mouseover', function (d, index) {
                 if (d.on) {
-                    // console.log('Mouseovered the event', d);
                     if (self.state.match) {
                         self.state.match.hover = d.simulationIndex
                         self.highlightSimulation(d.simulationIndex)
@@ -572,6 +594,10 @@ class EventTypeVis {
                     d3.select(this)
                         .attr('r', () => { return self.circleSize * self.highlightScale; });
                 }
+                self.config.tooltipSimIndex.text(`Simulation: ${d.simulationIndex}`)
+                self.config.tooltipTime.text(`Time: ${d.t}`)
+                self.config.tooltipSimScore.text(`Simulation Score: ${data.simulations[d.simulationIndex].meta.distance}`)
+                self.config.tooltip.style("visibility", "visible");
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {
@@ -589,6 +615,7 @@ class EventTypeVis {
                     .attr('r', () => { return self.circleSize; });
                 scatter.unhighlightSimulation(d.index);
                 paramVis.unhighlightSimulation(d.index);
+                self.config.tooltip.style("visibility", "hidden")
             })
             .on('click', function (d, i) {
                 console.log('Clicked event', d);
