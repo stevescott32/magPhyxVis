@@ -30,6 +30,12 @@ function calculateTestDistance(sim1, sim2) {
   while (indexFromSim2 < sim2.events.length - 1 && !sim2.events[indexFromSim2].on) {
     indexFromSim2++;
   }
+  if (sim2.events.length === 0) {
+    return Number.MAX_SAFE_INTEGER
+  }
+  if (sim1.events.length === 0) {
+    return sim2.events[indexFromSim2].t
+  }
 
   let dist = sim2.events[indexFromSim2].t - sim1.events[indexFromSim1].t;
   console.log('Test Distance: ', dist);
