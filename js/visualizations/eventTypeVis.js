@@ -34,6 +34,10 @@ class EventTypeVis {
                 .append("p")
                 .text("")
                 .style("margin", "0"),
+            tooltipInput: d3.select("#tooltip")
+            .append("p")
+            .text("")
+            .style("margin", "0"),
             width: 850, // 1200,
             height: 0, // (this.circleSize * 2) * numEvents,
             padding: {
@@ -582,7 +586,7 @@ class EventTypeVis {
             })
             .style('fill', d => { return data.getColor(d); })
             .classed('selected-sim', (d) => { return d.selected; })
-            .on("mousemove", function(){return self.config.tooltip.style("top", (event.pageY-40)+"px").style("left",(event.pageX+5)+"px");})
+            .on("mousemove", function(){return self.config.tooltip.style("top", (event.pageY-70)+"px").style("left",(event.pageX+5)+"px");})
             .on('mouseover', function (d, index) {
                 if (d.on) {
                     if (self.state.match) {
@@ -594,10 +598,25 @@ class EventTypeVis {
                     d3.select(this)
                         .attr('r', () => { return self.circleSize * self.highlightScale; });
                 }
-                self.config.tooltipSimIndex.text(`Simulation: ${d.simulationIndex}`)
-                self.config.tooltipTime.text(`Time: ${d.t}`)
-                self.config.tooltipSimScore.text(`Simulation Score: ${data.simulations[d.simulationIndex].meta.distance}`)
+                self.config.tooltipSimIndex.text(`Simulation: ${d.simulationIndex}`);
+                self.config.tooltipTime.text(`Time: ${d.t}`);
+                self.config.tooltipSimScore.text(`Simulation Score: ${data.simulations[d.simulationIndex].meta.distance}`);
+                self.config.tooltipInput.text(`this will be the input part`);
                 self.config.tooltip.style("visibility", "visible");
+                let io = "";
+                for (let i = Math.max(0, index-10); i < Math.min(data.simulations.length-1, index + 10); i++) {
+                    // io = io + `${i} | `
+                    // io = io + d.added
+                    if (data.simulations[d.simulationIndex].events[i]) {
+
+                        if (data.simulations[d.simulationIndex].events[i].added && data.simulations[d.simulationIndex].events[i].added !== ""){
+                            io = io + data.simulations[d.simulationIndex].events[i].added
+                        } else if (data.simulations[d.simulationIndex].events[i].removed && data.simulations[d.simulationIndex].events[i].removed !== "") {
+                            io.slice(0, io.length-1);
+                        }
+                    }
+                }
+                self.config.tooltipInput.text(io);
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {

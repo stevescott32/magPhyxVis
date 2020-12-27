@@ -194,6 +194,7 @@ function parseKeystrokeData(eventData) {
 
     // filter down to a single user
     let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
+    // console.log(onlyFile)
 
     // sort the data on its timestamp
     onlyFile = onlyFile.sort((a, b) => {
@@ -224,6 +225,10 @@ function parseKeystrokeData(eventData) {
                 event_type: currentEvent.change_type,
                 userId: +currentEvent.user_id,
                 hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
+                added: currentEvent.added,
+                removed: currentEvent.removed,
+                input: currentEvent.input,
+                output: currentEvent.output,
                 on: false,
                 selected: false,
                 eventTypeOn: false

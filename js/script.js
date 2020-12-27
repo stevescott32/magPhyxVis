@@ -316,7 +316,6 @@ function addEventTypeSelector(data) {
           for(let e = 0; e < data.simulations[sim].events.length; e++) {
             
             let event = data.simulations[sim].events[e];
-            if (e > 0 && event.t > data.simulations[sim].events[e-1].t) console.warn(event.t, data.simulations[sim].events[e-1].t)
               if(selectedEventTypes.has(event['event_type'])) {
               event.on = true;
               event.eventTypeOn = true;
