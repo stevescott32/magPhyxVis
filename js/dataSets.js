@@ -21,11 +21,18 @@ let data_sets = [
         parse: parseMagPhyxData,
     },
     {
-        name: 'Keystroke',
+        name: 'Keystroke (Runs)',
         sim_count: 1,
         events_folder: 'keystroke',
         param_folder: null,
-        parse: parseKeystrokeData,
+        parse: parseKeystrokeDataRuns,
+    },
+    {
+        name: 'Keystroke (Gaps)',
+        sim_count: 1,
+        events_folder: 'keystroke',
+        param_folder: null,
+        parse: parseKeystrokeDataGaps,
     }
 ];
 
@@ -188,9 +195,10 @@ function getMagPhyxColor(event) {
     }
 }
 
-function parseKeystrokeData(eventData) {
+const keystrokeEventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
+
+function parseKeystrokeDataRuns(eventData) {
     let simulations = [];
-    let eventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
 
     // filter down to a single user
     let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
@@ -215,7 +223,7 @@ function parseKeystrokeData(eventData) {
     while(row < onlyFile.length) {
         currentEvent = onlyFile[row]
 
-        if(eventTypes.includes(currentEvent.change_type) 
+        if(keystrokeEventTypes.includes(currentEvent.change_type) 
             && +currentEvent.timestamp < timeOffset + TIME_RANGE 
             && +currentEvent.timestamp > timeOffset
             ) {
@@ -260,34 +268,105 @@ function parseKeystrokeData(eventData) {
 
     return {
         simulations: simulations,
-        eventTypes: eventTypes,
-        getColor: (e) => {
-        switch (e['event_type']) {
-                case '+input':
-                    return 'blue';
-                case '+delete':
-                    return 'grey';
-                case 'cut':
-                    return 'orange';
-                case 'RUN':
-                    if(e.hasError) {
-                        return 'red'
-                    } else {
-                        return 'green';
-                    }
-                case 'paste':
-                    return 'purple';
-                case 'TASK':
-                    return 'yellow';
-                case 'SUBMIT':
-                    return 'cyan';
-                case 'undo':
-                    return 'maroon';
-                case 'drag':
-                    return 'brown';
-                default:
-                    return 'black';
-            }
-        } 
-    };
+        eventTypes: keystrokeEventTypes,
+        getColor: getKeystrokeColor  
+    }
 }
+
+
+function parseKeystrokeDataGaps(eventData) {
+    let simulations = [];
+
+    // filter down to a single user
+    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
+    const GAP_SIZE = 15 /* min */ * 60 /* sec per min */ * 1000 /* mili per sec */
+
+    // sort the data on its timestamp
+    onlyFile = onlyFile.sort((a, b) => {
+        return +a.timestamp - +b.timestamp;
+    })
+
+    let simIndex = 0
+    simulations.push({
+        params: null,
+        meta: {},
+        events: []
+    });
+
+    let row = 0
+    let runEvent = onlyFile[0]
+    let currentEvent = onlyFile[0]
+    let timeOffset = +runEvent.timestamp
+    let lastTimestamp = +currentEvent.timestamp
+    while(row < onlyFile.length) {
+        currentEvent = onlyFile[row]
+
+        // if the space between two events is greater than GAP_SIZE, move to new simulation
+        if(+currentEvent.timestamp - lastTimestamp > GAP_SIZE) {
+            simIndex++;
+            simulations.push({
+                    params: null,
+                    meta: {},
+                    events: []
+                }
+            )
+            timeOffset = +currentEvent.timestamp
+        }
+ 
+        if(keystrokeEventTypes.includes(currentEvent.change_type) 
+            // && +currentEvent.timestamp < timeOffset + TIME_RANGE 
+            && +currentEvent.timestamp > timeOffset
+            ) {
+            simulations[simIndex].events.push({
+                t: +currentEvent.timestamp - timeOffset,
+                event_type: currentEvent.change_type,
+                userId: +currentEvent.user_id,
+                hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
+                on: false,
+                selected: false,
+                eventTypeOn: false
+            })
+        } 
+
+        lastTimestamp = +currentEvent.timestamp
+        row++
+    }
+
+    // remove the extra simulation that was pushed after the final run event
+    simulations.pop() 
+
+    return {
+        simulations: simulations,
+        eventTypes: keystrokeEventTypes,
+        getColor: getKeystrokeColor  
+    }
+}
+
+function getKeystrokeColor(e) {
+    switch (e['event_type']) {
+        case '+input':
+            return 'blue';
+        case '+delete':
+            return 'grey';
+        case 'cut':
+            return 'orange';
+        case 'RUN':
+            if(e.hasError) {
+                return 'red'
+            } else {
+                return 'green';
+            }
+        case 'paste':
+            return 'purple';
+        case 'TASK':
+            return 'yellow';
+        case 'SUBMIT':
+            return 'cyan';
+        case 'undo':
+            return 'maroon';
+        case 'drag':
+            return 'brown';
+        default:
+            return 'black';
+    }
+} 
