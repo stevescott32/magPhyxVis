@@ -30,14 +30,22 @@ class EventTypeVis {
                 .append("p")
                 .text("")
                 .style("margin", "0"),
+            tooltipEventType: d3.select("#tooltip")
+                .append("p")
+                .text("")
+                .style("margin", "0"),
             tooltipSimScore: d3.select("#tooltip")
                 .append("p")
                 .text("")
                 .style("margin", "0"),
             tooltipInput: d3.select("#tooltip")
-            .append("p")
-            .text("")
-            .style("margin", "0"),
+                .append("p")
+                .text("")
+                .style("margin", "0"),
+            tooltipDelete: d3.select("#tooltip")
+                .append("p")
+                .text("")
+                .style("margin", "0"),
             width: 850, // 1200,
             height: 0, // (this.circleSize * 2) * numEvents,
             padding: {
@@ -586,7 +594,7 @@ class EventTypeVis {
             })
             .style('fill', d => { return data.getColor(d); })
             .classed('selected-sim', (d) => { return d.selected; })
-            .on("mousemove", function(){return self.config.tooltip.style("top", (event.pageY-70)+"px").style("left",(event.pageX+5)+"px");})
+            .on("mousemove", function(){return self.config.tooltip.style("top", (event.pageY-150)+"px").style("left",(event.pageX+5)+"px");})
             .on('mouseover', function (d, index) {
                 if (d.on) {
                     if (self.state.match) {
@@ -601,22 +609,42 @@ class EventTypeVis {
                 self.config.tooltipSimIndex.text(`Simulation: ${d.simulationIndex}`);
                 self.config.tooltipTime.text(`Time: ${d.t}`);
                 self.config.tooltipSimScore.text(`Simulation Score: ${data.simulations[d.simulationIndex].meta.distance}`);
-                self.config.tooltipInput.text(`this will be the input part`);
+                self.config.tooltipEventType.text(`EventType: ${d.event_type}`)
                 self.config.tooltip.style("visibility", "visible");
-                let io = "";
-                for (let i = Math.max(0, index-10); i < Math.min(data.simulations.length-1, index + 10); i++) {
-                    // io = io + `${i} | `
-                    // io = io + d.added
+                let input = "add :";
+                let del =   "del :";
+                for (let i = Math.max(0, index-14); i < Math.min(data.simulations.length-1, index + 14); i++) {
                     if (data.simulations[d.simulationIndex].events[i]) {
-
-                        if (data.simulations[d.simulationIndex].events[i].added && data.simulations[d.simulationIndex].events[i].added !== ""){
-                            io = io + data.simulations[d.simulationIndex].events[i].added
-                        } else if (data.simulations[d.simulationIndex].events[i].removed && data.simulations[d.simulationIndex].events[i].removed !== "") {
-                            io.slice(0, io.length-1);
+                        if (data.simulations[d.simulationIndex].events[i].added !== "") {
+                            input = input + data.simulations[d.simulationIndex].events[i].added;
+                            del = del + "-";
+                        } else if (data.simulations[d.simulationIndex].events[i].removed !== "") {
+                            input = input + "-";
+                            del = del + data.simulations[d.simulationIndex].events[i].removed;
                         }
                     }
                 }
-                self.config.tooltipInput.text(io);
+                self.config.tooltipInput.text(input);
+                self.config.tooltipDelete.text(del);
+
+                d3.selectAll("#input-child").remove();
+                d3.selectAll("#delete-child").remove();
+                const addition = d3.select("#input");
+                const deletion = d3.select("#delete");
+                data.simulations[d.simulationIndex].events.forEach((event, i) => {
+                    console.log(event)
+                    if (event.added && event.added !== "") {
+                        if (i === index) addition.append("p").text(event.added).attr("class", "inline-block").attr("id", "input-child").attr("class", "dark-green");
+                        else addition.append("p").text(event.added).attr("class", "inline-block").attr("class", "green").attr("id", "input-child");
+                        deletion.append("p").text("*").attr("class", "inline-block").attr("id", "delete-child");
+                    } else if (event.removed && event.removed !== "") {
+                        if (i === index) deletion.append("p").text(event.removed).attr("class", "inline-block").attr("id", "delete-child").attr("class", "dark-red");
+                        else deletion.append("p").text(event.removed).attr("class", "inline-block").attr("id", "delete-child").attr("class", "red");
+                        addition.append("p").text("*").attr("class", "inline-block").attr("id", "input-child")
+                    }
+                });
+
+
             })
             .on('mouseout', function (d) {
                 if (self.state.match) {

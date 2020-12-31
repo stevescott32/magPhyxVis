@@ -86,8 +86,18 @@
           match score:
           <input type="number" class="tnw-parameter" id="match" value="1"/>
           </label>
-
         </div>
+    </div>
+    <div>
+      <div id="input"> 
+        <p id="input-child">hello there this is some python code</p>
+        <p id="input-child">hello</p>
+      </div>
+      <div></div>
+      <div id="delete">
+        <p id="delete-child">This is some deletion code</p>
+        <p id="delete-child">delete</p>
+      </div>
     </div>
   </div>
   <div id="scatter"></div>
@@ -109,7 +119,40 @@
 </body>
 
 <style>
-   table {
+  .dark-green {
+    background-color: green;
+    font-weight: bold;
+    /* font-size: 20px; */
+  }
+  .dark-red {
+    background-color: red;
+    font-weight: bold;
+    /* font-size: 20px; */
+  }
+  .green {
+    background-color: #66ffb2;
+  }
+  .red {
+    background-color: #ffaaaa;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  #input {
+    display: inline-block;
+  }
+  #input > p {
+    display: inline-block;
+    background-color: #66ffb2;
+  }
+  #delete {
+    display: inline-block;
+  }
+  #delete > p {
+    display: inline-block;
+    background-color: #ffaaaa;
+  }
+ table {
   /* table-layout: fixed ; */
   width: 40% ;
   border-collapse: collapse;
