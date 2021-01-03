@@ -223,8 +223,7 @@ function parseKeystrokeDataRuns(eventData) {
     while(row < onlyFile.length) {
         currentEvent = onlyFile[row]
 
-        if(keystrokeEventTypes.includes(currentEvent.change_type) 
-            && +currentEvent.timestamp < timeOffset + TIME_RANGE 
+        if(+currentEvent.timestamp < timeOffset + TIME_RANGE 
             && +currentEvent.timestamp > timeOffset
             ) {
             simulations[simIndex].events.push({
@@ -275,7 +274,7 @@ function parseKeystrokeDataRuns(eventData) {
 
 
 function parseKeystrokeDataGaps(eventData) {
-    let simulations = [];
+    let simulations = []
 
     // filter down to a single user
     let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
@@ -313,27 +312,19 @@ function parseKeystrokeDataGaps(eventData) {
             timeOffset = +currentEvent.timestamp
         }
  
-        if(keystrokeEventTypes.includes(currentEvent.change_type) 
-            // && +currentEvent.timestamp < timeOffset + TIME_RANGE 
-            && +currentEvent.timestamp > timeOffset
-            ) {
-            simulations[simIndex].events.push({
-                t: +currentEvent.timestamp - timeOffset,
-                event_type: currentEvent.change_type,
-                userId: +currentEvent.user_id,
-                hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
-                on: false,
-                selected: false,
-                eventTypeOn: false
-            })
-        } 
+        simulations[simIndex].events.push({
+            t: +currentEvent.timestamp - timeOffset,
+            event_type: currentEvent.change_type,
+            userId: +currentEvent.user_id,
+            hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
+            on: false,
+            selected: false,
+            eventTypeOn: false
+        })
 
         lastTimestamp = +currentEvent.timestamp
         row++
     }
-
-    // remove the extra simulation that was pushed after the final run event
-    simulations.pop() 
 
     return {
         simulations: simulations,
