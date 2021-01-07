@@ -88,17 +88,6 @@
           </label>
         </div>
     </div>
-    <div>
-      <div id="input"> 
-        <p id="input-child">hello there this is some python code</p>
-        <p id="input-child">hello</p>
-      </div>
-      <div></div>
-      <div id="delete">
-        <p id="delete-child">This is some deletion code</p>
-        <p id="delete-child">delete</p>
-      </div>
-    </div>
   </div>
   <div id="scatter"></div>
 
@@ -116,12 +105,33 @@
     } );
   </script>
   <table></table>
+    <div id="input-delete">
+      <div id="input"> 
+        <p id="input-child">hello there this is some python code</p>
+        <p id="input-child">hello</p>
+      </div>
+      <br style="padding: 0; margin: 0;">
+      <div id="delete">
+        <p id="delete-child">This is some deletion code</p>
+        <p id="delete-child">delete</p>
+      </div>
+    </div>
 </body>
 
 <style>
+  #input-delete {
+    position: sticky; 
+    bottom: 0;
+    max-height: 10%;
+    margin: 0px;
+    width: 100%;
+    padding: 0;
+
+  }
   .dark-green {
     background-color: green;
     font-weight: bold;
+    text-decoration: underline;
     /* font-size: 20px; */
   }
   .dark-red {
@@ -140,6 +150,8 @@
   }
   #input {
     display: inline-block;
+    padding: 2px;
+    margin: 2px;
   }
   #input > p {
     display: inline-block;
@@ -147,6 +159,8 @@
   }
   #delete {
     display: inline-block;
+    padding: 2px;
+    margin: 2px;
   }
   #delete > p {
     display: inline-block;
