@@ -224,6 +224,10 @@ function parseKeystrokeData(eventData) {
                 event_type: currentEvent.change_type,
                 userId: +currentEvent.user_id,
                 hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
+                added: currentEvent.added,
+                removed: currentEvent.removed,
+                input: currentEvent.input,
+                output: currentEvent.output,
                 on: false,
                 selected: false,
                 eventTypeOn: false

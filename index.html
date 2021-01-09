@@ -86,7 +86,6 @@
           match score:
           <input type="number" class="tnw-parameter" id="match" value="1"/>
           </label>
-
         </div>
     </div>
   </div>
@@ -106,10 +105,68 @@
     } );
   </script>
   <table></table>
+    <div id="input-delete">
+      <div id="input"> 
+        <p id="input-child">hello there this is some python code</p>
+        <p id="input-child">hello</p>
+      </div>
+      <br style="padding: 0; margin: 0;">
+      <div id="delete">
+        <p id="delete-child">This is some deletion code</p>
+        <p id="delete-child">delete</p>
+      </div>
+    </div>
 </body>
 
 <style>
-   table {
+  #input-delete {
+    position: sticky; 
+    bottom: 0;
+    max-height: 10%;
+    margin: 0px;
+    width: 100%;
+    padding: 0;
+
+  }
+  .dark-green {
+    background-color: green;
+    font-weight: bold;
+    text-decoration: underline;
+    /* font-size: 20px; */
+  }
+  .dark-red {
+    background-color: red;
+    font-weight: bold;
+    /* font-size: 20px; */
+  }
+  .green {
+    background-color: #66ffb2;
+  }
+  .red {
+    background-color: #ffaaaa;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  #input {
+    display: inline-block;
+    padding: 2px;
+    margin: 2px;
+  }
+  #input > p {
+    display: inline-block;
+    background-color: #66ffb2;
+  }
+  #delete {
+    display: inline-block;
+    padding: 2px;
+    margin: 2px;
+  }
+  #delete > p {
+    display: inline-block;
+    background-color: #ffaaaa;
+  }
+ table {
   /* table-layout: fixed ; */
   width: 40% ;
   border-collapse: collapse;
