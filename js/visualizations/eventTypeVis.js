@@ -38,11 +38,7 @@ class EventTypeVis {
                 .append("p")
                 .text("")
                 .style("margin", "0"),
-            tooltipInput: d3.select("#tooltip")
-                .append("p")
-                .text("")
-                .style("margin", "0"),
-            tooltipDelete: d3.select("#tooltip")
+            tooltipCharacter: d3.select("#tooltip")
                 .append("p")
                 .text("")
                 .style("margin", "0"),
@@ -611,36 +607,64 @@ class EventTypeVis {
                 self.config.tooltipSimScore.text(`Simulation Score: ${data.simulations[d.simulationIndex].meta.distance}`);
                 self.config.tooltipEventType.text(`EventType: ${d.event_type}`)
                 self.config.tooltip.style("visibility", "visible");
-                let input = "add :";
-                let del =   "del :";
-                for (let i = Math.max(0, index-14); i < Math.min(data.simulations.length-1, index + 14); i++) {
-                    if (data.simulations[d.simulationIndex].events[i]) {
-                        if (data.simulations[d.simulationIndex].events[i].added !== "") {
-                            input = input + data.simulations[d.simulationIndex].events[i].added;
-                            del = del + "-";
-                        } else if (data.simulations[d.simulationIndex].events[i].removed !== "") {
-                            input = input + "-";
-                            del = del + data.simulations[d.simulationIndex].events[i].removed;
-                        }
-                    }
-                }
-                self.config.tooltipInput.text(input);
-                self.config.tooltipDelete.text(del);
-
+                let character = "";
+                if (d.event_type !== "RUN") character = d.added !== "" ? `add: ${d.added}` : `del: ${d.removed}`;
+                self.config.tooltipCharacter.text(character);
                 d3.selectAll("#input-child").remove();
                 d3.selectAll("#delete-child").remove();
                 const addition = d3.select("#input");
                 const deletion = d3.select("#delete");
                 data.simulations[d.simulationIndex].events.forEach((event, i) => {
-                    console.log(event)
                     if (event.added && event.added !== "") {
-                        if (i === index) addition.append("p").text(event.added).attr("class", "inline-block").attr("id", "input-child").attr("class", "dark-green");
-                        else addition.append("p").text(event.added).attr("class", "inline-block").attr("class", "green").attr("id", "input-child");
-                        deletion.append("p").text("*").attr("class", "inline-block").attr("id", "delete-child");
+                        if (i === index) {
+                            addition
+                                .append("p")
+                                .text(event.added)
+                                .attr("class", "inline-block")
+                                .attr("id", "input-child")
+                                .attr("class", "dark-green")
+                                ;
+                        }
+                        else {
+                            addition
+                                .append("p")
+                                .text(event.added)
+                                .attr("class", "inline-block")
+                                .attr("class", "green")
+                                .attr("id", "input-child")
+                                ;
+                        }
+                        deletion
+                            .append("p")
+                            .text("*")
+                            .attr("class", "inline-block")
+                            .attr("id", "delete-child")
+                            ;
                     } else if (event.removed && event.removed !== "") {
-                        if (i === index) deletion.append("p").text(event.removed).attr("class", "inline-block").attr("id", "delete-child").attr("class", "dark-red");
-                        else deletion.append("p").text(event.removed).attr("class", "inline-block").attr("id", "delete-child").attr("class", "red");
-                        addition.append("p").text("*").attr("class", "inline-block").attr("id", "input-child")
+                        if (i === index) {
+                            deletion
+                                .append("p")
+                                .text(event.removed)
+                                .attr("class", "inline-block")
+                                .attr("id", "delete-child")
+                                .attr("class", "dark-red")
+                                ;
+                        }
+                        else {
+                            deletion
+                                .append("p")
+                                .text(event.removed)
+                                .attr("class", "inline-block")
+                                .attr("id", "delete-child")
+                                .attr("class", "red")
+                                ;
+                        }
+                        addition
+                            .append("p")
+                            .text("*")
+                            .attr("class", "inline-block")
+                            .attr("id", "input-child")
+                            ;
                     }
                 });
 
