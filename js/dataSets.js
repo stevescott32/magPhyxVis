@@ -199,9 +199,25 @@ const keystrokeEventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setVal
 
 function parseKeystrokeDataRuns(eventData) {
     let simulations = [];
+    let onlyFile = [];
+    let userId = eventData[0][0].user_id;
+    let users = new Set();
+    if (document.getElementById('users').childElementCount > 0) {
+        userId = document.getElementById('users').value;
+    }
+    eventData[0].forEach((row) => {
+        if (row.user_id === userId) onlyFile.push(row);
+        users.add(row.user_id);
+    });
+    users.forEach((user) => {
+        let usersMenu = d3.select('#users')
+        usersMenu
+            .append('option')
+            .text(user)
+            ;
+    })
 
     // filter down to a single user
-    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
 
     // sort the data on its timestamp
     onlyFile = onlyFile.sort((a, b) => {
@@ -281,7 +297,23 @@ function parseKeystrokeDataGaps(eventData) {
     let simulations = []
 
     // filter down to a single user
-    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
+    let userId = eventData[0][0].user_id
+    let onlyFile = [];
+    let users = new Set();
+    if (document.getElementById('users').childElementCount > 0) {
+        userId = document.getElementById('users').value;
+    }
+    eventData[0].forEach((row) => {
+        if (row.user_id === userId) onlyFile.push(row);
+        users.add(row.user_id);
+    });
+    users.forEach((user) => {
+        let usersMenu = d3.select('#users')
+        usersMenu
+            .append('option')
+            .text(user)
+            ;
+    })
     const GAP_SIZE = 15 /* min */ * 60 /* sec per min */ * 1000 /* mili per sec */
 
     // sort the data on its timestamp
