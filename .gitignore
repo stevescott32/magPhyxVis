@@ -3,3 +3,5 @@ c#/bin
 c#/obj
 .vscode
 data/keystroke
+node_modules/**/*
+package-lock.json
