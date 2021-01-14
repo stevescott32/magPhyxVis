@@ -281,7 +281,8 @@ function parseKeystrokeDataGaps(eventData) {
     let simulations = []
 
     // filter down to a single user
-    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
+    // available user ids: 100109, 100111, 100200, 100408
+    let onlyFile = eventData[0].filter((row) => row.user_id === '100408')
     const GAP_SIZE = 15 /* min */ * 60 /* sec per min */ * 1000 /* mili per sec */
 
     // sort the data on its timestamp
@@ -361,6 +362,8 @@ function getKeystrokeColor(e) {
             return 'maroon';
         case 'drag':
             return 'brown';
+        case 'setValue':
+            return 'chartreuse';
         default:
             return 'black';
     }
