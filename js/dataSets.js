@@ -314,7 +314,8 @@ function parseKeystrokeDataGaps(eventData) {
 			.text(user)
 		;
 	});
-	const GAP_SIZE = 15 /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
+	const GAP_INPUT_MIN = Number(document.getElementById('gap-input').value);
+	const GAP_SIZE = GAP_INPUT_MIN /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
 
 	// sort the data on its timestamp
 	onlyFile = onlyFile.sort((a, b) => {
