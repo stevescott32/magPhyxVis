@@ -243,7 +243,7 @@ function parseKeystrokeDataRuns(eventData) {
             && +currentEvent.timestamp > timeOffset
 		) {
 			simulations[simIndex].events.push({
-				t: +currentEvent.timestamp - timeOffset,
+				t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
 				event_type: currentEvent.change_type,
 				userId: +currentEvent.user_id,
 				hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
@@ -350,7 +350,7 @@ function parseKeystrokeDataGaps(eventData) {
 		}
  
 		simulations[simIndex].events.push({
-			t: +currentEvent.timestamp - timeOffset,
+			t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
 			event_type: currentEvent.change_type,
 			userId: +currentEvent.user_id,
 			hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
