@@ -295,6 +295,7 @@ function addEventTypeSelector(data) {
 		.append('input')
 		.attr('type', 'checkbox')
 		.attr('name', 'event-type')
+		.property('checked', true)
 		.attr('value', (d) => { return d; })
 		.text(d => { return `${d}`; })
 	;
@@ -313,7 +314,6 @@ function addEventTypeSelector(data) {
 			}
 			for(let sim = 0; sim < data.simulations.length; sim++) {
 				for(let e = 0; e < data.simulations[sim].events.length; e++) {
-            
 					let event = data.simulations[sim].events[e];
 					if(selectedEventTypes.has(event['event_type'])) {
 						event.on = true;

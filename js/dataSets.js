@@ -394,6 +394,8 @@ function getKeystrokeColor(e) {
 		return 'maroon';
 	case 'drag':
 		return 'brown';
+	case 'setValue': 
+		return'chartreuse';
 	default:
 		return 'black';
 	}
