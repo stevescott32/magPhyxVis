@@ -33,6 +33,13 @@ let data_sets = [
 		events_folder: 'keystroke',
 		param_folder: null,
 		parse: parseKeystrokeDataGaps,
+	},
+	{
+		name: 'Keystroke (Runs and Gaps)',
+		sim_count: 1,
+		events_folder: 'keystroke',
+		param_folder: null,
+		parse: parseKeystrokeDataRunsAndGaps,
 	}
 ];
 
@@ -196,104 +203,29 @@ function getMagPhyxColor(event) {
 }
 
 const keystrokeEventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
+let GAP_SIZE = 15;
+const MAX_GAP = 120 * 60 * 1000;
 
 function parseKeystrokeDataRuns(eventData) {
-	let simulations = [];
-	let onlyFile = [];
-	let userId = eventData[0][0].user_id;
-	let users = new Set();
-	if (document.getElementById('users').childElementCount > 0) {
-		userId = document.getElementById('users').value;
-	}
-	eventData[0].forEach((row) => {
-		if (row.user_id === userId) onlyFile.push(row);
-		users.add(row.user_id);
+	return parseKeystrokeDataGeneric(eventData, (currentEvent) => {
+		return (currentEvent.change_type === 'RUN');
 	});
-	users.forEach((user) => {
-		let usersMenu = d3.select('#users');
-		usersMenu
-			.append('option')
-			.text(user)
-		;
-	});
-
-	// filter down to a single user
-
-	// sort the data on its timestamp
-	onlyFile = onlyFile.sort((a, b) => {
-		return +a.timestamp - +b.timestamp;
-	});
-
-	let simIndex = 0;
-	simulations.push({
-		params: null,
-		meta: {},
-		events: []
-	});
-
-	let row = 0;
-	let runEvent = onlyFile[0];
-	let currentEvent = onlyFile[0];
-	const TIME_RANGE = 100000;
-	let timeOffset = +runEvent.timestamp;
-	while(row < onlyFile.length) {
-		currentEvent = onlyFile[row];
-
-		if(+currentEvent.timestamp < timeOffset + TIME_RANGE 
-            && +currentEvent.timestamp > timeOffset
-		) {
-			simulations[simIndex].events.push({
-				t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
-				event_type: currentEvent.change_type,
-				userId: +currentEvent.user_id,
-				hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
-				added: currentEvent.added,
-				removed: currentEvent.removed,
-				input: currentEvent.input,
-				output: currentEvent.output,
-				on: false,
-				selected: false,
-				eventTypeOn: false
-			});
-		} 
-
-		// on a run event, switch to a new simulation and add the run event at time 0, resetting the time offset
-		if(currentEvent.change_type === 'RUN') {
-			simIndex++;
-			simulations.push({
-				params: null,
-				meta: {},
-				events: []
-			}
-			);
-			runEvent = onlyFile[row];
-			timeOffset = +runEvent.timestamp;
-			simulations[simIndex].events.push({
-				t: 0,
-				event_type: runEvent.change_type,
-				userId: +runEvent.user_id,
-				hasError: runEvent.has_error === 'True' || runEvent.has_error === 'true',
-				on: false,
-				selected: false,
-				eventTypeOn: false
-
-			});
-		}
-		row++;
-	}
-
-	// remove the extra simulation that was pushed after the final run event
-	simulations.pop(); 
-
-	return {
-		simulations: simulations,
-		eventTypes: keystrokeEventTypes,
-		getColor: getKeystrokeColor  
-	};
 }
 
-
 function parseKeystrokeDataGaps(eventData) {
+	return parseKeystrokeDataGeneric(eventData, (currentEvent, lastTimestamp) => {
+		return (+currentEvent.timestamp - lastTimestamp > GAP_SIZE);
+	});
+}
+
+function parseKeystrokeDataRunsAndGaps(eventData) {
+	return parseKeystrokeDataGeneric(eventData, (currentEvent, lastTimestamp) => {
+		return currentEvent.change_type === 'RUN' || (+currentEvent.timestamp - lastTimestamp > GAP_SIZE);
+	});
+
+}
+
+function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	let simulations = [];
 
 	// filter down to a single user
@@ -315,7 +247,7 @@ function parseKeystrokeDataGaps(eventData) {
 		;
 	});
 	const GAP_INPUT_MIN = Number(document.getElementById('gap-input').value);
-	const GAP_SIZE = GAP_INPUT_MIN /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
+	GAP_SIZE = GAP_INPUT_MIN /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
 
 	// sort the data on its timestamp
 	onlyFile = onlyFile.sort((a, b) => {
@@ -337,8 +269,7 @@ function parseKeystrokeDataGaps(eventData) {
 	while(row < onlyFile.length) {
 		currentEvent = onlyFile[row];
 
-		// if the space between two events is greater than GAP_SIZE, move to new simulation
-		if(+currentEvent.timestamp - lastTimestamp > GAP_SIZE) {
+		if(splitSimsCallback(currentEvent, lastTimestamp)) {
 			simIndex++;
 			simulations.push({
 				params: null,
@@ -349,15 +280,17 @@ function parseKeystrokeDataGaps(eventData) {
 			timeOffset = +currentEvent.timestamp;
 		}
  
-		simulations[simIndex].events.push({
-			t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
-			event_type: currentEvent.change_type,
-			userId: +currentEvent.user_id,
-			hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
-			on: false,
-			selected: false,
-			eventTypeOn: false
-		});
+		if(+currentEvent.timestamp < timeOffset + MAX_GAP) {
+			simulations[simIndex].events.push({
+				t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
+				event_type: currentEvent.change_type,
+				userId: +currentEvent.user_id,
+				hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
+				on: false,
+				selected: false,
+				eventTypeOn: false
+			});
+		}
 
 		lastTimestamp = +currentEvent.timestamp;
 		row++;
@@ -400,3 +333,4 @@ function getKeystrokeColor(e) {
 		return 'black';
 	}
 } 
+
