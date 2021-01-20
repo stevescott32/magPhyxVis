@@ -272,7 +272,6 @@ function removeTNWParameters() {
 
 // create buttons so the user can select which event type to display
 function addEventTypeSelector(data) {
-	console.log('Adding event type selector', data);
 	d3.selectAll('.checkboxes')
 		.remove()
 	;

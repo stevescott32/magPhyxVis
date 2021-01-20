@@ -1,39 +1,39 @@
 let data_sets = [
-    {
-        name: 'Trading Data',
-        sim_count: 144,
-        events_folder: 'momentumTradingData/events',
-        param_folder: null,
-        parse: parseStockMarketData,
-    },
-    {
-        name: 'MagPhyx Grid',
-        sim_count: 99,
-        events_folder: 'data4/events',
-        param_folder: 'data4/commands',
-        parse: parseMagPhyxData,
-    },
-    {
-        name: 'MagPhyx Random (7)',
-        sim_count: 99,
-        events_folder: 'data7/events',
-        param_folder: 'data7/commands',
-        parse: parseMagPhyxData,
-    },
-    {
-        name: 'Keystroke (Runs)',
-        sim_count: 1,
-        events_folder: 'keystroke',
-        param_folder: null,
-        parse: parseKeystrokeDataRuns,
-    },
-    {
-        name: 'Keystroke (Gaps)',
-        sim_count: 1,
-        events_folder: 'keystroke',
-        param_folder: null,
-        parse: parseKeystrokeDataGaps,
-    }
+	{
+		name: 'Trading Data',
+		sim_count: 144,
+		events_folder: 'momentumTradingData/events',
+		param_folder: null,
+		parse: parseStockMarketData,
+	},
+	{
+		name: 'MagPhyx Grid',
+		sim_count: 99,
+		events_folder: 'data4/events',
+		param_folder: 'data4/commands',
+		parse: parseMagPhyxData,
+	},
+	{
+		name: 'MagPhyx Random (7)',
+		sim_count: 99,
+		events_folder: 'data7/events',
+		param_folder: 'data7/commands',
+		parse: parseMagPhyxData,
+	},
+	{
+		name: 'Keystroke (Runs)',
+		sim_count: 1,
+		events_folder: 'keystroke',
+		param_folder: null,
+		parse: parseKeystrokeDataRuns,
+	},
+	{
+		name: 'Keystroke (Gaps)',
+		sim_count: 1,
+		events_folder: 'keystroke',
+		param_folder: null,
+		parse: parseKeystrokeDataGaps,
+	}
 ];
 
 /**
@@ -59,60 +59,60 @@ let data_sets = [
  * 
  */
 function parseStockMarketData(eventData) {
-    let simulations = [];
-    let eventTypes = ['buy', 'sell', 'stay'];
+	let simulations = [];
+	let eventTypes = ['buy', 'sell', 'stay'];
 
-    for (let i = 0; i < eventData.length; i++) {
-        let oneSim = eventData[i];
+	for (let i = 0; i < eventData.length; i++) {
+		let oneSim = eventData[i];
 
-        simulations.push(
-            {
-                params: null,
-                meta: {},
-                events: []
-            }
-        )
-        for (let j = 0; j < oneSim.length; j++) {
-            simulations[i].events.push(oneSim[j]);
-            simulations[i].events[j].t = +oneSim[j][" t"];
-            simulations[i].events[j].on = false;
-            simulations[i].events[j].selected = false;
-            simulations[i].events[j].eventTypeOn = false;
-        }
-    }
+		simulations.push(
+			{
+				params: null,
+				meta: {},
+				events: []
+			}
+		);
+		for (let j = 0; j < oneSim.length; j++) {
+			simulations[i].events.push(oneSim[j]);
+			simulations[i].events[j].t = +oneSim[j][' t'];
+			simulations[i].events[j].on = false;
+			simulations[i].events[j].selected = false;
+			simulations[i].events[j].eventTypeOn = false;
+		}
+	}
 
-    return {
-        simulations: simulations,
-        eventTypes: eventTypes,
-        getColor: getStockMarketColor
-    };
+	return {
+		simulations: simulations,
+		eventTypes: eventTypes,
+		getColor: getStockMarketColor
+	};
 }
 
 function getStockMarketColor(event) {
-    switch (event.category) {
-        case 'Volume Indicators':
-            return 'grey';
-        case 'Volatility Indicators':
-            return 'orange';
-        case 'Statistic Functions':
-            return 'yellow';
-        case 'Price Transform':
-            return 'brown';
-        case 'Pattern Recognition':
-            return 'blue';
-        case 'Overlap Studies':
-            return 'purple';
-        case 'Momentum Indicators':
-            return 'green';
-        case 'Math Transform':
-            return 'cyan';
-        case 'Math Operators':
-            return 'red';
-        case 'Cycle Indicators':
-            return 'pink';
-        default:
-            return 'black';
-    }
+	switch (event.category) {
+	case 'Volume Indicators':
+		return 'grey';
+	case 'Volatility Indicators':
+		return 'orange';
+	case 'Statistic Functions':
+		return 'yellow';
+	case 'Price Transform':
+		return 'brown';
+	case 'Pattern Recognition':
+		return 'blue';
+	case 'Overlap Studies':
+		return 'purple';
+	case 'Momentum Indicators':
+		return 'green';
+	case 'Math Transform':
+		return 'cyan';
+	case 'Math Operators':
+		return 'red';
+	case 'Cycle Indicators':
+		return 'pink';
+	default:
+		return 'black';
+	}
 }
 
 const baseUrl = 'http://edwardsjohnmartin.github.io/MagPhyx/?initparams=';
@@ -121,10 +121,10 @@ const baseUrl = 'http://edwardsjohnmartin.github.io/MagPhyx/?initparams=';
  * sample url: http://edwardsjohnmartin.github.io/MagPhyx/?initparams=1,0,0,0.721905,-0.0589265,0.0455992
  */ 
 function getMagPhyxUrl(paramData) {
-    let p = paramData; // shorter alias
-    let result = `${baseUrl}${p.r},${p.angleFromOrigin},${p.momentAngle},${p.theta},${p.beta},${p.angularMomentum}`;
-    return result;
-  }
+	let p = paramData; // shorter alias
+	let result = `${baseUrl}${p.r},${p.angleFromOrigin},${p.momentAngle},${p.theta},${p.beta},${p.angularMomentum}`;
+	return result;
+}
 
 /**
  * Parse data generated by the MagPhyx simulation
@@ -133,238 +133,268 @@ function getMagPhyxUrl(paramData) {
  * @returns an data object
  */
 function parseMagPhyxData(eventData, paramData) {
-    let simulations = [];
-    let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
+	let simulations = [];
+	let eventTypes = ['collision', 'beta = 0', 'pr = 0', 'pphi = 0', 'ptheta = 0'];
 
-    for (let i = 0; i < eventData.length; i++) {
-        let oneSim = eventData[i];
-        simulations.push(
-            {
-                params: paramData[i],
-                meta: {},
-                events: []
-            }
-        )
-        // give each simulation a URL based on the params
-        simulations[i].meta['url'] = getMagPhyxUrl(paramData[i]);
+	for (let i = 0; i < eventData.length; i++) {
+		let oneSim = eventData[i];
+		simulations.push(
+			{
+				params: paramData[i],
+				meta: {},
+				events: []
+			}
+		);
+		// give each simulation a URL based on the params
+		simulations[i].meta['url'] = getMagPhyxUrl(paramData[i]);
 
-        for (let j = 0; j < oneSim.length; j++) {
-            let oneEvent = oneSim[j];
-            simulations[i].events.push({
-                n: +oneEvent.n,
-                event_type: oneEvent[' event_type'],
-                beta: +oneEvent[' beta'],
-                phi: +oneEvent[' phi'],
-                pphi: +oneEvent[' pphi'],
-                ptheta: +oneEvent[' ptheta'],
-                theta: +oneEvent[' theta'],
-                r: +oneEvent[' r'],
-                t: +oneEvent[' t'],
-                on: false,
-                selected: false,
-                eventTypeOn: false
-            });
-        }
-    }
+		for (let j = 0; j < oneSim.length; j++) {
+			let oneEvent = oneSim[j];
+			simulations[i].events.push({
+				n: +oneEvent.n,
+				event_type: oneEvent[' event_type'],
+				beta: +oneEvent[' beta'],
+				phi: +oneEvent[' phi'],
+				pphi: +oneEvent[' pphi'],
+				ptheta: +oneEvent[' ptheta'],
+				theta: +oneEvent[' theta'],
+				r: +oneEvent[' r'],
+				t: +oneEvent[' t'],
+				on: false,
+				selected: false,
+				eventTypeOn: false
+			});
+		}
+	}
 
-    return {
-        simulations: simulations,
-        eventTypes: eventTypes,
-        getColor: getMagPhyxColor
-    };
+	return {
+		simulations: simulations,
+		eventTypes: eventTypes,
+		getColor: getMagPhyxColor
+	};
 }
 
 function getMagPhyxColor(event) {
-    switch (event['event_type']) {
-        case 'init':
-            return 'grey';
-        case 'collision':
-            return 'red';
-        case 'beta = 0':
-            return 'purple';
-        case 'theta = 0':
-            return 'blue';
-        case 'pr = 0':
-            return 'orange';
-        case 'phi = 0':
-            return 'green';
-        case 'pphi = 0':
-            return 'brown';
-        default:
-            return 'black';
-    }
+	switch (event['event_type']) {
+	case 'init':
+		return 'grey';
+	case 'collision':
+		return 'red';
+	case 'beta = 0':
+		return 'purple';
+	case 'theta = 0':
+		return 'blue';
+	case 'pr = 0':
+		return 'orange';
+	case 'phi = 0':
+		return 'green';
+	case 'pphi = 0':
+		return 'brown';
+	default:
+		return 'black';
+	}
 }
 
 const keystrokeEventTypes = ['+input', '+delete', 'RUN', 'paste', 'cut', 'setValue', 'TASK', 'SUBMIT', 'undo', 'drag'];
 
 function parseKeystrokeDataRuns(eventData) {
-    let simulations = [];
+	let simulations = [];
+	let onlyFile = [];
+	let userId = eventData[0][0].user_id;
+	let users = new Set();
+	if (document.getElementById('users').childElementCount > 0) {
+		userId = document.getElementById('users').value;
+	}
+	eventData[0].forEach((row) => {
+		if (row.user_id === userId) onlyFile.push(row);
+		users.add(row.user_id);
+	});
+	users.forEach((user) => {
+		let usersMenu = d3.select('#users');
+		usersMenu
+			.append('option')
+			.text(user)
+		;
+	});
 
-    // filter down to a single user
-    let onlyFile = eventData[0].filter((row) => row.user_id === '100109')
+	// filter down to a single user
 
-    // sort the data on its timestamp
-    onlyFile = onlyFile.sort((a, b) => {
-        return +a.timestamp - +b.timestamp;
-    })
+	// sort the data on its timestamp
+	onlyFile = onlyFile.sort((a, b) => {
+		return +a.timestamp - +b.timestamp;
+	});
 
-    let simIndex = 0
-    simulations.push({
-        params: null,
-        meta: {},
-        events: []
-    });
+	let simIndex = 0;
+	simulations.push({
+		params: null,
+		meta: {},
+		events: []
+	});
 
-    let row = 0
-    let runEvent = onlyFile[0]
-    let currentEvent = onlyFile[0]
-    const TIME_RANGE = 100000
-    let timeOffset = +runEvent.timestamp
-    while(row < onlyFile.length) {
-        currentEvent = onlyFile[row]
+	let row = 0;
+	let runEvent = onlyFile[0];
+	let currentEvent = onlyFile[0];
+	const TIME_RANGE = 100000;
+	let timeOffset = +runEvent.timestamp;
+	while(row < onlyFile.length) {
+		currentEvent = onlyFile[row];
 
-        if(+currentEvent.timestamp < timeOffset + TIME_RANGE 
+		if(+currentEvent.timestamp < timeOffset + TIME_RANGE 
             && +currentEvent.timestamp > timeOffset
-            ) {
-            simulations[simIndex].events.push({
-                t: (+currentEvent.timestamp - timeOffset ) / 1000 / 60,
-                event_type: currentEvent.change_type,
-                userId: +currentEvent.user_id,
-                hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
-                added: currentEvent.added,
-                removed: currentEvent.removed,
-                input: currentEvent.input,
-                output: currentEvent.output,
-                on: false,
-                selected: false,
-                eventTypeOn: false
-            })
-        } 
+		) {
+			simulations[simIndex].events.push({
+				t: +currentEvent.timestamp - timeOffset,
+				event_type: currentEvent.change_type,
+				userId: +currentEvent.user_id,
+				hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
+				added: currentEvent.added,
+				removed: currentEvent.removed,
+				input: currentEvent.input,
+				output: currentEvent.output,
+				on: false,
+				selected: false,
+				eventTypeOn: false
+			});
+		} 
 
-        // on a run event, switch to a new simulation and add the run event at time 0, resetting the time offset
-        if(currentEvent.change_type === 'RUN') {
-            simIndex++;
-            simulations.push({
-                    params: null,
-                    meta: {},
-                    events: []
-                }
-            )
-            runEvent = onlyFile[row]
-            timeOffset = +runEvent.timestamp
-            simulations[simIndex].events.push({
-                t: 0,
-                event_type: runEvent.change_type,
-                userId: +runEvent.user_id,
-                hasError: runEvent.has_error === "True" || runEvent.has_error === "true",
-                on: false,
-                selected: false,
-                eventTypeOn: false
+		// on a run event, switch to a new simulation and add the run event at time 0, resetting the time offset
+		if(currentEvent.change_type === 'RUN') {
+			simIndex++;
+			simulations.push({
+				params: null,
+				meta: {},
+				events: []
+			}
+			);
+			runEvent = onlyFile[row];
+			timeOffset = +runEvent.timestamp;
+			simulations[simIndex].events.push({
+				t: 0,
+				event_type: runEvent.change_type,
+				userId: +runEvent.user_id,
+				hasError: runEvent.has_error === 'True' || runEvent.has_error === 'true',
+				on: false,
+				selected: false,
+				eventTypeOn: false
 
-            })
-        }
-        row++
-    }
+			});
+		}
+		row++;
+	}
 
-    // remove the extra simulation that was pushed after the final run event
-    simulations.pop() 
+	// remove the extra simulation that was pushed after the final run event
+	simulations.pop(); 
 
-    return {
-        simulations: simulations,
-        eventTypes: keystrokeEventTypes,
-        getColor: getKeystrokeColor  
-    }
+	return {
+		simulations: simulations,
+		eventTypes: keystrokeEventTypes,
+		getColor: getKeystrokeColor  
+	};
 }
 
 
 function parseKeystrokeDataGaps(eventData) {
-    let simulations = []
+	let simulations = [];
 
-    // filter down to a single user
-    // available user ids: 100109, 100111, 100200, 100408
-    let onlyFile = eventData[0].filter((row) => row.user_id === '100408')
-    const GAP_SIZE = 15 /* min */ * 60 /* sec per min */ * 1000 /* mili per sec */
+	// filter down to a single user
+	let userId = eventData[0][0].user_id;
+	let onlyFile = [];
+	let users = new Set();
+	if (document.getElementById('users').childElementCount > 0) {
+		userId = document.getElementById('users').value;
+	}
+	eventData[0].forEach((row) => {
+		if (row.user_id === userId) onlyFile.push(row);
+		users.add(row.user_id);
+	});
+	users.forEach((user) => {
+		let usersMenu = d3.select('#users');
+		usersMenu
+			.append('option')
+			.text(user)
+		;
+	});
+	const GAP_INPUT_MIN = Number(document.getElementById('gap-input').value);
+	const GAP_SIZE = GAP_INPUT_MIN /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
 
-    // sort the data on its timestamp
-    onlyFile = onlyFile.sort((a, b) => {
-        return +a.timestamp - +b.timestamp;
-    })
+	// sort the data on its timestamp
+	onlyFile = onlyFile.sort((a, b) => {
+		return +a.timestamp - +b.timestamp;
+	});
 
-    let simIndex = 0
-    simulations.push({
-        params: null,
-        meta: {},
-        events: []
-    });
+	let simIndex = 0;
+	simulations.push({
+		params: null,
+		meta: {},
+		events: []
+	});
 
-    let row = 0
-    let runEvent = onlyFile[0]
-    let currentEvent = onlyFile[0]
-    let timeOffset = +runEvent.timestamp
-    let lastTimestamp = +currentEvent.timestamp
-    while(row < onlyFile.length) {
-        currentEvent = onlyFile[row]
+	let row = 0;
+	let runEvent = onlyFile[0];
+	let currentEvent = onlyFile[0];
+	let timeOffset = +runEvent.timestamp;
+	let lastTimestamp = +currentEvent.timestamp;
+	while(row < onlyFile.length) {
+		currentEvent = onlyFile[row];
 
-        // if the space between two events is greater than GAP_SIZE, move to new simulation
-        if(+currentEvent.timestamp - lastTimestamp > GAP_SIZE) {
-            simIndex++;
-            simulations.push({
-                    params: null,
-                    meta: {},
-                    events: []
-                }
-            )
-            timeOffset = +currentEvent.timestamp
-        }
+		// if the space between two events is greater than GAP_SIZE, move to new simulation
+		if(+currentEvent.timestamp - lastTimestamp > GAP_SIZE) {
+			simIndex++;
+			simulations.push({
+				params: null,
+				meta: {},
+				events: []
+			}
+			);
+			timeOffset = +currentEvent.timestamp;
+		}
  
-        simulations[simIndex].events.push({
-            t: (+currentEvent.timestamp - timeOffset) / 1000 / 60,
-            event_type: currentEvent.change_type,
-            userId: +currentEvent.user_id,
-            hasError: currentEvent.has_error === "True" || currentEvent.has_error === "true",
-            on: false,
-            selected: false,
-            eventTypeOn: false
-        })
+		simulations[simIndex].events.push({
+			t: +currentEvent.timestamp - timeOffset,
+			event_type: currentEvent.change_type,
+			userId: +currentEvent.user_id,
+			hasError: currentEvent.has_error === 'True' || currentEvent.has_error === 'true',
+			on: false,
+			selected: false,
+			eventTypeOn: false
+		});
 
-        lastTimestamp = +currentEvent.timestamp
-        row++
-    }
+		lastTimestamp = +currentEvent.timestamp;
+		row++;
+	}
 
-    return {
-        simulations: simulations,
-        eventTypes: keystrokeEventTypes,
-        getColor: getKeystrokeColor  
-    }
+	return {
+		simulations: simulations,
+		eventTypes: keystrokeEventTypes,
+		getColor: getKeystrokeColor  
+	};
 }
 
 function getKeystrokeColor(e) {
-    switch (e['event_type']) {
-        case '+input':
-            return 'blue';
-        case '+delete':
-            return 'grey';
-        case 'cut':
-            return 'orange';
-        case 'RUN':
-            if(e.hasError) {
-                return 'red'
-            } else {
-                return 'green';
-            }
-        case 'paste':
-            return 'purple';
-        case 'TASK':
-            return 'yellow';
-        case 'SUBMIT':
-            return 'cyan';
-        case 'undo':
-            return 'maroon';
-        case 'drag':
-            return 'brown';
-        case 'setValue':
-            return 'chartreuse';
-        default:
-            return 'black';
-    }
+	switch (e['event_type']) {
+	case '+input':
+		return 'blue';
+	case '+delete':
+		return 'grey';
+	case 'cut':
+		return 'orange';
+	case 'RUN':
+		if(e.hasError) {
+			return 'red';
+		} else {
+			return 'green';
+		}
+	case 'paste':
+		return 'purple';
+	case 'TASK':
+		return 'yellow';
+	case 'SUBMIT':
+		return 'cyan';
+	case 'undo':
+		return 'maroon';
+	case 'drag':
+		return 'brown';
+	default:
+		return 'black';
+	}
 } 
