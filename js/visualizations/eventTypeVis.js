@@ -420,12 +420,20 @@ class EventTypeVis {
         const min = d3.min(sims, (sim) => {
             // TODO i think this should be min(sim.events)
             return d3.min(sim.events, (event) => {
-                return event.t;
+                if(event.on) {
+                    return event.t;
+                } else {
+                    return Number.MAX_SAFE_INTEGER;
+                }
             })
         })
         const max = d3.max(data.simulations, (sim) => {
             return d3.max(sim.events, (event) => {
-                return event.t;
+                if(event.on) {
+                    return event.t;
+                } else {
+                    return Number.MIN_SAFE_INTEGER;
+                }
             })
         })
         return [parseFloat(min), parseFloat(max)]
