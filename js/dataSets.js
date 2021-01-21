@@ -257,7 +257,9 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	let simIndex = 0;
 	simulations.push({
 		params: null,
-		meta: {},
+		meta: {
+			time: +onlyFile[0].timestamp
+		},
 		events: []
 	});
 
@@ -273,7 +275,9 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 			simIndex++;
 			simulations.push({
 				params: null,
-				meta: {},
+				meta: {
+					time: lastTimestamp
+				},
 				events: []
 			}
 			);
