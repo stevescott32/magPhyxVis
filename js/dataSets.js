@@ -239,13 +239,14 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 		if (row.user_id === userId) onlyFile.push(row);
 		users.add(row.user_id);
 	});
-	users.forEach((user) => {
-		let usersMenu = d3.select('#users');
-		usersMenu
-			.append('option')
-			.text(user)
-		;
-	});
+	d3.select('#users')
+		.selectAll('option')
+		.data(Array.from(users))
+		.enter()
+		.append('option')
+		.text(d => d)
+	;
+
 	const GAP_INPUT_MIN = Number(document.getElementById('gap-input').value);
 	GAP_SIZE = GAP_INPUT_MIN /* min */ * 60 /* sec per min */ * 1000; /* mili per sec */
 
