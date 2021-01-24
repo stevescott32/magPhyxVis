@@ -241,7 +241,7 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	});
 	d3.select('#users')
 		.selectAll('option')
-		.data(Array.from(users))
+		.data(Array.from(users).sort())
 		.enter()
 		.append('option')
 		.text(d => d)
