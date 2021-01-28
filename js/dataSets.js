@@ -258,7 +258,9 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	let simIndex = 0;
 	simulations.push({
 		params: null,
-		meta: {},
+		meta: {
+			gapTime: 1
+		},
 		events: []
 	});
 
@@ -267,6 +269,7 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	let currentEvent = onlyFile[0];
 	let timeOffset = +runEvent.timestamp;
 	let lastTimestamp = +currentEvent.timestamp;
+	console.log(onlyFile[0])
 	while(row < onlyFile.length) {
 		currentEvent = onlyFile[row];
 
@@ -274,7 +277,9 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 			simIndex++;
 			simulations.push({
 				params: null,
-				meta: {},
+				meta: {
+					gapTime: +onlyFile[simIndex]['timestamp'] - +onlyFile[simIndex-1]['timestamp']
+				},
 				events: []
 			}
 			);
@@ -296,6 +301,8 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 		lastTimestamp = +currentEvent.timestamp;
 		row++;
 	}
+	console.log(simulations[0])
+	console.log(simulations[1])
 
 	return {
 		simulations: simulations,

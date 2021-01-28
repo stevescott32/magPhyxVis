@@ -74,6 +74,13 @@ class EventTypeVis {
         keyboard.registerHandler('ArrowUp', this.shiftSimUp);
         // pressing the arrow down key moves the selected simulation down
         keyboard.registerHandler('ArrowDown', this.shiftSimDown);
+        this.max = 0.009055385138137417;
+        this.min = 0.00036055512754639384;
+        this.distanceScale = d3.scaleLinear()
+            .domain([this.min, this.max])
+            .range([0, 20])
+            ;
+
     }
 
     /**
@@ -508,6 +515,38 @@ class EventTypeVis {
             .attr('height', () => { return this.config.height + this.config.padding.top + this.config.padding.bottom; })
 
         this.svg.selectAll('g.axis').remove();
+
+        let gaps = [];
+        console.log(data)
+        for (const sim of data.simulations) {
+            console.log(sim.meta['gapTime'])
+            gaps.push(sim.meta['gapTime']);
+        }
+        const distanceScale = d3.scaleLog()
+            .domain([d3.min(gaps), d3.max(gaps)])
+            .range([0, 50])
+            ;
+
+
+        let distanceBars = this.svg.selectAll('.distanceBars')
+            // .data(distances)
+            // .data([0.0010295630140986986, 0.0022847319317591697, 0.0006000000000000033, 0.0008602325267042623, 0.0020000000000000018, 0.0008062257748298592, 0.0013601470508735444, 0.0008062257748298505, 0.0038483762809787695, 0.0012041594578792347, 0.0008062257748298574, 0.0007810249675906682, 0.0005830951894845277, 0.0010770329614269007, 0.0009848857801796078, 0.0020880613017821062, 0.0015264337522473744, 0.0010000000000000037, 0.0007211102550927973, 0.0023086792761230395, 0.001081665382639197, 0.0010198039027185578, 0.004001249804748508, 0.0011313708498984691, 0.0008246211251235339, 0.0013038404810405268, 0.002154065922853804, 0.004313930922024599, 0.0009486832980505191, 0.0011180339887498915, 0.0018681541692269436, 0.0005099019513592795, 0.002154065922853804, 0.0013341664064126294, 0.002121320343559647, 0.009055385138137417, 0.0016124515496597149, 0.000640312423743288, 0.0020124611797498124, 0.0015033296378372917, 0.0005000000000000004, 0.0015811388300841947, 0.0012529964086141717, 0.0016278820596099682, 0.0021023796041628622, 0.0018384776310850222, 0.001555634918610405, 0.0011704699910719653, 0.0005830951894845313, 0.00036055512754639384, 0.0013000000000000025, 0.00246981780704569, 0.0010049875621120897, 0.000899999999999998, 0.0012727922061357877, 0.0010198039027185578, 0.003769615364994155, 0.0035355339059327407, 0.0043382023926967755, 0.001552417469626003, 0.0005099019513592781, 0.0010816653826392028, 0.001140175425099142, 0.0008062257748298574, 0.0005999999999999964, 0.0012806248474865718, 0.0013453624047073704, 0.001170469991071961, 0.0010000000000000037])
+            .data(gaps)
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => {
+                return 20 - distanceScale(d);
+            })
+            .attr('y', (d, i) => { return this.config.padding.top + i * this.circleSize * 2; })
+            .attr('width', (d) => {
+                return distanceScale(d)
+            })
+            .attr('height', 1 /*eventCountScale(1)*/)
+            .attr('class', 'distanceBars')
+            .on('click', (thing) => console.log(thing))
+            ;
+
+
         let xaxis = this.svg.append('g').attr('class', 'axis')
             .attr('transform', `translate(0, ${this.config.padding.left + 10})`)
             ;

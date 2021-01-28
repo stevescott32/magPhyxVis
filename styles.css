@@ -5,7 +5,13 @@
 }
 
 .event-type-vis {
+    background-color: #ffaaaa;
     width: 100%;
+    padding-left: 300px;
+}
+
+.distance-bars {
+    background-color: blue;
 }
 
 .selected-sim {
