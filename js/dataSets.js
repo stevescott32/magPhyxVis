@@ -269,6 +269,7 @@ function parseKeystrokeDataGeneric(eventData, splitSimsCallback) {
 	let currentEvent = onlyFile[0];
 	let timeOffset = +runEvent.timestamp;
 	let lastTimestamp = +currentEvent.timestamp;
+	console.log(onlyFile)
 	console.log(onlyFile[0])
 	while(row < onlyFile.length) {
 		currentEvent = onlyFile[row];

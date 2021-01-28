@@ -524,7 +524,7 @@ class EventTypeVis {
         }
         const distanceScale = d3.scaleLog()
             .domain([d3.min(gaps), d3.max(gaps)])
-            .range([0, 50])
+            .range([0, 40])
             ;
 
 
@@ -535,15 +535,17 @@ class EventTypeVis {
             .enter()
             .append('rect')
             .attr('x', (d, i) => {
-                return 20 - distanceScale(d);
+                // console.log(d, distanceScale(d))
+                const tr = 40 - distanceScale(d);
+                console.log(tr);
+                return tr
             })
             .attr('y', (d, i) => { return this.config.padding.top + i * this.circleSize * 2; })
             .attr('width', (d) => {
                 return distanceScale(d)
             })
             .attr('height', 1 /*eventCountScale(1)*/)
-            .attr('class', 'distanceBars')
-            .on('click', (thing) => console.log(thing))
+            .on('mouseover', (thing) => console.log(thing))
             ;
 
 
@@ -581,7 +583,7 @@ class EventTypeVis {
             .attr('transform', `rotate(-90)`)
             .attr('y', this.config.padding.left / 2)
             .attr('x', -(this.config.padding.top + this.config.height / 2))
-            .text('Simulation')
+            // .text('Simulation')
             ;
 
         let simulationGroup = this.svg.select('g.simulations')
