@@ -516,11 +516,19 @@ class EventTypeVis {
         this.svg.selectAll('g.axis').remove();
 
         let gaps = [];
+        let max = -1;
+        let min = 1e15;
+        const maxGap = +document.getElementById('gap-input').value * 60 * 1000;
         for (const sim of data.simulations) {
             gaps.push(sim.meta['gapTime']);
+            if (sim.meta['gapTime'] < maxGap) {
+                max = Math.max(max, sim.meta['gapTime']);
+            }
+            min = Math.min(min, sim.meta['gapTime']);
         }
+
         const distanceScale = d3.scaleLog()
-            .domain([d3.min(gaps), d3.max(gaps)])
+            .domain([min, max])
             .range([0, 40])
             ;
 
@@ -534,7 +542,12 @@ class EventTypeVis {
             })
             .attr('y', (d, i) => { return eventCountScale(i); })
             .attr('width', (d) => {
-                return distanceScale(d)
+                const maxGap = +document.getElementById('gap-input').value * 60 * 1000;
+                if (d > maxGap) {
+                    return 0
+                } else {
+                    return distanceScale(d) 
+                }
             })
             .attr('height', 1 /*eventCountScale(1)*/)
             .on('mouseover', (thing) => console.log(thing))
@@ -628,13 +641,17 @@ class EventTypeVis {
                 console.log(d)
                 return timeScale(0)
             })
-            .attr('y', (d, i) => eventCountScale(i))
+            .attr('y', (d, i) => eventCountScale(i) - (this.circleSize) / 2)
             .attr('width', d => '1000px')
-            .attr('height', d => this.circleSize * 2)
+            .attr('height', d => this.circleSize)
             .attr('fill', '#000000')
             .attr('opacity', (d, i) => {
-                console.log(d.meta['gapTime'], opacityScale(d.meta['gapTime']))
-                return opacityScale(d.meta['gapTime']);
+                const maxGap = +document.getElementById('gap-input').value * 60 * 1000;
+                if (d.meta['gapTime'] > maxGap) {
+                    return 0.2 
+                } else {
+                    return 0
+                }
             })
         
         console.log('done entering')
