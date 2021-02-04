@@ -615,6 +615,29 @@ class EventTypeVis {
 
         circleSel.exit().remove();
 
+        const opacityScale = d3.scaleLog()
+            .domain([d3.min(gaps), d3.max(gaps)])
+            .range([0, 0.3])
+            ;
+
+        simsSel
+            .enter()
+            .append('rect')
+            .merge(circleSel)
+            .attr('x', (d, i) => {
+                console.log(d)
+                return timeScale(0)
+            })
+            .attr('y', (d, i) => eventCountScale(i))
+            .attr('width', d => '1000px')
+            .attr('height', d => this.circleSize * 2)
+            .attr('fill', '#000000')
+            .attr('opacity', (d, i) => {
+                console.log(d.meta['gapTime'], opacityScale(d.meta['gapTime']))
+                return opacityScale(d.meta['gapTime']);
+            })
+        
+        console.log('done entering')
         circleSel
             .enter()
             .append('circle')
