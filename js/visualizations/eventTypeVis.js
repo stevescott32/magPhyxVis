@@ -625,16 +625,20 @@ class EventTypeVis {
             .append('rect')
             .merge(circleSel)
             .attr('x', (d, i) => {
-                console.log(d)
                 return timeScale(0)
             })
-            .attr('y', (d, i) => eventCountScale(i))
+            .attr('y', (d, i) => eventCountScale(i) - this.circleSize)
             .attr('width', d => '1000px')
             .attr('height', d => this.circleSize * 2)
             .attr('fill', '#000000')
             .attr('opacity', (d, i) => {
-                console.log(d.meta['gapTime'], opacityScale(d.meta['gapTime']))
-                return opacityScale(d.meta['gapTime']);
+                // console.log(d.meta['gapTime'], opacityScale(d.meta['gapTime']))
+                // return opacityScale(d.meta['gapTime']);
+                const maxGap = +document.getElementById('gap-input').value
+                console.log(maxGap, maxGap * 60 * 1000)
+                console.log(d)
+
+                return d.meta['gapTime'] > maxGap * 60 * 1000 ? 0.4 : 0
             })
         
         console.log('done entering')
