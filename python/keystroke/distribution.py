@@ -54,7 +54,7 @@ for user in user_count_data:
 plt.title('Keystrokes Between Runs')
 fig1.show()
 
-BINS = 10
+BINS = 20
 user_binAverage = []
 for user in user_count_data:
     user_binAverage.append([])
@@ -65,13 +65,13 @@ for user in user_count_data:
     i = 0
     while i < user_length:
         if user_length == 1:
+            # with only one value, divide it evenly into the bins
             for j in range(BINS):
-                user_binAverage[-1].append(user[0])
+                user_binAverage[-1].append(user[0] / BINS)
             i += 1
         else:
             user_binAverage[-1].append(mean(user[i : i + bin_size]))
             i += bin_size
-    # print(len(user_binAverage[-1]), user_binAverage[-1])
 
 fig2 = plt.figure(2)
 for i in range(len(user_binAverage) - 1):
@@ -91,6 +91,31 @@ for i in range(len(user_binAverage) - 1):
 
 plt.title('Binned Keystrokes Between Runs')
 fig3.show()
+
+
+user_sum = []
+for user in user_count_data:
+    user_sum.append(sum(user))
+
+fig4 = plt.figure(4)
+# bar_width = (1 / len(user_binAverage))
+for i in range(len(user_binAverage) - 1):
+    user = [x / user_sum[i] for x in user_binAverage[i]]
+    x_pos = np.arange(len(user)) + (i * bar_width)
+    plt.bar(x_pos, user, width=bar_width)
+
+plt.title('Normalized Keystrokes Between Runs')
+fig4.show()
+
+# inverted = [list(i) for i in zip(*user_binAverage)]
+# fig5 = plt.figure(5)
+# x_pos = np.arange(0, len(inverted))
+# bar_width = (1 / len(inverted))
+# plt.bar(x_pos, inverted, width=bar_width)
+
+# plt.title('Averaged Normalized Keystrokes Between Runs')
+# fig5.show()
+
 
 print('Press enter to continue')
 input()
