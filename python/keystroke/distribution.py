@@ -4,13 +4,14 @@ import pandas as pd
 import csv
 import sys
 import math
-from statistics import mean
+from statistics import mean, median
 
 print('Starting distribution script')
 
 csv.field_size_limit(sys.maxsize)
 filename = './data/keystroke/events0.csv'
 
+BINS = 80
 
 headers = []
 data = []
@@ -54,10 +55,10 @@ for user in user_count_data:
 plt.title('Keystrokes Between Runs')
 fig1.show()
 
-BINS = 20
-user_binAverage = []
+
+user_bin_average = []
 for user in user_count_data:
-    user_binAverage.append([])
+    user_bin_average.append([])
     user_length = len(user)
     if user_length == 0:
         continue
@@ -67,25 +68,26 @@ for user in user_count_data:
         if user_length == 1:
             # with only one value, divide it evenly into the bins
             for j in range(BINS):
-                user_binAverage[-1].append(user[0] / BINS)
+                user_bin_average[-1].append(user[0] / BINS)
             i += 1
         else:
-            user_binAverage[-1].append(mean(user[i : i + bin_size]))
+            user_bin_average[-1].append(mean(user[i : i + bin_size]))
             i += bin_size
 
 fig2 = plt.figure(2)
-for i in range(len(user_binAverage) - 1):
-    user = user_binAverage[i]
+for i in range(len(user_bin_average)):
+    user = user_bin_average[i]
     x_pos = np.arange(len(user)) + (i * 0.1)
     plt.bar(x_pos, user, align='center', alpha=0.3)
 
 plt.title('Overlapping Binned Keystrokes Between Runs')
 fig2.show()
 
+
 fig3 = plt.figure(3)
-bar_width = (1 / len(user_binAverage))
-for i in range(len(user_binAverage) - 1):
-    user = user_binAverage[i]
+bar_width = (1 / len(user_bin_average))
+for i in range(len(user_bin_average)):
+    user = user_bin_average[i]
     x_pos = np.arange(len(user)) + (i * bar_width)
     plt.bar(x_pos, user, width=bar_width)
 
@@ -97,24 +99,59 @@ user_sum = []
 for user in user_count_data:
     user_sum.append(sum(user))
 
+normalized_user_bin_average = []
+for (user, user_sum) in zip(user_bin_average, user_sum):
+    normalized_user_bin_average.append([x / user_sum for x in user])
+
 fig4 = plt.figure(4)
-# bar_width = (1 / len(user_binAverage))
-for i in range(len(user_binAverage) - 1):
-    user = [x / user_sum[i] for x in user_binAverage[i]]
+bar_width = (1 / len(normalized_user_bin_average))
+for i in range(len(normalized_user_bin_average)):
+    user = normalized_user_bin_average[i]
     x_pos = np.arange(len(user)) + (i * bar_width)
     plt.bar(x_pos, user, width=bar_width)
 
 plt.title('Normalized Keystrokes Between Runs')
 fig4.show()
 
-# inverted = [list(i) for i in zip(*user_binAverage)]
-# fig5 = plt.figure(5)
-# x_pos = np.arange(0, len(inverted))
-# bar_width = (1 / len(inverted))
-# plt.bar(x_pos, inverted, width=bar_width)
 
-# plt.title('Averaged Normalized Keystrokes Between Runs')
-# fig5.show()
+sum_of_bins = [0] * BINS
+count_of_bins = [0] * BINS
+for u in range(len(normalized_user_bin_average)):
+    user = normalized_user_bin_average[u]
+    for bin in range(len(user)):
+        sum_of_bins[bin] += user[bin]
+        count_of_bins[bin] += 1
+
+avg_of_bins = [0] * BINS
+for i in range(BINS):
+    avg_of_bins[i] = sum_of_bins[i] / count_of_bins[i]
+
+fig5 = plt.figure(5)
+x_pos = np.arange(0, len(avg_of_bins))
+plt.bar(x_pos, avg_of_bins, align='edge')
+
+plt.title('Averaged Normalized Keystrokes Between Runs')
+fig5.show()
+
+
+bin_user = []
+for i in range(BINS):
+    bin_user.append([])
+
+for user in normalized_user_bin_average:
+    for bin in range(len(user)):
+        bin_user[bin].append(user[bin])
+
+median_of_bins = [0] * BINS
+for i in range(BINS):
+    median_of_bins[i] = median(bin_user[i])
+
+fig6 = plt.figure(6)
+x_pos = np.arange(0, len(median_of_bins))
+plt.bar(x_pos, median_of_bins, align='edge')
+
+plt.title('Median Normalized Keystrokes Between Runs')
+fig6.show()
 
 
 print('Press enter to continue')
