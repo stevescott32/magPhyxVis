@@ -527,7 +527,7 @@ class EventTypeVis {
             min = Math.min(min, sim.meta['gapTime']);
         }
 
-        const distanceScale = d3.scaleLog()
+        const distanceScale = d3.scaleLinear()
             .domain([min, max])
             .range([0, 40])
             ;
