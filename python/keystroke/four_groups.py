@@ -4,6 +4,7 @@ import pandas as pd
 import csv
 import sys
 import math
+import seaborn as sns
 from statistics import mean, median
 
 # correlation between number of keystrokes and the percentage chance the next compile is a failure
@@ -96,5 +97,8 @@ for group in four_groups:
     print('    Q1: ' + str(np.quantile(group["data"], 0.25)))
     print('    Median: ' + str(np.quantile(group["data"], 0.5)))
     print('    Q3: ' + str(np.quantile(group["data"], 0.75)))
+    sns.displot(group["data"])
+
+plt.show()
 
 print('Finishing four groups script')
