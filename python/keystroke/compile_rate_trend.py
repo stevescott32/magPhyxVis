@@ -103,19 +103,6 @@ for user in user_bin_stats:
 plt.title('Successful compile rate')
 combined_fig.show()
 
-
-# correlation between number of keystrokes and the percentage chance the next compile is a failure
-# two groups - successful runs, failed runs, take stats
-# four groups - sucess to success, fail to fail, success to fail, fail to success
-
-# weighted moving average
-
-# walk through, calculate what % of the way through you are (e.g. 40%), then
-# place value into the corresponding bin (e.g. 40% of the bins)
-
-# IEEE Viz
-
-
 print('Press enter to continue')
 input()
 print('Finishing revised distribution')

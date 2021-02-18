@@ -6,12 +6,13 @@ import sys
 import math
 from statistics import mean, median
 
+# correlation between number of keystrokes and the percentage chance the next compile is a failure
+# four groups - sucess to success, fail to fail, success to fail, fail to success
+
 print('Starting four groups script')
 
 csv.field_size_limit(sys.maxsize)
 filename = './data/keystroke/events0.csv'
-
-BINS = 10
 
 headers = []
 data = []
@@ -69,15 +70,31 @@ for user in users_sims_events:
             failure_failure.append(len(sim))
             last_result_success = False
 
-# correlation between number of keystrokes and the percentage chance the next compile is a failure
-# two groups - successful runs, failed runs, take stats
-# four groups - sucess to success, fail to fail, success to fail, fail to success
 
-# weighted moving average
-print('Success success: median: ' + str(median(success_success)) + ' mean: ' + str(mean(success_success)) + ' std: ' + str(np.std(success_success)))
-print('Success failure: median: ' + str(median(success_failure)) + ' mean: ' + str(mean(success_failure)) + ' std: ' + str(np.std(success_failure)))
-print('Failure success: median: ' + str(median(failure_success)) + ' mean: ' + str(mean(failure_success)) + ' std: ' + str(np.std(failure_success)))
-print('Failure failure: median: ' + str(median(failure_failure)) + ' mean: ' + str(mean(failure_failure)) + ' std: ' + str(np.std(failure_failure)))
+four_groups = []
+four_groups.append({
+    "name": "Success success",
+    "data": success_success
+})
+four_groups.append({
+    "name": "Success failure",
+    "data": success_failure
+})
+four_groups.append({
+    "name": "Failure success",
+    "data": failure_success
+})
+four_groups.append({
+    "name": "Failure failure",
+    "data": failure_failure
+})
 
+for group in four_groups:
+    print(group["name"])
+    print('    Mean: ' + str(mean(group["data"])))
+    print('    Std: ' + str(np.std(group["data"])))
+    print('    Q1: ' + str(np.quantile(group["data"], 0.25)))
+    print('    Median: ' + str(np.quantile(group["data"], 0.5)))
+    print('    Q3: ' + str(np.quantile(group["data"], 0.75)))
 
 print('Finishing four groups script')

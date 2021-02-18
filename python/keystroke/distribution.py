@@ -6,17 +6,6 @@ import sys
 import math
 from statistics import mean, median
 
-# correlation between number of keystrokes and the percentage chance the next compile is a failure
-# two groups - successful runs, failed runs, take stats
-# four groups - sucess to success, fail to fail, success to fail, fail to success
-
-# weighted moving average
-
-# walk through, calculate what % of the way through you are (e.g. 40%), then
-# place value into the corresponding bin (e.g. 40% of the bins)
-
-# IEEE Viz
-
 print('Starting distribution script')
 
 csv.field_size_limit(sys.maxsize)
@@ -54,7 +43,8 @@ for event in data:
     users_sims_events[-1][-1].append(event)
 
 
-# bin the events for each user
+# walk through, calculate what % of the way through you are (e.g. 40%), then
+# place value into the corresponding bin (e.g. 0.40 * BINS )
 users_bins_events = []
 for user in users_sims_events:
     # add a new user
