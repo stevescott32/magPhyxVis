@@ -6,6 +6,17 @@ import sys
 import math
 from statistics import mean, median
 
+# correlation between number of keystrokes and the percentage chance the next compile is a failure
+# two groups - successful runs, failed runs, take stats
+# four groups - sucess to success, fail to fail, success to fail, fail to success
+
+# weighted moving average
+
+# walk through, calculate what % of the way through you are (e.g. 40%), then
+# place value into the corresponding bin (e.g. 40% of the bins)
+
+# IEEE Viz
+
 print('Starting distribution script')
 
 csv.field_size_limit(sys.maxsize)
@@ -28,6 +39,7 @@ with open('./data/keystroke/events0.csv', newline='') as csvfile:
             data.append(obj)
 
 
+# split the data by user and run event
 users_sims_events = [[[]]]
 current_user = data[0]['user_id']
 for event in data:
@@ -41,11 +53,32 @@ for event in data:
     # add the event to the most recent user, most recent sim
     users_sims_events[-1][-1].append(event)
 
-user_count_data = []
+
+# bin the events for each user
+users_bins_events = []
 for user in users_sims_events:
+    # add a new user
+    users_bins_events.append([])
+    # add bins to the user
+    for b in range(BINS):
+        users_bins_events[-1].append([])
+
+    user_length = len(user)
+    if user_length == 0:
+        continue
+    for i in range(user_length):
+        target_bin = math.floor(i / user_length * BINS)
+        users_bins_events[-1][target_bin].append(user[i])
+
+
+user_count_data = []
+for user in users_bins_events:
     user_count_data.append([])
-    for sim in user:
-        user_count_data[-1].append(len(sim))
+    for one_bin in user:
+        bin_total = 0
+        for sim in one_bin:
+            bin_total += len(sim)
+        user_count_data[-1].append(bin_total / len(sim))
 
 fig1 = plt.figure(1)
 for user in user_count_data:
@@ -54,7 +87,6 @@ for user in user_count_data:
 
 plt.title('Keystrokes Between Runs')
 fig1.show()
-
 
 user_bin_average = []
 for user in user_count_data:
