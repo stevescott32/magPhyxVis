@@ -5,13 +5,16 @@ import csv
 import sys
 import math
 from statistics import mean, median
+from sklearn.cluster import KMeans
+from sklearn.datasets.samples_generator import make_blobs
 
 print('Starting distribution script')
 
 csv.field_size_limit(sys.maxsize)
 filename = './data/keystroke/events0.csv'
 
-BINS = 10
+BINS = 4
+SHOW_ALL_USERS = False
 
 headers = []
 data = []
@@ -84,24 +87,78 @@ for user in user_bin_events:
 
         user_bin_stats[-1].append(stats)
 
+i = 0
+if SHOW_ALL_USERS:
+    for (i, user) in zip(range(len(user_bin_stats)), user_bin_stats):
+        fig = plt.figure(i)
+        x = np.arange(BINS)
+        y = [ b["keystrokes_before_successes"] / ( max(b["keystrokes_before_successes"] + b["keystrokes_before_failures"], 1)) for b in user ]
+        plt.plot(x, y)  
+        plt.title('Successful compile rate')
+        fig.show()
 
-for (i, user) in zip(range(len(user_bin_stats)), user_bin_stats):
-    fig = plt.figure(i)
-    x = np.arange(BINS)
-    y = [ b["keystrokes_before_successes"] / ( max(b["keystrokes_before_successes"] + b["keystrokes_before_failures"], 1)) for b in user ]
-    plt.plot(x, y)  
-    plt.title('Successful compile rate')
-    fig.show()
-
-
-combined_fig = plt.figure(i + 1)
+user_bin_compile_rate = []
 for user in user_bin_stats:
+    user_bin_compile_rate.append([ b["keystrokes_before_successes"] / ( max(b["keystrokes_before_successes"] + b["keystrokes_before_failures"], 1)) for b in user ])
+
+i += 1
+combined_fig = plt.figure(i)
+for user in user_bin_compile_rate:
     x = np.arange(BINS)
-    y = [ b["keystrokes_before_successes"] / ( max(b["keystrokes_before_successes"] + b["keystrokes_before_failures"], 1)) for b in user ]
-    plt.plot(x, y)  
+    plt.plot(x, user)  
 
 plt.title('Successful compile rate')
 combined_fig.show()
+
+potential_ks = range(2, 10)
+i += 1
+elbow_plot = plt.figure(i)
+wcss = []
+for k in potential_ks:
+    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    kmeans.fit(user_bin_compile_rate)
+    wcss.append(kmeans.inertia_)
+
+plt.plot(potential_ks, wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+elbow_plot.show()
+
+num_clusters = 4
+clusters = []
+for x in range(num_clusters):
+    clusters.append([])
+cluster_median_fig = plt.figure(i)
+i += 1
+kmeans = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=300, n_init=10, random_state=0)
+predicted_cluster = kmeans.fit_predict(user_bin_compile_rate)
+for (user, c) in zip(user_bin_compile_rate, predicted_cluster):
+    clusters[c].append(user)
+
+# TODO plot the median of each bin
+cluster_median_fig.show()
+
+
+i += 1
+sample_blobs_plot = plt.figure(i)
+X, y = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+plt.scatter(X[:,0], X[:,1])
+sample_blobs_plot.show()
+
+i += 1
+sample_elbow_plot = plt.figure(i)
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    kmeans.fit(X)
+    wcss.append(kmeans.inertia_)
+plt.plot(range(1, 11), wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')
+sample_elbow_plot.show()
+
 
 print('Press enter to continue')
 input()

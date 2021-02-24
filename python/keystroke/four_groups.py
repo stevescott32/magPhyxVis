@@ -72,6 +72,14 @@ for user in users_sims_events:
             last_result_success = False
 
 
+# def myFilter(e):
+#     return e > 2
+
+# success_success = filter(myFilter, success_success)
+# success_failure = filter(myFilter, success_failure)
+# failure_success = filter(myFilter, failure_success)
+# failure_failure = filter(myFilter, failure_failure)
+
 four_groups = []
 four_groups.append({
     "name": "Success success",
