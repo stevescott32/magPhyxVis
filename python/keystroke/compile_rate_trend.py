@@ -6,7 +6,6 @@ import sys
 import math
 from statistics import mean, median
 from sklearn.cluster import KMeans
-from sklearn.datasets.samples_generator import make_blobs
 
 print('Starting distribution script')
 
@@ -152,27 +151,6 @@ for cluster in cluster_bin_median:
     plt.plot(range(len(cluster)), cluster)
 
 cluster_median_fig.show()
-
-
-i += 1
-sample_blobs_plot = plt.figure(i)
-X, y = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
-plt.scatter(X[:,0], X[:,1])
-sample_blobs_plot.show()
-
-i += 1
-sample_elbow_plot = plt.figure(i)
-wcss = []
-for i in range(1, 11):
-    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
-    kmeans.fit(X)
-    wcss.append(kmeans.inertia_)
-plt.plot(range(1, 11), wcss)
-plt.title('Elbow Method')
-plt.xlabel('Number of clusters')
-plt.ylabel('WCSS')
-sample_elbow_plot.show()
-
 
 print('Press enter to continue')
 input()
