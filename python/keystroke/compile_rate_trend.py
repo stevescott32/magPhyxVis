@@ -93,7 +93,7 @@ if SHOW_ALL_USERS:
         fig = plt.figure(i)
         x = np.arange(BINS)
         y = [ b["keystrokes_before_successes"] / ( max(b["keystrokes_before_successes"] + b["keystrokes_before_failures"], 1)) for b in user ]
-        plt.plot(x, y)  
+        plt.plot(x, y)
         plt.title('Successful compile rate')
         fig.show()
 
@@ -127,16 +127,30 @@ elbow_plot.show()
 
 num_clusters = 4
 clusters = []
+cluster_bin_median = []
 for x in range(num_clusters):
     clusters.append([])
-cluster_median_fig = plt.figure(i)
-i += 1
+    cluster_bin_median.append([])
+    for y in range(BINS):
+        clusters[x].append([])
+
 kmeans = KMeans(n_clusters=num_clusters, init='k-means++', max_iter=300, n_init=10, random_state=0)
 predicted_cluster = kmeans.fit_predict(user_bin_compile_rate)
 for (user, c) in zip(user_bin_compile_rate, predicted_cluster):
-    clusters[c].append(user)
+    for b in range(BINS):
+        clusters[c][b].append(user[b])
 
-# TODO plot the median of each bin
+for (cluster, c) in zip(clusters, range(len(clusters))):
+    for b in cluster:
+        cluster_bin_median[c].append(median(b))
+
+i += 1
+cluster_median_fig = plt.figure(i)
+
+# flip cluster_user_bin to cluster_bin_user
+for cluster in cluster_bin_median:
+    plt.plot(range(len(cluster)), cluster)
+
 cluster_median_fig.show()
 
 
