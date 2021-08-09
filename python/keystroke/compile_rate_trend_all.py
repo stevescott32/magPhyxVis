@@ -10,14 +10,16 @@ from sklearn.cluster import KMeans
 print('Starting distribution script')
 
 csv.field_size_limit(sys.maxsize)
-filename = './data/keystroke/events0.csv'
+filename = './data/keystroke/project-events.csv'
 
 BINS = 4
 SHOW_ALL_USERS = False
+CALCULATE_ELBOW = True
+num_clusters = 10
 
 headers = []
 data = []
-with open('./data/keystroke/events0.csv', newline='') as csvfile:
+with open(filename, newline='') as csvfile:
     csvReader = csv.reader(csvfile)
     i = 0
     for row in csvReader:
@@ -32,7 +34,11 @@ with open('./data/keystroke/events0.csv', newline='') as csvfile:
 
 users_sims_events = [[[]]]
 current_user = data[0]['user_id']
+# run_events = project_events[(project_events.project_id.isin([195, 200, 204, 205, 207])) & (project_events.change_type == 'RUN')]
 for event in data:
+    # project_id = event['project_id']
+    # if not project_id == 195 and not project_id == 200 and not project_id == 204 and not project_id == 205 and not project_id == 207:
+        # continue
     # switch to a new user
     if not event['user_id'] == current_user:
         users_sims_events.append([[]])
@@ -109,22 +115,22 @@ for user in user_bin_compile_rate:
 plt.title('Successful compile rate')
 combined_fig.show()
 
-potential_ks = range(2, math.floor(len(users_sims_events) / 2))
-i += 1
-elbow_plot = plt.figure(i)
-wcss = []
-for k in potential_ks:
-    kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
-    kmeans.fit(user_bin_compile_rate)
-    wcss.append(kmeans.inertia_)
+if CALCULATE_ELBOW:
+    potential_ks = range(2, math.floor(len(users_sims_events) / 4))
+    i += 1
+    elbow_plot = plt.figure(i)
+    wcss = []
+    for k in potential_ks:
+        kmeans = KMeans(n_clusters=k, init='k-means++', max_iter=300, n_init=10, random_state=0)
+        kmeans.fit(user_bin_compile_rate)
+        wcss.append(kmeans.inertia_)
 
-plt.plot(potential_ks, wcss)
-plt.title('Elbow Method')
-plt.xlabel('Number of clusters')
-plt.ylabel('WCSS')
-elbow_plot.show()
+    plt.plot(potential_ks, wcss)
+    plt.title('Elbow Method')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    elbow_plot.show()
 
-num_clusters = 6
 clusters = []
 cluster_bin_median = []
 for x in range(num_clusters):
@@ -140,8 +146,12 @@ for (user, c) in zip(user_bin_compile_rate, predicted_cluster):
 
 for (cluster, c) in zip(clusters, range(len(clusters))):
     for b in cluster:
-        print(len(b))
         cluster_bin_median[c].append(median(b))
+
+legend_vals = []
+for cluster in clusters:
+    print(len(cluster[0]))
+    legend_vals.append(str(len(cluster[0])))
 
 i += 1
 cluster_median_fig = plt.figure(i)
@@ -150,14 +160,18 @@ cluster_median_fig = plt.figure(i)
 for cluster in cluster_bin_median:
     plt.plot(range(len(cluster)), cluster)
 
+plt.legend(legend_vals)
 cluster_median_fig.show()
+
+# i += 1
+# big_cluster_fig = plt.figure(i)
+# for cluster in cluster_bin_median:
+#     plt.plot(range(len(cluster)), cluster)
+#     break
+
+# big_cluster_fig.show()
+
 
 print('Press enter to continue')
 input()
 print('Finishing revised distribution')
-
-# Assign 4: 195
-#   Assign 5: 200
-#   Assign 6: 204
-#   Assign 7: 205
-#   Assign 8: 207
